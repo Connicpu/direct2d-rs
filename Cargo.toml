@@ -1,0 +1,6 @@
+[package]
+name = "direct2d"
+version = "0.1.0"
+authors = ["Connor Hilarides <connorcpu@live.com>"]
+
+[dependencies]
