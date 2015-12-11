@@ -1,3 +1,4 @@
-#[test]
-fn it_works() {
-}
+extern crate winapi;
+
+pub mod comptr;
+
