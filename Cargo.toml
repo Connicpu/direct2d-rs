@@ -1,7 +1,10 @@
 [package]
 name = "direct2d"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Connor Hilarides <connorcpu@live.com>"]
+description = "A safe abstraction for drawing Direct2D"
+repository = "https://github.com/Connorcpu/direct2d-rs"
+license = "MIT"
 
 [dependencies]
 winapi = "0.2"
