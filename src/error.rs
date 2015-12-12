@@ -4,6 +4,8 @@ use winapi::*;
 pub enum D2D1Error {
     /// May be caused if you try to run this on an older version of windows
     MissingLibrary,
+    /// A Direct2D API returned an enum value that this abstraction doesn't know about
+    UnknownEnumValue,
     /// Any other HRESULT error
     ComError(HRESULT),
 }

@@ -95,7 +95,7 @@ pub trait Geometry {
                 stroke_style,
                 matrix,
                 flattening_tolerance,
-                &mut contains
+                &mut contains,
             );
             
             if SUCCEEDED(result) {
@@ -105,6 +105,81 @@ pub trait Geometry {
             }
         }
     }
+    
+    fn fill_contains_point(
+        &self, point: math::Point2F, world_transform: Option<&math::Matrix3x2F>,
+        flattening_tolerance: f32
+    )-> Result<bool, D2D1Error> {
+        unsafe {
+            let ptr = self.get_ptr();
+            assert!(!ptr.is_null());
+            
+            let matrix = match world_transform {
+                Some(mat) => &mat.0 as *const _,
+                None => ptr::null(),
+            };
+            
+            let mut contains: BOOL = 0;
+            let result = (*ptr).FillContainsPoint(
+                point.0,
+                matrix,
+                flattening_tolerance,
+                &mut contains,
+            );
+            
+            if SUCCEEDED(result) {
+                Ok(contains != 0)
+            } else {
+                Err(From::from(result))
+            }
+        }
+    }
+    
+    fn compare_with_geometry<T: Geometry>(
+        &self, input: &T, input_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
+    ) -> Result<GeometryRelation, D2D1Error> {
+        unsafe {
+            let self_ptr = self.get_ptr();
+            assert!(!self_ptr.is_null());
+            let input_ptr = input.get_ptr();
+            assert!(!input_ptr.is_null());
+            
+            let matrix = match input_transform {
+                Some(mat) => &mat.0 as *const _,
+                None => ptr::null(),
+            };
+            
+            let mut relation: D2D1_GEOMETRY_RELATION = D2D1_GEOMETRY_RELATION_UNKNOWN;
+            let result = (*self_ptr).CompareWithGeometry(
+                input_ptr,
+                matrix,
+                flattening_tolerance,
+                &mut relation,
+            );
+            
+            if SUCCEEDED(result) {
+                use self::GeometryRelation::*;
+                match relation {
+                    D2D1_GEOMETRY_RELATION_UNKNOWN => Ok(Unknown),
+                    D2D1_GEOMETRY_RELATION_DISJOINT => Ok(Disjoint),
+                    D2D1_GEOMETRY_RELATION_IS_CONTAINED => Ok(IsContained),
+                    D2D1_GEOMETRY_RELATION_CONTAINS => Ok(Contains),
+                    D2D1_GEOMETRY_RELATION_OVERLAP => Ok(Overlap),
+                    _ => Err(D2D1Error::UnknownEnumValue),
+                }
+            } else {
+                Err(From::from(result))
+            }
+        }
+    }
+}
+
+pub enum GeometryRelation {
+    Unknown = 0,
+    Disjoint = 1,
+    IsContained = 2,
+    Contains = 3,
+    Overlap = 4,
 }
 
 /// Represents a rectangle which can be used anywhere Geometry is needed
