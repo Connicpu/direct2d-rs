@@ -96,6 +96,8 @@ fn path_geometry() {
         .end()
     .close();
     
+    assert!(path.open().is_err());
+    
     let real_area = 1.25;
     let area = path.compute_area(None).unwrap();
     assert!((area - real_area).abs() <= EPSILON);
