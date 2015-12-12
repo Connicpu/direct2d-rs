@@ -93,7 +93,11 @@ fn path_geometry() {
             .add_line(Point2F::new(1.0, 1.0))
             .add_line(Point2F::new(0.5, 1.5))
             .add_line(Point2F::new(0.0, 1.0))
-            .end()
-        .close();
+        .end()
+    .close();
+    
+    let real_area = 1.25;
+    let area = path.compute_area(None).unwrap();
+    assert!((area - real_area).abs() <= EPSILON);
 }
 
