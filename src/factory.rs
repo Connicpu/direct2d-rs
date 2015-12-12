@@ -121,4 +121,17 @@ impl Factory {
             }
         }
     }
+    
+    pub fn create_path_geometry(&self) -> Result<geometry::Path, D2D1Error> {
+        unsafe {
+            let mut ptr: ComPtr<ID2D1PathGeometry> = ComPtr::new();
+            let result = (*self.ptr.raw_value()).CreatePathGeometry(ptr.raw_addr());
+            
+            if SUCCEEDED(result) {
+                Ok(FromRaw::from_raw(ptr.raw_value()))
+            } else {
+                Err(From::from(result))
+            }
+        }
+    }
 }

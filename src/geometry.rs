@@ -542,13 +542,13 @@ impl FromRaw for Path {
 /// Interface for building Path geometry
 pub struct GeometryBuilder<'a> {
     sink: ComPtr<ID2D1GeometrySink>,
-    phantom: PhantomData<&'a Path>,
+    phantom: PhantomData<&'a mut Path>,
 }
 
 impl<'a> GeometryBuilder<'a> {
-    pub fn begin_figure<'b: 'a>(
-        &'b mut self, start: math::Point2F, begin: FigureBegin, end: FigureEnd
-    ) -> FigureBuilder<'b> {
+    pub fn begin_figure(
+        mut self, start: math::Point2F, begin: FigureBegin, end: FigureEnd
+    ) -> FigureBuilder<'a> {
         unsafe {
             self.sink.BeginFigure(start.0, D2D1_FIGURE_BEGIN(begin as u32));
         }
@@ -557,28 +557,38 @@ impl<'a> GeometryBuilder<'a> {
             end: D2D1_FIGURE_END(end as u32),
         }
     }
+    
+    pub fn close(self) {
+        // Drop self
+    }
 }
 
 impl<'a> Drop for GeometryBuilder<'a> {
     fn drop(&mut self) {
         unsafe {
-            self.sink.Close();
+            if !self.sink.is_null() {
+                self.sink.Close();
+            }
         }
     }
 }
 
 pub struct FigureBuilder<'a> {
-    builder: &'a mut GeometryBuilder<'a>,
+    builder: GeometryBuilder<'a>,
     end: D2D1_FIGURE_END,
 }
 
 impl<'a> FigureBuilder<'a> {
-    pub fn end(self) -> &'a mut GeometryBuilder<'a> {
-        self.builder
+    pub fn end(self) -> GeometryBuilder<'a> {
+        GeometryBuilder {
+            sink: self.builder.sink.clone(),
+            phantom: PhantomData,
+        }
     }
     
-    pub fn add_line(&mut self, point: math::Point2F) {
+    pub fn add_line(mut self, point: math::Point2F) -> Self {
         unsafe { self.builder.sink.AddLine(point.0) };
+        self
     }
 }
 

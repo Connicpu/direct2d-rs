@@ -1,7 +1,7 @@
 extern crate direct2d;
 
 use direct2d::Factory;
-use direct2d::geometry::{Geometry, FillMode};
+use direct2d::geometry::{Geometry, FillMode, FigureBegin, FigureEnd};
 use direct2d::math::*;
 
 const EPSILON: f32 = 0.0001;
@@ -80,5 +80,20 @@ fn transformed_area() {
             }
         }
     }
+}
+
+#[test]
+fn path_geometry() {
+    let factory = Factory::create().unwrap();
+    
+    let mut path = factory.create_path_geometry().unwrap();
+    path.open().unwrap()
+        .begin_figure(Point2F::new(0.0, 0.0), FigureBegin::Filled, FigureEnd::Closed)
+            .add_line(Point2F::new(1.0, 0.0))
+            .add_line(Point2F::new(1.0, 1.0))
+            .add_line(Point2F::new(0.5, 1.5))
+            .add_line(Point2F::new(0.0, 1.0))
+            .end()
+        .close();
 }
 
