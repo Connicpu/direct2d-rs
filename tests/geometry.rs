@@ -18,6 +18,17 @@ fn rectangle_area() {
 }
 
 #[test]
+fn rectangle_length() {
+    let factory = Factory::create().unwrap();
+    
+    let rect = RectF::new(0.0, 0.0, 1.0, 1.0);
+    let rectangle = factory.create_rectangle_geometry(&rect).unwrap();
+    
+    let area = rectangle.compute_length(None).unwrap();
+    assert!((area - 4.0).abs() <= EPSILON);
+}
+
+#[test]
 fn combined_area() {
     let factory = Factory::create().unwrap();
     
