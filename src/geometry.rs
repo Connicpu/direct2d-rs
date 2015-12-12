@@ -1,4 +1,5 @@
 use std::{mem, ptr};
+use std::marker::PhantomData;
 use winapi::*;
 use comptr::ComPtr;
 use error::D2D1Error;
@@ -500,6 +501,95 @@ impl FromRaw for Transformed {
     }
 }
 
+/// Custom-shaped geometry made of lines and curves
+#[derive(Clone, PartialEq)]
+pub struct Path {
+    geom: ComPtr<ID2D1PathGeometry>,
+}
+
+impl Path {
+    pub fn open<'a>(&'a mut self) -> Result<GeometryBuilder<'a>, D2D1Error> {
+        let mut ptr: ComPtr<ID2D1GeometrySink> = ComPtr::new();
+        unsafe {
+            let result = (*self.geom.raw_value()).Open(ptr.raw_addr());
+            if SUCCEEDED(result) {
+                Ok(GeometryBuilder {
+                    sink: ptr,
+                    phantom: PhantomData,
+                })
+            } else {
+                Err(From::from(result))
+            }
+        }
+    }
+}
+
+impl Geometry for Path {
+    unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
+        &mut **(&mut *self.geom.raw_value())
+    }
+}
+
+impl FromRaw for Path {
+    type Raw = ID2D1PathGeometry;
+    unsafe fn from_raw(raw: *mut ID2D1PathGeometry) -> Self {
+        Path {
+            geom: ComPtr::from_existing(raw)
+        }
+    }
+}
+
+/// Interface for building Path geometry
+pub struct GeometryBuilder<'a> {
+    sink: ComPtr<ID2D1GeometrySink>,
+    phantom: PhantomData<&'a Path>,
+}
+
+impl<'a> GeometryBuilder<'a> {
+    pub fn begin_figure<'b: 'a>(
+        &'b mut self, start: math::Point2F, begin: FigureBegin, end: FigureEnd
+    ) -> FigureBuilder<'b> {
+        unsafe {
+            self.sink.BeginFigure(start.0, D2D1_FIGURE_BEGIN(begin as u32));
+        }
+        FigureBuilder {
+            builder: self,
+            end: D2D1_FIGURE_END(end as u32),
+        }
+    }
+}
+
+impl<'a> Drop for GeometryBuilder<'a> {
+    fn drop(&mut self) {
+        unsafe {
+            self.sink.Close();
+        }
+    }
+}
+
+pub struct FigureBuilder<'a> {
+    builder: &'a mut GeometryBuilder<'a>,
+    end: D2D1_FIGURE_END,
+}
+
+impl<'a> FigureBuilder<'a> {
+    pub fn end(self) -> &'a mut GeometryBuilder<'a> {
+        self.builder
+    }
+    
+    pub fn add_line(&mut self, point: math::Point2F) {
+        unsafe { self.builder.sink.AddLine(point.0) };
+    }
+}
+
+impl<'a> Drop for FigureBuilder<'a> {
+    fn drop(&mut self) {
+        unsafe {
+            self.builder.sink.EndFigure(self.end);
+        }
+    }
+}
+
 pub enum GeometryRelation {
     Unknown = 0,
     Disjoint = 1,
@@ -522,5 +612,15 @@ impl FillMode {
             _ => Err(D2D1Error::UnknownEnumValue)
         }
     }
+}
+
+pub enum FigureBegin {
+    Filled = 0,
+    Hollow = 1,
+}
+
+pub enum FigureEnd {
+    Open = 0,
+    Closed = 1,
 }
 

@@ -29,6 +29,9 @@ impl_com_refcount! { ID2D1RoundedRectangleGeometry, "2cd906a3-12e2-11dc-9fed-001
 impl_com_refcount! { ID2D1EllipseGeometry, "2cd906a4-12e2-11dc-9fed-001143a055f9" }
 impl_com_refcount! { ID2D1GeometryGroup, "2cd906a6-12e2-11dc-9fed-001143a055f9" }
 impl_com_refcount! { ID2D1TransformedGeometry, "2cd906bb-12e2-11dc-9fed-001143a055f9" }
+impl_com_refcount! { ID2D1PathGeometry, "2cd906a5-12e2-11dc-9fed-001143a055f9" }
+impl_com_refcount! { ID2D1SimplifiedGeometrySink, "2cd9069e-12e2-11dc-9fed-001143a055f9" }
+impl_com_refcount! { ID2D1GeometrySink, "2cd9069f-12e2-11dc-9fed-001143a055f9" }
 
 // Stroke
 impl_com_refcount! { ID2D1StrokeStyle, "2cd9069d-12e2-11dc-9fed-001143a055f9" }
