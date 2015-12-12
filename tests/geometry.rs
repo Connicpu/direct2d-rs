@@ -44,3 +44,41 @@ fn combined_area() {
     assert!((area - 2.0).abs() <= EPSILON);
 }
 
+#[test]
+fn transformed_area() {
+    let factory = Factory::create().unwrap();
+    
+    let rect = RectF::new(0.0, 0.0, 1.0, 1.0);
+    let rectangle = factory.create_rectangle_geometry(&rect).unwrap();
+    
+    for x in 1..5 {
+        for y in 1..5 {
+            for t in -10..10 {
+                let x = x as f32;
+                let y = y as f32;
+                let t = t as f32;
+                let real_area = x * y;
+                
+                let transform = Matrix3x2F::new([
+                    [  x, 0.0], // Scale along the X axis by `x`
+                    [0.0,   y], // Scale along the Y axis by `y`
+                    [  t,  -t], // this value shouldn't affect area (translation component)
+                ]);
+                
+                // Apply the transformation to get the area
+                let area = rectangle.compute_area(Some(&transform)).unwrap();
+                assert!((area - real_area).abs() <= EPSILON);
+                
+                // Create a permanently transformed geometry and test its base area
+                let transformed = rectangle.transformed(&transform).unwrap();
+                let area = transformed.compute_area(None).unwrap();
+                assert!((area - real_area).abs() <= EPSILON);
+                
+                // Double-transform
+                let area = transformed.compute_area(Some(&transform)).unwrap();
+                assert!((area - real_area*real_area).abs() <= EPSILON);
+            }
+        }
+    }
+}
+

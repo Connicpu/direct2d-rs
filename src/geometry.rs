@@ -424,6 +424,12 @@ pub struct Group {
 }
 
 impl Group {
+    pub fn get_fill_mode(&self) -> Result<FillMode, D2D1Error> {
+        unsafe {
+            FillMode::from_raw((*self.geom.raw_value()).GetFillMode())
+        }
+    }
+    
     pub fn get_source_geometry_count(&self) -> u32 {
         unsafe {
             (*self.geom.raw_value()).GetSourceGeometryCount()
@@ -461,6 +467,24 @@ pub struct Transformed {
     geom: ComPtr<ID2D1TransformedGeometry>,
 }
 
+impl Transformed {
+    pub fn get_source_geometry(&self) -> GenericGeometry {
+        unsafe {
+            let mut ptr: ComPtr<ID2D1Geometry> = ComPtr::new();
+            (*self.geom.raw_value()).GetSourceGeometry(ptr.raw_addr());
+            GenericGeometry { geom: ptr }
+        }
+    }
+    
+    pub fn get_transform(&self) -> math::Matrix3x2F {
+        unsafe {
+            let mut matrix: D2D1_MATRIX_3X2_F = mem::uninitialized();
+            (*self.geom.raw_value()).GetTransform(&mut matrix);
+            math::Matrix3x2F(matrix)
+        }
+    }
+}
+
 impl Geometry for Transformed {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
         &mut **(&mut *self.geom.raw_value())
@@ -487,5 +511,16 @@ pub enum GeometryRelation {
 pub enum FillMode {
     Alternate = 0,
     Winding = 1,
+}
+
+impl FillMode {
+    pub fn from_raw(value: D2D1_FILL_MODE) -> Result<FillMode, D2D1Error> {
+        use self::FillMode::*;
+        match value {
+            D2D1_FILL_MODE_ALTERNATE => Ok(Alternate),
+            D2D1_FILL_MODE_WINDING => Ok(Winding),
+            _ => Err(D2D1Error::UnknownEnumValue)
+        }
+    }
 }
 

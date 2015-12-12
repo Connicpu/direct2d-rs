@@ -38,18 +38,6 @@ pub struct ComPtr<T: ComUnknown> {
     ptr: *mut T,
 }
 
-impl<T: ComUnknown> PartialEq for ComPtr<T> {
-    fn eq(&self, rhs: &Self) -> bool {
-        self.ptr == rhs.ptr
-    }
-}
-
-impl<T: ComUnknown + HasIID> ComPtr<T> {
-    pub fn iid(&self) -> IID {
-        T::iid()
-    }
-}
-
 #[allow(dead_code)] // I'm not done, I'll need at least some of it :P
 impl<T: ComUnknown> ComPtr<T> {
     pub fn new() -> Self {
@@ -114,6 +102,18 @@ impl<T: ComUnknown> ComPtr<T> {
     pub unsafe fn raw_void(&mut self) -> *mut *mut c_void {
         assert!(self.ptr == ptr::null_mut());
         self.raw_addr() as *mut *mut c_void
+    }
+}
+
+impl<T: ComUnknown + HasIID> ComPtr<T> {
+    pub fn iid(&self) -> IID {
+        T::iid()
+    }
+}
+
+impl<T: ComUnknown> PartialEq for ComPtr<T> {
+    fn eq(&self, rhs: &Self) -> bool {
+        self.ptr == rhs.ptr
     }
 }
 

@@ -18,3 +18,11 @@ impl RectF {
         })
     }
 }
+
+impl Matrix3x2F {
+    pub fn new(data: [[f32; 2]; 3]) -> Matrix3x2F {
+        Matrix3x2F(D2D1_MATRIX_3X2_F {
+            matrix: data,
+        })
+    }
+}
