@@ -13,11 +13,19 @@ pub trait HasIID {
     fn iid() -> IID;
 }
 
+// Base types
 impl_com_refcount! { IUnknown, "00000000-0000-0000-C000-000000000046" }
 impl_com_refcount! { ID2D1Factory, "06152247-6f50-465a-9245-118bfd3b6007" }
 impl_com_refcount! { ID2D1RenderTarget, "2cd90694-12e2-11dc-9fed-001143a055f9" }
+
+// Brushes
 impl_com_refcount! { ID2D1Brush, "2cd906a8-12e2-11dc-9fed-001143a055f9" }
 impl_com_refcount! { ID2D1SolidColorBrush, "2cd906a9-12e2-11dc-9fed-001143a055f9" }
+
+// Geometry
+impl_com_refcount! { ID2D1Geometry, "2cd906a1-12e2-11dc-9fed-001143a055f9" }
+impl_com_refcount! { ID2D1RectangleGeometry, "2cd906a2-12e2-11dc-9fed-001143a055f9" }
+impl_com_refcount! { ID2D1RoundedRectangleGeometry, "2cd906a3-12e2-11dc-9fed-001143a055f9" }
 
 #[derive(Debug)]
 pub struct ComPtr<T: ComUnknown> {
