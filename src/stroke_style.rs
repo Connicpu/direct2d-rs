@@ -42,6 +42,33 @@ impl StrokeStyle {
             LineJoin::from_raw((*self.get_ptr()).GetLineJoin())
         }
     }
+    
+    pub fn get_dash_offset(&self) -> f32 {
+        unsafe {
+            (*self.get_ptr()).GetDashOffset()
+        }
+    }
+    
+    pub fn get_dash_style(&self) -> Result<DashStyle, D2D1Error> {
+        unsafe {
+            DashStyle::from_raw((*self.get_ptr()).GetDashStyle())
+        }
+    }
+    
+    pub fn get_dashes_count(&self) -> u32 {
+        unsafe {
+            (*self.get_ptr()).GetDashesCount()
+        }
+    }
+    
+    pub fn get_dashes(&self) -> Vec<f32> {
+        let count = self.get_dashes_count();
+        let mut data = vec![0.0; count as usize];
+        unsafe {
+            (*self.get_ptr()).GetDashes(data.as_mut_ptr(), count);
+        }
+        data
+    }
 }
 
 pub enum CapStyle {
@@ -79,6 +106,30 @@ impl LineJoin {
             D2D1_LINE_JOIN_BEVEL => Ok(Bevel),
             D2D1_LINE_JOIN_ROUND => Ok(Round),
             D2D1_LINE_JOIN_MITER_OR_BEVEL => Ok(MiterOrBevel),
+            _ => Err(D2D1Error::UnknownEnumValue),
+        }
+    }
+}
+
+pub enum DashStyle {
+    Solid = 0,
+    Dash = 1,
+    Dot = 2,
+    DashDot = 3,
+    DashDotDot = 4,
+    Custom = 5,
+}
+
+impl DashStyle {
+    fn from_raw(value: D2D1_DASH_STYLE) -> Result<DashStyle, D2D1Error> {
+        use self::DashStyle::*;
+        match value {
+            D2D1_DASH_STYLE_SOLID => Ok(Solid),
+            D2D1_DASH_STYLE_DASH => Ok(Dash),
+            D2D1_DASH_STYLE_DOT => Ok(Dot),
+            D2D1_DASH_STYLE_DASH_DOT => Ok(DashDot),
+            D2D1_DASH_STYLE_DASH_DOT_DOT => Ok(DashDotDot),
+            D2D1_DASH_STYLE_CUSTOM => Ok(Custom),
             _ => Err(D2D1Error::UnknownEnumValue),
         }
     }

@@ -3,10 +3,28 @@ use winapi::*;
 use comptr::ComPtr;
 use error::D2D1Error;
 use stroke_style::StrokeStyle;
+use factory::Factory;
+use helpers::{GetRaw, FromRaw};
 use math;
 
 pub trait Geometry {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry;
+    
+    fn get_factory(&self) -> Factory {
+        unsafe {
+            let ptr = self.get_ptr();
+            let mut factory = ComPtr::<ID2D1Factory>::new();
+            (*ptr).GetFactory(factory.raw_addr());
+            
+            Factory::from_ptr(factory)
+        }
+    }
+    
+    fn to_generic(&self) -> GenericGeometry {
+        GenericGeometry {
+            geom: unsafe { ComPtr::from_existing(self.get_ptr()) },
+        }
+    }
     
     /// Retrieve the bounds of the geometry, with an optional applied transform.
     /// 
@@ -15,8 +33,6 @@ pub trait Geometry {
     fn get_bounds(&self, world_transform: Option<&math::Matrix3x2F>) -> Result<math::RectF, D2D1Error> {
         unsafe {
             let ptr = self.get_ptr();
-            assert!(!ptr.is_null());
-            
             let matrix = match world_transform {
                 Some(mat) => &mat.0 as *const _,
                 None => ptr::null(),
@@ -36,12 +52,10 @@ pub trait Geometry {
     /// an optional pen style applied.
     fn get_widened_bounds(
         &self, stroke_width: f32, stroke_style: Option<&StrokeStyle>,
-        world_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
+        world_transform: Option<&math::Matrix3x2F>
     ) -> Result<math::RectF, D2D1Error> {
         unsafe {
             let ptr = self.get_ptr();
-            assert!(!ptr.is_null());
-            
             let matrix = match world_transform {
                 Some(mat) => &mat.0 as *const _,
                 None => ptr::null(),
@@ -56,7 +70,7 @@ pub trait Geometry {
                 stroke_width,
                 stroke_style,
                 matrix,
-                flattening_tolerance,
+                D2D1_DEFAULT_FLATTENING_TOLERANCE,
                 &mut rect,
             );
             
@@ -72,12 +86,10 @@ pub trait Geometry {
     /// given point.
     fn stroke_contains_point(
         &self, point: math::Point2F, stroke_width: f32, stroke_style: Option<&StrokeStyle>,
-        world_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
+        world_transform: Option<&math::Matrix3x2F>
     ) -> Result<bool, D2D1Error> {
         unsafe {
             let ptr = self.get_ptr();
-            assert!(!ptr.is_null());
-            
             let matrix = match world_transform {
                 Some(mat) => &mat.0 as *const _,
                 None => ptr::null(),
@@ -93,7 +105,7 @@ pub trait Geometry {
                 stroke_width,
                 stroke_style,
                 matrix,
-                flattening_tolerance,
+                D2D1_DEFAULT_FLATTENING_TOLERANCE,
                 &mut contains,
             );
             
@@ -107,13 +119,10 @@ pub trait Geometry {
     
     /// Test whether the given fill of this geometry would contain this point.
     fn fill_contains_point(
-        &self, point: math::Point2F, world_transform: Option<&math::Matrix3x2F>,
-        flattening_tolerance: f32
+        &self, point: math::Point2F, world_transform: Option<&math::Matrix3x2F>
     )-> Result<bool, D2D1Error> {
         unsafe {
             let ptr = self.get_ptr();
-            assert!(!ptr.is_null());
-            
             let matrix = match world_transform {
                 Some(mat) => &mat.0 as *const _,
                 None => ptr::null(),
@@ -123,7 +132,7 @@ pub trait Geometry {
             let result = (*ptr).FillContainsPoint(
                 point.0,
                 matrix,
-                flattening_tolerance,
+                D2D1_DEFAULT_FLATTENING_TOLERANCE,
                 &mut contains,
             );
             
@@ -137,13 +146,11 @@ pub trait Geometry {
     
     /// Compare how one geometry intersects or contains another geometry.
     fn compare_with_geometry<T: Geometry>(
-        &self, input: &T, input_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
+        &self, input: &T, input_transform: Option<&math::Matrix3x2F>
     ) -> Result<GeometryRelation, D2D1Error> {
         unsafe {
             let self_ptr = self.get_ptr();
-            assert!(!self_ptr.is_null());
             let input_ptr = input.get_ptr();
-            assert!(!input_ptr.is_null());
             
             let matrix = match input_transform {
                 Some(mat) => &mat.0 as *const _,
@@ -154,7 +161,7 @@ pub trait Geometry {
             let result = (*self_ptr).CompareWithGeometry(
                 input_ptr,
                 matrix,
-                flattening_tolerance,
+                D2D1_DEFAULT_FLATTENING_TOLERANCE,
                 &mut relation,
             );
             
@@ -176,12 +183,10 @@ pub trait Geometry {
     
     /// Computes the area of the geometry.
     fn compute_area(
-        &self, world_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
+        &self, world_transform: Option<&math::Matrix3x2F>
     ) -> Result<f32, D2D1Error> {
         unsafe {
             let ptr = self.get_ptr();
-            assert!(!ptr.is_null());
-            
             let matrix = match world_transform {
                 Some(mat) => &mat.0 as *const _,
                 None => ptr::null(),
@@ -190,7 +195,7 @@ pub trait Geometry {
             let mut area = 0.0;
             let result = (*ptr).ComputeArea(
                 matrix,
-                flattening_tolerance,
+                D2D1_DEFAULT_FLATTENING_TOLERANCE,
                 &mut area,
             );
             
@@ -204,12 +209,10 @@ pub trait Geometry {
     
     /// Computes the length of the geometry.
     fn compute_length(
-        &self, world_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
+        &self, world_transform: Option<&math::Matrix3x2F>
     ) -> Result<f32, D2D1Error> {
         unsafe {
             let ptr = self.get_ptr();
-            assert!(!ptr.is_null());
-            
             let matrix = match world_transform {
                 Some(mat) => &mat.0 as *const _,
                 None => ptr::null(),
@@ -218,7 +221,7 @@ pub trait Geometry {
             let mut length = 0.0;
             let result = (*ptr).ComputeLength(
                 matrix,
-                flattening_tolerance,
+                D2D1_DEFAULT_FLATTENING_TOLERANCE,
                 &mut length,
             );
             
@@ -232,12 +235,10 @@ pub trait Geometry {
     
     /// Computes the point and tangent at a given distance along the path.
     fn compute_point_at_length(
-        &self, length: f32, world_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
+        &self, length: f32, world_transform: Option<&math::Matrix3x2F>
     ) -> Result<(math::Point2F, math::Vector2F), D2D1Error> {
         unsafe {
             let ptr = self.get_ptr();
-            assert!(!ptr.is_null());
-            
             let matrix = match world_transform {
                 Some(mat) => &mat.0 as *const _,
                 None => ptr::null(),
@@ -248,7 +249,7 @@ pub trait Geometry {
             let result = (*ptr).ComputePointAtLength(
                 length,
                 matrix,
-                flattening_tolerance,
+                D2D1_DEFAULT_FLATTENING_TOLERANCE,
                 &mut point,
                 &mut tangent,
             );
@@ -266,17 +267,65 @@ pub trait Geometry {
             }
         }
     }
+    
+    fn transformed(&self, transform: &math::Matrix3x2F) -> Result<Transformed, D2D1Error> {
+        let factory = self.get_factory();
+        unsafe {
+            let raw_factory = factory.get_raw();
+            let mut transformed: ComPtr<ID2D1TransformedGeometry> = ComPtr::new();
+            let result = (*raw_factory).CreateTransformedGeometry(
+                self.get_ptr(),
+                &transform.0,
+                transformed.raw_addr(),
+            );
+            
+            if SUCCEEDED(result) {
+                Ok(Transformed { geom: transformed })
+            } else {
+                Err(From::from(result))
+            }
+        }
+    }
 }
 
-pub enum GeometryRelation {
-    Unknown = 0,
-    Disjoint = 1,
-    IsContained = 2,
-    Contains = 3,
-    Overlap = 4,
+impl<'a, T: Geometry> Geometry for &'a T {
+    unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
+        T::get_ptr(*self)
+    }
+}
+
+/// Represents generic geometry of an unknown type
+#[derive(Clone, PartialEq)]
+pub struct GenericGeometry {
+    geom: ComPtr<ID2D1Geometry>,
+}
+
+impl GenericGeometry {
+    pub fn as_rectangle(&self) -> Option<Rectangle> {
+        match self.geom.query_interface::<ID2D1RectangleGeometry>() {
+            Ok(ptr) => Some(Rectangle { geom: ptr }),
+            Err(_) => None,
+        }
+    }
+}
+
+impl Geometry for GenericGeometry {
+    unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
+        &mut *(&mut *self.geom.raw_value())
+    }
+}
+
+impl FromRaw for GenericGeometry {
+    type Raw = ID2D1Geometry;
+    unsafe fn from_raw(raw: *mut ID2D1Geometry) -> Self {
+        GenericGeometry {
+            geom: ComPtr::from_existing(raw)
+        }
+    }
 }
 
 /// Represents a rectangle which can be used anywhere Geometry is needed
+#[derive(Clone, PartialEq)]
 pub struct Rectangle {
     geom: ComPtr<ID2D1RectangleGeometry>,
 }
@@ -297,14 +346,146 @@ impl Geometry for Rectangle {
     }
 }
 
+impl FromRaw for Rectangle {
+    type Raw = ID2D1RectangleGeometry;
+    unsafe fn from_raw(raw: *mut ID2D1RectangleGeometry) -> Self {
+        Rectangle {
+            geom: ComPtr::from_existing(raw)
+        }
+    }
+}
+
 /// Represents a rounded rectangle which can be used anywhere Geometry is needed
+#[derive(Clone, PartialEq)]
 pub struct RoundedRectangle {
     geom: ComPtr<ID2D1RoundedRectangleGeometry>,
+}
+
+impl RoundedRectangle {
+    pub fn get_rounded_rect(&self) -> math::RoundedRect {
+        unsafe {
+            let mut rect: D2D1_ROUNDED_RECT = mem::uninitialized();
+            (*self.geom.raw_value()).GetRoundedRect(&mut rect);
+            math::RoundedRect(rect)
+        }
+    }
 }
 
 impl Geometry for RoundedRectangle {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
         &mut **(&mut *self.geom.raw_value())
     }
+}
+
+impl FromRaw for RoundedRectangle {
+    type Raw = ID2D1RoundedRectangleGeometry;
+    unsafe fn from_raw(raw: *mut ID2D1RoundedRectangleGeometry) -> Self {
+        RoundedRectangle {
+            geom: ComPtr::from_existing(raw)
+        }
+    }
+}
+
+/// Represents an ellipse which can be used anywhere Geometry is needed
+#[derive(Clone, PartialEq)]
+pub struct Ellipse {
+    geom: ComPtr<ID2D1EllipseGeometry>,
+}
+
+impl Ellipse {
+    pub fn get_ellipse(&self) -> math::Ellipse {
+        unsafe {
+            let mut ellipse: D2D1_ELLIPSE = mem::uninitialized();
+            (*self.geom.raw_value()).GetEllipse(&mut ellipse);
+            math::Ellipse(ellipse)
+        }
+    }
+}
+
+impl Geometry for Ellipse {
+    unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
+        &mut **(&mut *self.geom.raw_value())
+    }
+}
+
+impl FromRaw for Ellipse {
+    type Raw = ID2D1EllipseGeometry;
+    unsafe fn from_raw(raw: *mut ID2D1EllipseGeometry) -> Self {
+        Ellipse {
+            geom: ComPtr::from_existing(raw)
+        }
+    }
+}
+
+/// Represents multiple geometries combined into a single item
+#[derive(Clone, PartialEq)]
+pub struct Group {
+    geom: ComPtr<ID2D1GeometryGroup>,
+}
+
+impl Group {
+    pub fn get_source_geometry_count(&self) -> u32 {
+        unsafe {
+            (*self.geom.raw_value()).GetSourceGeometryCount()
+        }
+    }
+    
+    pub fn get_source_geometries(&self) -> Vec<GenericGeometry> {
+        unsafe {
+            let count = self.get_source_geometry_count();
+            let mut data: Vec<GenericGeometry> = vec![GenericGeometry { geom: ComPtr::new() }; count as usize];
+            (*self.geom.raw_value()).GetSourceGeometries(data.as_mut_ptr() as *mut _, count);
+            data
+        }
+    }
+}
+
+impl Geometry for Group {
+    unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
+        &mut **(&mut *self.geom.raw_value())
+    }
+}
+
+impl FromRaw for Group {
+    type Raw = ID2D1GeometryGroup;
+    unsafe fn from_raw(raw: *mut ID2D1GeometryGroup) -> Self {
+        Group {
+            geom: ComPtr::from_existing(raw)
+        }
+    }
+}
+
+/// Represents geometry which has had a transformation applied to it
+#[derive(Clone, PartialEq)]
+pub struct Transformed {
+    geom: ComPtr<ID2D1TransformedGeometry>,
+}
+
+impl Geometry for Transformed {
+    unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
+        &mut **(&mut *self.geom.raw_value())
+    }
+}
+
+impl FromRaw for Transformed {
+    type Raw = ID2D1TransformedGeometry;
+    unsafe fn from_raw(raw: *mut ID2D1TransformedGeometry) -> Self {
+        Transformed {
+            geom: ComPtr::from_existing(raw)
+        }
+    }
+}
+
+pub enum GeometryRelation {
+    Unknown = 0,
+    Disjoint = 1,
+    IsContained = 2,
+    Contains = 3,
+    Overlap = 4,
+}
+
+pub enum FillMode {
+    Alternate = 0,
+    Winding = 1,
 }
 

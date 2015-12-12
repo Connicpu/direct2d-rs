@@ -2,6 +2,16 @@ use std::{ptr, slice, mem};
 use winapi::*;
 use kernel32;
 
+pub trait GetRaw {
+    type Raw;
+    unsafe fn get_raw(&self) -> *mut Self::Raw;
+}
+
+pub trait FromRaw {
+    type Raw;
+    unsafe fn from_raw(raw: *mut Self::Raw) -> Self;
+}
+
 pub fn hresult_from_win32(win32: DWORD) -> HRESULT {
     if win32 as HRESULT <= 0 {
         win32 as HRESULT

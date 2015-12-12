@@ -26,6 +26,9 @@ impl_com_refcount! { ID2D1SolidColorBrush, "2cd906a9-12e2-11dc-9fed-001143a055f9
 impl_com_refcount! { ID2D1Geometry, "2cd906a1-12e2-11dc-9fed-001143a055f9" }
 impl_com_refcount! { ID2D1RectangleGeometry, "2cd906a2-12e2-11dc-9fed-001143a055f9" }
 impl_com_refcount! { ID2D1RoundedRectangleGeometry, "2cd906a3-12e2-11dc-9fed-001143a055f9" }
+impl_com_refcount! { ID2D1EllipseGeometry, "2cd906a4-12e2-11dc-9fed-001143a055f9" }
+impl_com_refcount! { ID2D1GeometryGroup, "2cd906a6-12e2-11dc-9fed-001143a055f9" }
+impl_com_refcount! { ID2D1TransformedGeometry, "2cd906bb-12e2-11dc-9fed-001143a055f9" }
 
 // Stroke
 impl_com_refcount! { ID2D1StrokeStyle, "2cd9069d-12e2-11dc-9fed-001143a055f9" }
@@ -87,6 +90,10 @@ impl<T: ComUnknown> ComPtr<T> {
         let temp = ComPtr { ptr: ptr };
         mem::forget(temp.clone());
         temp
+    }
+    
+    pub unsafe fn attach(ptr: *mut T) -> Self {
+        ComPtr { ptr: ptr }
     }
     
     pub unsafe fn detach(&mut self) -> *mut T {

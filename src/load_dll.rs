@@ -16,7 +16,11 @@ impl D2D1 {
     pub fn load() -> Result<D2D1, HRESULT> {
         unsafe {
             let dll = ffi::CString::new("D2D1.dll").unwrap();
-            let handle = kernel32::LoadLibraryA(dll.as_ptr());
+            let mut handle = kernel32::GetModuleHandleA(dll.as_ptr());
+            if handle == ptr::null_mut() {
+                handle = kernel32::LoadLibraryA(dll.as_ptr());
+            }
+            
             if handle != ptr::null_mut() {
                 Ok(D2D1 { handle: handle })
             } else {
@@ -38,13 +42,5 @@ impl D2D1 {
         
         let create_factory: CreateFactory = mem::transmute(create_factory_ptr);
         create_factory(ftype, riid, options, ppv)
-    }
-}
-
-impl Drop for D2D1 {
-    fn drop(&mut self) {
-        unsafe {
-            kernel32::FreeLibrary(self.handle);
-        }
     }
 }
