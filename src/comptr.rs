@@ -27,6 +27,9 @@ impl_com_refcount! { ID2D1Geometry, "2cd906a1-12e2-11dc-9fed-001143a055f9" }
 impl_com_refcount! { ID2D1RectangleGeometry, "2cd906a2-12e2-11dc-9fed-001143a055f9" }
 impl_com_refcount! { ID2D1RoundedRectangleGeometry, "2cd906a3-12e2-11dc-9fed-001143a055f9" }
 
+// Stroke
+impl_com_refcount! { ID2D1StrokeStyle, "2cd9069d-12e2-11dc-9fed-001143a055f9" }
+
 #[derive(Debug)]
 pub struct ComPtr<T: ComUnknown> {
     ptr: *mut T,
@@ -44,6 +47,7 @@ impl<T: ComUnknown + HasIID> ComPtr<T> {
     }
 }
 
+#[allow(dead_code)] // I'm not done, I'll need at least some of it :P
 impl<T: ComUnknown> ComPtr<T> {
     pub fn new() -> Self {
         ComPtr { ptr: ptr::null_mut() }

@@ -2,6 +2,7 @@ use std::{mem, ptr};
 use winapi::*;
 use comptr::ComPtr;
 use error::D2D1Error;
+use stroke_style::StrokeStyle;
 use math;
 
 pub trait Geometry {
@@ -33,9 +34,8 @@ pub trait Geometry {
     
     /// Get the bounds of the corresponding geometry after it has been widened or have
     /// an optional pen style applied.
-    // TODO: StrokeStyle
     fn get_widened_bounds(
-        &self, stroke_width: f32, stroke_style: Option<()>,
+        &self, stroke_width: f32, stroke_style: Option<&StrokeStyle>,
         world_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
     ) -> Result<math::RectF, D2D1Error> {
         unsafe {
@@ -47,7 +47,7 @@ pub trait Geometry {
                 None => ptr::null(),
             };
             let stroke_style = match stroke_style {
-                Some(_) => ptr::null_mut(), // TODO
+                Some(stroke) => stroke.get_ptr(),
                 None => ptr::null_mut(),
             };
             
@@ -70,9 +70,8 @@ pub trait Geometry {
     
     /// Checks to see whether the corresponding penned and widened geometry contains the
     /// given point.
-    // TODO: StrokeStyle
     fn stroke_contains_point(
-        &self, point: math::Point2F, stroke_width: f32, stroke_style: Option<()>,
+        &self, point: math::Point2F, stroke_width: f32, stroke_style: Option<&StrokeStyle>,
         world_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
     ) -> Result<bool, D2D1Error> {
         unsafe {
@@ -84,7 +83,7 @@ pub trait Geometry {
                 None => ptr::null(),
             };
             let stroke_style = match stroke_style {
-                Some(_) => ptr::null_mut(), // TODO
+                Some(stroke) => stroke.get_ptr(),
                 None => ptr::null_mut(),
             };
             
@@ -106,6 +105,7 @@ pub trait Geometry {
         }
     }
     
+    /// Test whether the given fill of this geometry would contain this point.
     fn fill_contains_point(
         &self, point: math::Point2F, world_transform: Option<&math::Matrix3x2F>,
         flattening_tolerance: f32
@@ -135,6 +135,7 @@ pub trait Geometry {
         }
     }
     
+    /// Compare how one geometry intersects or contains another geometry.
     fn compare_with_geometry<T: Geometry>(
         &self, input: &T, input_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
     ) -> Result<GeometryRelation, D2D1Error> {
@@ -173,6 +174,7 @@ pub trait Geometry {
         }
     }
     
+    /// Computes the area of the geometry.
     fn compute_area(
         &self, world_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
     ) -> Result<f32, D2D1Error> {
@@ -200,6 +202,7 @@ pub trait Geometry {
         }
     }
     
+    /// Computes the length of the geometry.
     fn compute_length(
         &self, world_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
     ) -> Result<f32, D2D1Error> {
@@ -221,6 +224,43 @@ pub trait Geometry {
             
             if SUCCEEDED(result) {
                 Ok(length)
+            } else {
+                Err(From::from(result))
+            }
+        }
+    }
+    
+    /// Computes the point and tangent at a given distance along the path.
+    fn compute_point_at_length(
+        &self, length: f32, world_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
+    ) -> Result<(math::Point2F, math::Vector2F), D2D1Error> {
+        unsafe {
+            let ptr = self.get_ptr();
+            assert!(!ptr.is_null());
+            
+            let matrix = match world_transform {
+                Some(mat) => &mat.0 as *const _,
+                None => ptr::null(),
+            };
+            
+            let mut point: D2D1_POINT_2F = mem::uninitialized();
+            let mut tangent: D2D1_POINT_2F = mem::uninitialized();
+            let result = (*ptr).ComputePointAtLength(
+                length,
+                matrix,
+                flattening_tolerance,
+                &mut point,
+                &mut tangent,
+            );
+            
+            if SUCCEEDED(result) {
+                Ok((
+                    math::Point2F(point),
+                    math::Vector2F(D2D_VECTOR_2F {
+                        x: tangent.x,
+                        y: tangent.y,
+                    }),
+                ))
             } else {
                 Err(From::from(result))
             }

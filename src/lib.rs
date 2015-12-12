@@ -11,7 +11,8 @@ pub mod factory;
 pub mod error;
 pub mod math;
 pub mod geometry;
+pub mod stroke_style;
 
-pub mod comptr;
-pub mod load_dll;
-pub mod helpers;
+mod comptr;
+mod load_dll;
+mod helpers;
