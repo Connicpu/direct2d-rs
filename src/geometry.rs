@@ -172,6 +172,60 @@ pub trait Geometry {
             }
         }
     }
+    
+    fn compute_area(
+        &self, world_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
+    ) -> Result<f32, D2D1Error> {
+        unsafe {
+            let ptr = self.get_ptr();
+            assert!(!ptr.is_null());
+            
+            let matrix = match world_transform {
+                Some(mat) => &mat.0 as *const _,
+                None => ptr::null(),
+            };
+            
+            let mut area = 0.0;
+            let result = (*ptr).ComputeArea(
+                matrix,
+                flattening_tolerance,
+                &mut area,
+            );
+            
+            if SUCCEEDED(result) {
+                Ok(area)
+            } else {
+                Err(From::from(result))
+            }
+        }
+    }
+    
+    fn compute_length(
+        &self, world_transform: Option<&math::Matrix3x2F>, flattening_tolerance: f32
+    ) -> Result<f32, D2D1Error> {
+        unsafe {
+            let ptr = self.get_ptr();
+            assert!(!ptr.is_null());
+            
+            let matrix = match world_transform {
+                Some(mat) => &mat.0 as *const _,
+                None => ptr::null(),
+            };
+            
+            let mut length = 0.0;
+            let result = (*ptr).ComputeLength(
+                matrix,
+                flattening_tolerance,
+                &mut length,
+            );
+            
+            if SUCCEEDED(result) {
+                Ok(length)
+            } else {
+                Err(From::from(result))
+            }
+        }
+    }
 }
 
 pub enum GeometryRelation {
