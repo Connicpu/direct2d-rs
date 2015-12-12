@@ -1,17 +1,42 @@
 use winapi::*;
 use std::{ptr, mem};
+use std::cmp::PartialEq;
 use std::ops::{Drop, Deref, DerefMut};
 
-pub trait ComRefcounted {
-    unsafe fn add_ref(ptr: *mut Self);
-    unsafe fn release(ptr: *mut Self);
+pub trait ComUnknown {
+    unsafe fn add_ref(ptr: *mut Self) -> ULONG;
+    unsafe fn release(ptr: *mut Self) -> ULONG;
+    unsafe fn query_interface(ptr: *mut Self, riid: REFIID, ppv: *mut *mut c_void) -> HRESULT;
 }
 
-pub struct ComPtr<T: ComRefcounted> {
+pub trait HasIID {
+    fn iid() -> IID;
+}
+
+impl_com_refcount! { IUnknown, "00000000-0000-0000-C000-000000000046" }
+impl_com_refcount! { ID2D1Factory, "06152247-6f50-465a-9245-118bfd3b6007" }
+impl_com_refcount! { ID2D1RenderTarget, "2cd90694-12e2-11dc-9fed-001143a055f9" }
+impl_com_refcount! { ID2D1Brush, "2cd906a8-12e2-11dc-9fed-001143a055f9" }
+impl_com_refcount! { ID2D1SolidColorBrush, "2cd906a9-12e2-11dc-9fed-001143a055f9" }
+
+#[derive(Debug)]
+pub struct ComPtr<T: ComUnknown> {
     ptr: *mut T,
 }
 
-impl<T: ComRefcounted> ComPtr<T> {
+impl<T: ComUnknown> PartialEq for ComPtr<T> {
+    fn eq(&self, rhs: &Self) -> bool {
+        self.ptr == rhs.ptr
+    }
+}
+
+impl<T: ComUnknown + HasIID> ComPtr<T> {
+    pub fn iid(&self) -> IID {
+        T::iid()
+    }
+}
+
+impl<T: ComUnknown> ComPtr<T> {
     pub fn new() -> Self {
         ComPtr { ptr: ptr::null_mut() }
     }
@@ -19,7 +44,7 @@ impl<T: ComRefcounted> ComPtr<T> {
     pub fn release(&mut self) {
         unsafe {
             if self.ptr != ptr::null_mut() {
-                ComRefcounted::release(self.ptr);
+                ComUnknown::release(self.ptr);
                 self.ptr = ptr::null_mut();
             }
         }
@@ -27,6 +52,23 @@ impl<T: ComRefcounted> ComPtr<T> {
     
     pub fn is_null(&self) -> bool {
         self.ptr == ptr::null_mut()
+    }
+    
+    pub fn query_interface<U: ComUnknown + HasIID>(&self) -> Result<ComPtr<U>, HRESULT> {
+        unsafe {
+            if self.ptr == ptr::null_mut() {
+                return Err(From::from(E_POINTER));
+            }
+            
+            let mut ptr: ComPtr<U> = ComPtr::new();
+            let iid = U::iid();
+            let hr = ComUnknown::query_interface(self.ptr, &iid, ptr.raw_void());
+            if SUCCEEDED(hr) {
+                Ok(ptr)
+            } else {
+                return Err(From::from(hr));
+            }
+        }
     }
     
     pub unsafe fn from_existing(ptr: *mut T) -> Self {
@@ -56,18 +98,18 @@ impl<T: ComRefcounted> ComPtr<T> {
     }
 }
 
-impl<T: ComRefcounted> Clone for ComPtr<T> {
+impl<T: ComUnknown> Clone for ComPtr<T> {
     fn clone(&self) -> Self {
         unsafe {
             if self.ptr != ptr::null_mut() {
-                ComRefcounted::add_ref(self.ptr);
+                ComUnknown::add_ref(self.ptr);
             }
             ComPtr { ptr: self.ptr }
         }
     }
 }
 
-impl<T: ComRefcounted> Deref for ComPtr<T> {
+impl<T: ComUnknown> Deref for ComPtr<T> {
     type Target = T;
     fn deref(&self) -> &T {
         assert!(self.ptr != ptr::null_mut());
@@ -75,35 +117,15 @@ impl<T: ComRefcounted> Deref for ComPtr<T> {
     }
 }
 
-impl<T: ComRefcounted> DerefMut for ComPtr<T> {
+impl<T: ComUnknown> DerefMut for ComPtr<T> {
     fn deref_mut(&mut self) -> &mut T {
         assert!(self.ptr != ptr::null_mut());
         unsafe { &mut *self.ptr }
     }
 }
 
-impl<T: ComRefcounted> Drop for ComPtr<T> {
+impl<T: ComUnknown> Drop for ComPtr<T> {
     fn drop(&mut self) {
         self.release();
     }
 }
-
-macro_rules! impl_com_refcount {
-    ($ty:ident) => {
-        impl ComRefcounted for $ty {
-            unsafe fn add_ref(ptr: *mut Self) {
-                (*ptr).AddRef();
-            }
-            
-            unsafe fn release(ptr: *mut Self) {
-                (*ptr).Release();
-            }
-        }
-    }
-}
-
-impl_com_refcount! { IUnknown }
-impl_com_refcount! { ID2D1Factory }
-impl_com_refcount! { ID2D1RenderTarget }
-impl_com_refcount! { ID2D1Brush }
-impl_com_refcount! { ID2D1SolidColorBrush }

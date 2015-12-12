@@ -4,4 +4,6 @@ version = "0.1.0"
 authors = ["Connor Hilarides <connorcpu@live.com>"]
 
 [dependencies]
-winapi = "*"
+winapi = "0.2"
+kernel32-sys = "0.2"
+uuid = "0.1"
