@@ -129,3 +129,14 @@ fn path_geometry() {
     assert!((area - real_area).abs() <= EPSILON);
 }
 
+#[test]
+fn to_generic_and_back() {
+    let factory = Factory::create().unwrap();
+    
+    let rect = RectF::new(0.0, 0.0, 1.0, 1.0);
+    let rectangle = factory.create_rectangle_geometry(&rect).unwrap();
+    let generic = rectangle.to_generic();
+    let rectangle = generic.as_rectangle().unwrap();
+    assert_eq!(rectangle.get_rect(), rect);
+}
+

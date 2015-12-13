@@ -175,6 +175,16 @@ impl RectF {
     }
 }
 
+impl PartialEq for RectF {
+    #[inline]
+    fn eq(&self, rhs: &RectF) -> bool {
+        self.0.left == rhs.0.left &&
+        self.0.top == rhs.0.top &&
+        self.0.right == rhs.0.right &&
+        self.0.bottom == rhs.0.bottom
+    }
+}
+
 impl Matrix3x2F {
     #[inline]
     pub fn new(data: [[f32; 2]; 3]) -> Matrix3x2F {

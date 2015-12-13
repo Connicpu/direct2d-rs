@@ -308,6 +308,41 @@ impl GenericGeometry {
             Err(_) => None,
         }
     }
+    
+    pub fn as_rounded_rectangle(&self) -> Option<RoundedRectangle> {
+        match self.geom.query_interface::<ID2D1RoundedRectangleGeometry>() {
+            Ok(ptr) => Some(RoundedRectangle { geom: ptr }),
+            Err(_) => None,
+        }
+    }
+    
+    pub fn as_ellipse(&self) -> Option<Ellipse> {
+        match self.geom.query_interface::<ID2D1EllipseGeometry>() {
+            Ok(ptr) => Some(Ellipse { geom: ptr }),
+            Err(_) => None,
+        }
+    }
+    
+    pub fn as_group(&self) -> Option<Group> {
+        match self.geom.query_interface::<ID2D1GeometryGroup>() {
+            Ok(ptr) => Some(Group { geom: ptr }),
+            Err(_) => None,
+        }
+    }
+    
+    pub fn as_transformed(&self) -> Option<Transformed> {
+        match self.geom.query_interface::<ID2D1TransformedGeometry>() {
+            Ok(ptr) => Some(Transformed { geom: ptr }),
+            Err(_) => None,
+        }
+    }
+    
+    pub fn as_path(&self) -> Option<Path> {
+        match self.geom.query_interface::<ID2D1PathGeometry>() {
+            Ok(ptr) => Some(Path { geom: ptr }),
+            Err(_) => None,
+        }
+    }
 }
 
 impl Geometry for GenericGeometry {
