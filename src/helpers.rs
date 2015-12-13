@@ -2,6 +2,8 @@ use std::{ptr, slice, mem};
 use winapi::*;
 use kernel32;
 
+pub const EPSILON: f32 = 1e-7;
+
 pub trait GetRaw {
     type Raw;
     unsafe fn get_raw(&self) -> *mut Self::Raw;

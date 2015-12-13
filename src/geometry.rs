@@ -546,6 +546,11 @@ pub struct GeometryBuilder<'a> {
 }
 
 impl<'a> GeometryBuilder<'a> {
+    pub fn fill_mode(mut self, fill_mode: FillMode) -> Self {
+        unsafe { self.sink.SetFillMode(D2D1_FILL_MODE(fill_mode as u32)) };
+        self
+    }
+    
     pub fn begin_figure(
         mut self, start: math::Point2F, begin: FigureBegin, end: FigureEnd
     ) -> FigureBuilder<'a> {
@@ -567,7 +572,8 @@ impl<'a> Drop for GeometryBuilder<'a> {
     fn drop(&mut self) {
         unsafe {
             if !self.sink.is_null() {
-                self.sink.Close();
+                let result = self.sink.Close();
+                assert!(SUCCEEDED(result));
             }
         }
     }
@@ -579,9 +585,14 @@ pub struct FigureBuilder<'a> {
 }
 
 impl<'a> FigureBuilder<'a> {
-    pub fn end(self) -> GeometryBuilder<'a> {
+    pub fn end(mut self) -> GeometryBuilder<'a> {
+        unsafe { self.builder.sink.EndFigure(self.end) };
+                
+        let mut ptr = ComPtr::new();
+        mem::swap(&mut ptr, &mut self.builder.sink);
+        
         GeometryBuilder {
-            sink: self.builder.sink.clone(),
+            sink: ptr,
             phantom: PhantomData,
         }
     }
@@ -590,12 +601,19 @@ impl<'a> FigureBuilder<'a> {
         unsafe { self.builder.sink.AddLine(point.0) };
         self
     }
+    
+    pub fn add_bezier(mut self, bezier: &math::BezierSegment) -> Self {
+        unsafe { self.builder.sink.AddBezier(&bezier.0) };
+        self
+    }
 }
 
 impl<'a> Drop for FigureBuilder<'a> {
     fn drop(&mut self) {
         unsafe {
-            self.builder.sink.EndFigure(self.end);
+            if !self.builder.sink.is_null() {
+                self.builder.sink.EndFigure(self.end);
+            }
         }
     }
 }

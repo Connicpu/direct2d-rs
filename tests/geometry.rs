@@ -88,11 +88,13 @@ fn path_geometry() {
     
     let mut path = factory.create_path_geometry().unwrap();
     path.open().unwrap()
+        .fill_mode(FillMode::Winding)
         .begin_figure(Point2F::new(0.0, 0.0), FigureBegin::Filled, FigureEnd::Closed)
             .add_line(Point2F::new(1.0, 0.0))
             .add_line(Point2F::new(1.0, 1.0))
             .add_line(Point2F::new(0.5, 1.5))
             .add_line(Point2F::new(0.0, 1.0))
+            .add_line(Point2F::new(0.0, 0.0))
         .end()
     .close();
     

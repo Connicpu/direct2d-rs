@@ -1,3 +1,5 @@
+#![feature(slice_patterns)]
+
 extern crate winapi;
 extern crate kernel32;
 extern crate uuid;
