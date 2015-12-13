@@ -511,12 +511,36 @@ impl Path {
     pub fn open<'a>(&'a mut self) -> Result<GeometryBuilder<'a>, D2D1Error> {
         let mut ptr: ComPtr<ID2D1GeometrySink> = ComPtr::new();
         unsafe {
-            let result = (*self.geom.raw_value()).Open(ptr.raw_addr());
+            let result = self.geom.Open(ptr.raw_addr());
             if SUCCEEDED(result) {
                 Ok(GeometryBuilder {
                     sink: ptr,
                     phantom: PhantomData,
                 })
+            } else {
+                Err(From::from(result))
+            }
+        }
+    }
+    
+    pub fn get_segment_count(&self) -> Result<u32, D2D1Error> {
+        unsafe {
+            let mut count = 0;
+            let result = (*self.geom.raw_value()).GetSegmentCount(&mut count);
+            if SUCCEEDED(result) {
+                Ok(count)
+            } else {
+                Err(From::from(result))
+            }
+        }
+    }
+    
+    pub fn get_figure_count(&self) -> Result<u32, D2D1Error> {
+        unsafe {
+            let mut count = 0;
+            let result = (*self.geom.raw_value()).GetFigureCount(&mut count);
+            if SUCCEEDED(result) {
+                Ok(count)
             } else {
                 Err(From::from(result))
             }
@@ -548,6 +572,11 @@ pub struct GeometryBuilder<'a> {
 impl<'a> GeometryBuilder<'a> {
     pub fn fill_mode(mut self, fill_mode: FillMode) -> Self {
         unsafe { self.sink.SetFillMode(D2D1_FILL_MODE(fill_mode as u32)) };
+        self
+    }
+    
+    pub fn set_segment_flags(mut self, flags: PathSegment) -> Self {
+        unsafe { self.sink.SetSegmentFlags(D2D1_PATH_SEGMENT(flags as u32)) };
         self
     }
     
@@ -602,8 +631,33 @@ impl<'a> FigureBuilder<'a> {
         self
     }
     
+    pub fn add_lines(mut self, points: &[math::Point2F]) -> Self {
+        unsafe { self.builder.sink.AddLines(points.as_ptr() as *const _, points.len() as u32) };
+        self
+    }
+    
     pub fn add_bezier(mut self, bezier: &math::BezierSegment) -> Self {
         unsafe { self.builder.sink.AddBezier(&bezier.0) };
+        self
+    }
+    
+    pub fn add_beziers(mut self, beziers: &[math::BezierSegment]) -> Self {
+        unsafe { self.builder.sink.AddBeziers(beziers.as_ptr() as *const _, beziers.len() as u32) };
+        self
+    }
+    
+    pub fn add_quadratic_bezier(mut self, bezier: &math::QuadBezierSegment) -> Self {
+        unsafe { self.builder.sink.AddQuadraticBezier(&bezier.0) };
+        self
+    }
+    
+    pub fn add_quadratic_beziers(mut self, beziers: &[math::QuadBezierSegment]) -> Self {
+        unsafe { self.builder.sink.AddQuadraticBeziers(beziers.as_ptr() as *const _, beziers.len() as u32) };
+        self
+    }
+    
+    pub fn add_arc(mut self, arc: &math::ArcSegment) -> Self {
+        unsafe { self.builder.sink.AddArc(&arc.0) };
         self
     }
 }
@@ -650,5 +704,11 @@ pub enum FigureBegin {
 pub enum FigureEnd {
     Open = 0,
     Closed = 1,
+}
+
+pub enum PathSegment {
+    None = 0,
+    ForceUnstroked = 1,
+    ForceRoundLineJoin = 2,
 }
 

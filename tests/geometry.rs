@@ -86,15 +86,39 @@ fn transformed_area() {
 fn path_geometry() {
     let factory = Factory::create().unwrap();
     
+    /* It looks something like this:
+        - -
+      - - - -
+    - - - - - -
+    - -     - -
+    - -     - -
+    - - - - - -
+      - - - -
+        - -
+    */
+    
     let mut path = factory.create_path_geometry().unwrap();
     path.open().unwrap()
         .fill_mode(FillMode::Winding)
+        // Square with a triangle base
         .begin_figure(Point2F::new(0.0, 0.0), FigureBegin::Filled, FigureEnd::Closed)
             .add_line(Point2F::new(1.0, 0.0))
             .add_line(Point2F::new(1.0, 1.0))
             .add_line(Point2F::new(0.5, 1.5))
             .add_line(Point2F::new(0.0, 1.0))
             .add_line(Point2F::new(0.0, 0.0))
+        .end()
+        // Add a triangle hat
+        .begin_figure(Point2F::new(0.0, 0.0), FigureBegin::Filled, FigureEnd::Closed)
+            .add_line(Point2F::new(0.5, -0.5))
+            .add_line(Point2F::new(1.0, 0.0))
+        .end()
+        // Cut a hole in the middle
+        .fill_mode(FillMode::Alternate)
+        .begin_figure(Point2F::new(0.25, 0.25), FigureBegin::Filled, FigureEnd::Closed)
+            .add_line(Point2F::new(0.75, 0.25))
+            .add_line(Point2F::new(0.75, 0.75))
+            .add_line(Point2F::new(0.25, 0.75))
         .end()
     .close();
     
