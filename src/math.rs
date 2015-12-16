@@ -5,22 +5,34 @@ use std::f32::EPSILON;
 
 #[derive(Copy, Clone, Debug)] #[repr(C)]
 pub struct Point2F(pub D2D1_POINT_2F);
+
 #[derive(Copy, Clone, Debug)] #[repr(C)]
 pub struct Vector2F(pub D2D_VECTOR_2F);
+
 #[derive(Copy, Clone, Debug)] #[repr(C)]
 pub struct SizeF(pub D2D1_SIZE_F);
+
 #[derive(Copy, Clone, Debug)] #[repr(C)]
 pub struct RectF(pub D2D1_RECT_F);
+
 #[derive(Copy, Clone, Debug)] #[repr(C)]
 pub struct RoundedRect(pub D2D1_ROUNDED_RECT);
+
 #[derive(Copy, Clone, Debug)] #[repr(C)]
 pub struct Ellipse(pub D2D1_ELLIPSE);
+
+#[derive(Copy, Clone, Debug)] #[repr(C)]
+pub struct ColorF(pub D2D1_COLOR_F);
+
 #[derive(Copy, Clone, Debug)] #[repr(C)]
 pub struct Matrix3x2F(pub D2D1_MATRIX_3X2_F);
+
 #[derive(Copy, Clone, Debug)] #[repr(C)]
 pub struct BezierSegment(pub D2D1_BEZIER_SEGMENT);
+
 #[derive(Copy, Clone, Debug)] #[repr(C)]
 pub struct QuadBezierSegment(pub D2D1_QUADRATIC_BEZIER_SEGMENT);
+
 #[derive(Copy, Clone, Debug)] #[repr(C)]
 pub struct ArcSegment(pub D2D1_ARC_SEGMENT);
 
@@ -182,6 +194,21 @@ impl PartialEq for RectF {
         self.0.top == rhs.0.top &&
         self.0.right == rhs.0.right &&
         self.0.bottom == rhs.0.bottom
+    }
+}
+
+impl ColorF {
+    pub fn uint_rgb(rgb: u32, a: f32) -> ColorF {
+        let r = ((rgb >> 16) & 0xFF) as f32 / 255.0;
+        let g = ((rgb >> 8) & 0xFF) as f32 / 255.0;
+        let b = (rgb & 0xFF) as f32 / 255.0;
+        
+        ColorF(D2D1_COLOR_F {
+            r: r,
+            g: g,
+            b: b,
+            a: a,
+        })
     }
 }
 

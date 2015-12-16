@@ -4,6 +4,7 @@ use math::*;
 use brush::Brush;
 use error::D2D1Error;
 use stroke_style::StrokeStyle;
+use factory::Factory;
 use comptr::ComPtr;
 use helpers::{GetRaw, FromRaw};
 
@@ -62,6 +63,36 @@ impl RenderTarget {
         }
     }
     
+    pub fn get_factory(&mut self) -> Factory {
+        unsafe {
+            let mut factory = ComPtr::<ID2D1Factory>::new();
+            self.rt().GetFactory(factory.raw_addr());
+            
+            Factory::from_ptr(factory)
+        }
+    }
+    
+    pub fn begin_draw(&mut self) {
+        unsafe {
+            self.rt().BeginDraw();
+        }
+    }
+    
+    pub fn end_draw(&mut self) -> Result<(), (D2D1Error, Option<RenderTag>)> {
+        let mut tag1 = 0;
+        let mut tag2 = 0;
+        unsafe {
+            let result = self.rt().EndDraw(&mut tag1, &mut tag2);
+            
+            if SUCCEEDED(result) {
+                Ok(())
+            } else {
+                let tag = RenderTarget::make_tag(tag1, tag2);
+                Err((From::from(result), tag))
+            }
+        }
+    }
+    
     pub fn set_tag(&mut self, tag: RenderTag) {
         unsafe {
             let RenderTagRaw(tag1, tag2) = mem::transmute(tag);
@@ -93,8 +124,15 @@ impl RenderTarget {
         }
     }
     
+    pub fn clear(&mut self, color: &ColorF) {
+        println!("Clear to: {:?}", color);
+        unsafe {
+            self.rt().Clear(&color.0);
+        }
+    }
+    
     pub fn draw_line<B: Brush>(
-        &mut self, p0: Point2F, p1: Point2F, brush: &B, stroke_width: f32,
+        &mut self, p0: &Point2F, p1: &Point2F, brush: &B, stroke_width: f32,
         stroke_style: Option<&StrokeStyle>
     ) {
         unsafe {
@@ -110,6 +148,87 @@ impl RenderTarget {
                 stroke_width,
                 stroke_style,
             )
+        }
+    }
+    
+    pub fn draw_rectangle<B: Brush>(
+        &mut self, rect: &RectF, brush: &B, stroke_width: f32, stroke_style: Option<&StrokeStyle>
+    ) {
+        unsafe {
+            let stroke_style = match stroke_style {
+                Some(s) => s.get_ptr(),
+                None => ptr::null_mut(),
+            };
+            
+            self.rt().DrawRectangle(
+                &rect.0,
+                brush.get_ptr(),
+                stroke_width,
+                stroke_style,
+            );
+        }
+    }
+    
+    pub fn fill_rectangle<B: Brush>(&mut self, rect: &RectF, brush: &B) {
+        unsafe {
+            self.rt().FillRectangle(
+                &rect.0,
+                brush.get_ptr(),
+            );
+        }
+    }
+    
+    pub fn draw_rounded_rectangle<B: Brush>(
+        &mut self, rect: &RoundedRect, brush: &B, stroke_width: f32, stroke_style: Option<&StrokeStyle>
+    ) {
+        unsafe {
+            let stroke_style = match stroke_style {
+                Some(s) => s.get_ptr(),
+                None => ptr::null_mut(),
+            };
+            
+            self.rt().DrawRoundedRectangle(
+                &rect.0,
+                brush.get_ptr(),
+                stroke_width,
+                stroke_style,
+            );
+        }
+    }
+    
+    pub fn fill_rounded_rectangle<B: Brush>(&mut self, rect: &RoundedRect, brush: &B) {
+        unsafe {
+            self.rt().FillRoundedRectangle(
+                &rect.0,
+                brush.get_ptr(),
+            );
+        }
+    }
+    
+    pub fn draw_ellipse<B: Brush>(
+        &mut self, ellipse: &Ellipse, brush: &B, stroke_width: f32, stroke_style: Option<&StrokeStyle>
+    ) {
+        unsafe {
+            let stroke_style = match stroke_style {
+                Some(s) => s.get_ptr(),
+                None => ptr::null_mut(),
+            };
+            
+            self.rt().DrawEllipse(
+                &ellipse.0,
+                brush.get_ptr(),
+                stroke_width,
+                stroke_style,
+            );
+        }
+    }
+    
+    pub fn fill_ellipse<B: Brush>(&mut self, ellipse: &Ellipse, brush: &B) {
+        unsafe {
+            self.rt().FillEllipse(
+                &ellipse.0,
+                brush.get_ptr(),
+            );
         }
     }
 }
