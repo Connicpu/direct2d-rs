@@ -1,10 +1,13 @@
+use std::ptr;
 use std::sync::Arc;
 use winapi::*;
 use comptr::ComPtr;
 use load_dll;
 use error::D2D1Error;
 use helpers::{GetRaw, FromRaw};
+use render_target::{RenderTarget, RenderTargetBacking};
 use geometry;
+use stroke_style;
 use math;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -132,6 +135,44 @@ impl Factory {
             } else {
                 Err(From::from(result))
             }
+        }
+    }
+    
+    pub fn create_stroke_style(
+        &self, props: &stroke_style::StrokeStyleProperties
+    ) -> Result<stroke_style::StrokeStyle, D2D1Error> {
+        unsafe {
+            let mut ptr: ComPtr<ID2D1StrokeStyle> = ComPtr::new();
+            let pdata = props.get_d2d1_data();
+            let (dashes, dashes_count) = match props.dashes {
+                Some(dashes) => (dashes.as_ptr(), dashes.len() as u32),
+                None => (ptr::null(), 0),
+            };
+            
+            let result = (*self.ptr.raw_value()).CreateStrokeStyle(
+                &pdata,
+                dashes,
+                dashes_count,
+                ptr.raw_addr(),
+            );
+            
+            if SUCCEEDED(result) {
+                Ok(FromRaw::from_raw(ptr.raw_value()))
+            } else {
+                Err(From::from(result))
+            }
+        }
+    }
+    
+    pub fn create_render_target<T: RenderTargetBacking>(&self, backing: T) -> Result<RenderTarget, D2D1Error> {
+        unsafe {
+            let factory = &mut *self.ptr.raw_value();
+            let rt_ptr = try!(backing.create_target(factory));
+            assert!(!rt_ptr.is_null());
+            
+            (*rt_ptr).SetTags(0, 0);
+            
+            Ok(FromRaw::from_raw(rt_ptr))
         }
     }
 }

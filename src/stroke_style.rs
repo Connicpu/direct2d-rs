@@ -1,9 +1,57 @@
 use winapi::*;
 use comptr::ComPtr;
 use error::D2D1Error;
+use helpers::{GetRaw, FromRaw};
 
+#[derive(Clone, Debug)]
 pub struct StrokeStyle {
     stroke: ComPtr<ID2D1StrokeStyle>,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct StrokeStyleProperties<'a> {
+    pub start_cap: CapStyle,
+    pub end_cap: CapStyle,
+    pub dash_cap: CapStyle,
+    pub line_join: LineJoin,
+    pub miter_limit: f32,
+    pub dash_style: DashStyle,
+    pub dash_offset: f32,
+    pub dashes: Option<&'a [f32]>,
+}
+
+impl<'a> StrokeStyleProperties<'a> {
+    pub fn new() -> StrokeStyleProperties<'static> {
+        // default values taken from D2D1::StrokeStyleProperties in d2d1helper.h
+        StrokeStyleProperties {
+            start_cap: CapStyle::Flat,
+            end_cap: CapStyle::Flat,
+            dash_cap: CapStyle::Flat,
+            line_join: LineJoin::Miter,
+            miter_limit: 10.0,
+            dash_style: DashStyle::Solid,
+            dash_offset: 0.0,
+            dashes: None,
+        }
+    }
+    
+    pub unsafe fn get_d2d1_data(&self) -> D2D1_STROKE_STYLE_PROPERTIES {
+        D2D1_STROKE_STYLE_PROPERTIES {
+            startCap: D2D1_CAP_STYLE(self.start_cap as u32),
+            endCap: D2D1_CAP_STYLE(self.end_cap as u32),
+            dashCap: D2D1_CAP_STYLE(self.dash_cap as u32),
+            lineJoin: D2D1_LINE_JOIN(self.line_join as u32),
+            miterLimit: self.miter_limit,
+            dashStyle: D2D1_DASH_STYLE(self.dash_style as u32),
+            dashOffset: self.dash_offset,
+        }
+    }
+}
+
+impl<'a> Default for StrokeStyleProperties<'a> {
+    fn default() -> StrokeStyleProperties<'static> {
+        StrokeStyleProperties::new()
+    }
 }
 
 impl StrokeStyle {
@@ -71,6 +119,23 @@ impl StrokeStyle {
     }
 }
 
+impl GetRaw for StrokeStyle {
+    type Raw = ID2D1StrokeStyle;
+    unsafe fn get_raw(&self) -> *mut ID2D1StrokeStyle {
+        self.stroke.raw_value()
+    }
+}
+
+impl FromRaw for StrokeStyle {
+    type Raw = ID2D1StrokeStyle;
+    unsafe fn from_raw(raw: *mut ID2D1StrokeStyle) -> Self {
+        StrokeStyle {
+            stroke: ComPtr::from_existing(raw)
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
 pub enum CapStyle {
     Flat = 0,
     Square = 1,
@@ -91,6 +156,7 @@ impl CapStyle {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
 pub enum LineJoin {
     Miter = 0,
     Bevel = 1,
@@ -111,6 +177,7 @@ impl LineJoin {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
 pub enum DashStyle {
     Solid = 0,
     Dash = 1,
