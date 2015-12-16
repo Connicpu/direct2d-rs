@@ -43,7 +43,7 @@ macro_rules! make_render_tag {
 #[macro_export]
 macro_rules! set_render_tag {
     ($rt:ident) => {
-        $rt.set_tag(make_render_tag!())
+        $rt.set_tag(make_render_tag!());
     }
 }
 
