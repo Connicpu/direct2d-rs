@@ -80,8 +80,8 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND, msg: UINT, wp: WPARAM, lp: LPARAM
         },
         WM_PAINT => {
             let window: &mut Window = mem::transmute(user32::GetWindowLongPtrW(hwnd, GWLP_USERDATA));
-            let rt = window.target.as_mut().unwrap();
             
+            let rt = window.target.as_mut().unwrap();
             rt.begin_draw();
             rt.clear(&ColorF::uint_rgb(0xFF0000, 1.0));
             rt.end_draw().unwrap();
