@@ -29,7 +29,7 @@ pub struct RenderTag {
     pub file_line: &'static str,
 }
 
-struct RenderTagRaw(D2D1_TAG, D2D1_TAG);
+struct RenderTagRaw(usize, usize);
 
 #[macro_export]
 macro_rules! make_render_tag {
@@ -56,7 +56,7 @@ impl RenderTarget {
         if tag1 == 0 {
             None
         } else {
-            let raw = RenderTagRaw(tag1, tag2);
+            let raw = RenderTagRaw(tag1 as usize, tag2 as usize);
             let tag = mem::transmute(raw);
             Some(tag)
         }
@@ -65,7 +65,7 @@ impl RenderTarget {
     pub fn set_tag(&mut self, tag: RenderTag) {
         unsafe {
             let RenderTagRaw(tag1, tag2) = mem::transmute(tag);
-            self.rt().SetTags(tag1, tag2)
+            self.rt().SetTags(tag1 as u64, tag2 as u64)
         };
     }
     
