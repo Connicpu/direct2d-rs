@@ -202,15 +202,11 @@ impl PartialEq for RectF {
 
 impl ColorF {
     #[inline]
-    pub fn uint_rgb(rgb: u32, a: f32) -> ColorF {
-        let r = ((rgb >> 16) & 0xFF) as f32 / 255.0;
-        let g = ((rgb >> 8) & 0xFF) as f32 / 255.0;
-        let b = (rgb & 0xFF) as f32 / 255.0;
-        
+    pub const fn uint_rgb(rgb: u32, a: f32) -> ColorF {
         ColorF(D2D1_COLOR_F {
-            r: r,
-            g: g,
-            b: b,
+            r: ((rgb >> 16) & 0xFF) as f32 / 255.0,
+            g: ((rgb >> 8) & 0xFF) as f32 / 255.0,
+            b: (rgb & 0xFF) as f32 / 255.0,
             a: a,
         })
     }

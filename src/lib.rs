@@ -1,4 +1,4 @@
-#![feature(slice_patterns)]
+#![feature(slice_patterns, const_fn)]
 
 extern crate winapi;
 extern crate kernel32;

@@ -1,3 +1,5 @@
+#![feature(const_fn)]
+
 extern crate winapi;
 extern crate user32;
 extern crate kernel32;
@@ -11,16 +13,23 @@ use direct2d::{Factory, RenderTarget};
 use direct2d::render_target::RenderTargetBacking;
 use direct2d::math::*;
 
+pub const BACKGROUND: ColorF = ColorF::uint_rgb(0x2A14CC, 1.0);
+pub const HIGHLIGHT: ColorF = ColorF::uint_rgb(0x483D99, 1.0);
+pub const ACCENT: ColorF = ColorF::uint_rgb(0x006AFF, 1.0);
+pub const FOREGROUND: ColorF = ColorF::uint_rgb(0xFFA940, 1.0);
+pub const FADED: ColorF = ColorF::uint_rgb(0xCC5E14, 1.0);
+
 fn paint_window(window: &mut Window) {
     let rt = window.target.as_mut().unwrap();
     
-    let brush_color = ColorF::uint_rgb(0x00FFFF, 1.0);
-    let brush = rt.create_solid_color_brush(&brush_color, &BrushProperties::default()).unwrap();
+    let accent_brush = rt.create_solid_color_brush(&ACCENT, &BrushProperties::default()).unwrap();
+    let foreground_brush = rt.create_solid_color_brush(&FOREGROUND, &BrushProperties::default()).unwrap();
         
     rt.begin_draw();
-    rt.clear(&ColorF::uint_rgb(0xFF0000, 1.0));
+    rt.clear(&BACKGROUND);
     
-    rt.fill_rectangle(&RectF::new(100.0, 50.0, 700.0, 430.0), &brush);
+    rt.fill_rectangle(&RectF::new(50.0, 50.0, 750.0, 430.0), &accent_brush);
+    rt.fill_rectangle(&RectF::new(150.0, 150.0, 650.0, 330.0), &foreground_brush);
     
     rt.end_draw().unwrap();
 }
