@@ -9,7 +9,21 @@ use std::os::windows::ffi::OsStrExt;
 use winapi::*;
 use direct2d::{Factory, RenderTarget};
 use direct2d::render_target::RenderTargetBacking;
-use direct2d::math::ColorF;
+use direct2d::math::*;
+
+fn paint_window(window: &mut Window) {
+    let rt = window.target.as_mut().unwrap();
+    
+    let brush_color = ColorF::uint_rgb(0x00FFFF, 1.0);
+    let brush = rt.create_solid_color_brush(&brush_color, &BrushProperties::default()).unwrap();
+        
+    rt.begin_draw();
+    rt.clear(&ColorF::uint_rgb(0xFF0000, 1.0));
+    
+    rt.fill_rectangle(&RectF::new(100.0, 50.0, 700.0, 430.0), &brush);
+    
+    rt.end_draw().unwrap();
+}
 
 struct Window {
     hwnd: HWND,
@@ -80,11 +94,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND, msg: UINT, wp: WPARAM, lp: LPARAM
         },
         WM_PAINT => {
             let window: &mut Window = mem::transmute(user32::GetWindowLongPtrW(hwnd, GWLP_USERDATA));
-            
-            let rt = window.target.as_mut().unwrap();
-            rt.begin_draw();
-            rt.clear(&ColorF::uint_rgb(0xFF0000, 1.0));
-            rt.end_draw().unwrap();
+            paint_window(window);
             
             user32::DefWindowProcW(hwnd, msg, wp, lp)
         },

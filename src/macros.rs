@@ -25,3 +25,26 @@ macro_rules! impl_com_refcount {
         }
     };
 }
+
+macro_rules! brush_type {
+    (pub struct $ty:ident($ptrty:ty);) => {
+        pub struct $ty {
+            ptr: $crate::comptr::ComPtr<$ptrty>,
+        }
+        
+        impl ::brush::Brush for $ty {
+            unsafe fn get_ptr(&self) -> *mut ID2D1Brush {
+                &mut **self.ptr.raw_value()
+            }
+        }
+        
+        impl ::helpers::FromRaw for $ty {
+            type Raw = $ptrty;
+            unsafe fn from_raw(raw: *mut $ptrty) -> Self {
+                $ty {
+                    ptr: $crate::comptr::ComPtr::from_existing(raw),
+                }
+            }
+        }
+    }
+}

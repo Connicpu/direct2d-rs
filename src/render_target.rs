@@ -1,7 +1,7 @@
 use std::{ptr, mem};
 use winapi::*;
 use math::*;
-use brush::Brush;
+use brush::{self, Brush};
 use error::D2D1Error;
 use stroke_style::StrokeStyle;
 use factory::Factory;
@@ -69,6 +69,21 @@ impl RenderTarget {
             self.rt().GetFactory(factory.raw_addr());
             
             Factory::from_ptr(factory)
+        }
+    }
+    
+    pub fn create_solid_color_brush(
+        &self, color: &ColorF, props: &BrushProperties
+    ) -> Result<brush::SolidColor, D2D1Error> {
+        unsafe {
+            let mut ptr = ComPtr::<ID2D1SolidColorBrush>::new();
+            let result = self.rt().CreateSolidColorBrush(&color.0, &props.0, ptr.raw_addr());
+            
+            if SUCCEEDED(result) {
+                Ok(FromRaw::from_raw(ptr.raw_value()))
+            } else {
+                Err(From::from(result))
+            }
         }
     }
     

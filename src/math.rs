@@ -36,6 +36,9 @@ pub struct QuadBezierSegment(pub D2D1_QUADRATIC_BEZIER_SEGMENT);
 #[derive(Copy, Clone, Debug)] #[repr(C)]
 pub struct ArcSegment(pub D2D1_ARC_SEGMENT);
 
+#[derive(Copy, Clone, Debug)] #[repr(C)]
+pub struct BrushProperties(pub D2D1_BRUSH_PROPERTIES);
+
 pub enum SweepDirection {
     CounterClockwise = 0,
     Clockwise = 1,
@@ -198,6 +201,7 @@ impl PartialEq for RectF {
 }
 
 impl ColorF {
+    #[inline]
     pub fn uint_rgb(rgb: u32, a: f32) -> ColorF {
         let r = ((rgb >> 16) & 0xFF) as f32 / 255.0;
         let g = ((rgb >> 8) & 0xFF) as f32 / 255.0;
@@ -209,6 +213,16 @@ impl ColorF {
             b: b,
             a: a,
         })
+    }
+}
+
+impl PartialEq for ColorF {
+    #[inline]
+    fn eq(&self, rhs: &ColorF) -> bool {
+        self.0.r == rhs.0.r &&
+        self.0.g == rhs.0.g &&
+        self.0.b == rhs.0.b &&
+        self.0.a == rhs.0.a
     }
 }
 
@@ -367,6 +381,7 @@ impl PartialEq for Matrix3x2F {
 }
 
 impl BezierSegment {
+    #[inline]
     pub fn new(p1: Point2F, p2: Point2F, p3: Point2F) -> BezierSegment {
         BezierSegment(D2D1_BEZIER_SEGMENT {
             point1: p1.0,
@@ -377,6 +392,7 @@ impl BezierSegment {
 }
 
 impl QuadBezierSegment {
+    #[inline]
     pub fn new(p1: Point2F, p2: Point2F) -> QuadBezierSegment {
         QuadBezierSegment(D2D1_QUADRATIC_BEZIER_SEGMENT {
             point1: p1.0,
@@ -386,6 +402,7 @@ impl QuadBezierSegment {
 }
 
 impl ArcSegment {
+    #[inline]
     pub fn new(
         point: Point2F, size: SizeF, angle: f32, sweep_dir: SweepDirection, arc_size: ArcSize
     ) -> ArcSegment {
@@ -399,24 +416,57 @@ impl ArcSegment {
     }
     
     /// Create a counter-clockwise small arc
+    #[inline]
     pub fn new_cc_sm(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
         ArcSegment::new(point, size, angle, SweepDirection::CounterClockwise, ArcSize::Small)
     }
     
     /// Create a counter-clockwise large arc
+    #[inline]
     pub fn new_cc_lg(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
         ArcSegment::new(point, size, angle, SweepDirection::CounterClockwise, ArcSize::Large)
     }
     
     
     /// Create a clockwise small arc
+    #[inline]
     pub fn new_cw_sm(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
         ArcSegment::new(point, size, angle, SweepDirection::Clockwise, ArcSize::Small)
     }
     
     
     /// Create a counter-clockwise small arc
+    #[inline]
     pub fn new_cw_lg(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
         ArcSegment::new(point, size, angle, SweepDirection::Clockwise, ArcSize::Large)
+    }
+}
+
+impl BrushProperties {
+    #[inline]
+    pub fn new(opacity: f32, transform: &Matrix3x2F) -> BrushProperties {
+        BrushProperties(D2D1_BRUSH_PROPERTIES {
+            opacity: opacity,
+            transform: transform.0,
+        })
+    }
+    
+    #[inline]
+    pub fn opacity(mut self, opacity: f32) -> Self {
+        self.0.opacity = opacity;
+        self
+    }
+    
+    #[inline]
+    pub fn transform(mut self, transform: &Matrix3x2F) -> Self {
+        self.0.transform = transform.0;
+        self
+    }
+}
+
+impl Default for BrushProperties {
+    #[inline]
+    fn default() -> BrushProperties {
+        BrushProperties::new(1.0, &Matrix3x2F::identity())
     }
 }
