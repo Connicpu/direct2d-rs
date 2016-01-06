@@ -53,6 +53,10 @@ impl RenderTarget {
         &mut *self.ptr.raw_value()
     }
     
+    pub unsafe fn hwnd_rt(&self) -> Option<ComPtr<ID2D1HwndRenderTarget>> {
+        self.ptr.query_interface().ok()
+    }
+    
     unsafe fn make_tag(tag1: D2D1_TAG, tag2: D2D1_TAG) -> Option<RenderTag> {
         if tag1 == 0 {
             None
@@ -140,7 +144,6 @@ impl RenderTarget {
     }
     
     pub fn clear(&mut self, color: &ColorF) {
-        println!("Clear to: {:?}", color);
         unsafe {
             self.rt().Clear(&color.0);
         }

@@ -17,7 +17,7 @@ pub mod math;
 pub mod geometry;
 pub mod stroke_style;
 pub mod brush;
+pub mod comptr;
 
-mod comptr;
 mod load_dll;
 mod helpers;

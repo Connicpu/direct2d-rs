@@ -189,6 +189,6 @@ impl<T> ToWide for T where T: AsRef<OsStr> {
     fn to_wide_null(&self) -> Vec<u16> { 
         self.as_ref().encode_wide().chain(Some(0)).collect() 
     } 
-} 
+}
 
 
