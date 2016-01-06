@@ -168,6 +168,16 @@ impl Div<Vector2F> for f32 {
     }
 }
 
+impl SizeF {
+    #[inline]
+    pub fn new(width: f32, height: f32) -> SizeF {
+        SizeF(D2D1_SIZE_F {
+            width: width,
+            height: height,
+        })
+    }
+}
+
 impl RectF {
     #[inline]
     pub fn new(left: f32, top: f32, right: f32, bottom: f32) -> RectF {
@@ -197,6 +207,17 @@ impl PartialEq for RectF {
         self.0.top == rhs.0.top &&
         self.0.right == rhs.0.right &&
         self.0.bottom == rhs.0.bottom
+    }
+}
+
+impl Ellipse {
+    #[inline]
+    pub fn new(center: Point2F, radius_x: f32, radius_y: f32) -> Ellipse {
+        Ellipse(D2D1_ELLIPSE {
+            point: center.0,
+            radiusX: radius_x,
+            radiusY: radius_y,
+        })
     }
 }
 

@@ -2,6 +2,7 @@ use std::{ptr, mem};
 use winapi::*;
 use math::*;
 use brush::{self, Brush};
+use geometry::{Geometry};
 use error::D2D1Error;
 use stroke_style::StrokeStyle;
 use factory::Factory;
@@ -246,6 +247,28 @@ impl RenderTarget {
             self.rt().FillEllipse(
                 &ellipse.0,
                 brush.get_ptr(),
+            );
+        }
+    }
+    
+    pub fn fill_geometry<G: Geometry, B: Brush>(&mut self, geometry: &G, brush: &B) {
+        unsafe {
+            self.rt().FillGeometry(
+                geometry.get_ptr(),
+                brush.get_ptr(),
+                ptr::null_mut(),
+            );
+        }
+    }
+    
+    pub fn fill_geometry_with_opacity<G: Geometry, B: Brush, OB: Brush>(
+        &mut self, geometry: &G, brush: &B, opacity_brush: &OB
+    ) {
+        unsafe {
+            self.rt().FillGeometry(
+                geometry.get_ptr(),
+                brush.get_ptr(),
+                opacity_brush.get_ptr(),
             );
         }
     }
