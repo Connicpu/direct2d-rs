@@ -77,6 +77,14 @@ impl RenderTarget {
         }
     }
     
+    pub fn get_size(&self) -> SizeF {
+        unsafe {
+            let mut size = mem::uninitialized();
+            self.rt().GetSize(&mut size);
+            SizeF(size)
+        }
+    }
+    
     pub fn create_solid_color_brush(
         &self, color: &ColorF, props: &BrushProperties
     ) -> Result<brush::SolidColor, D2D1Error> {
