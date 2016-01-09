@@ -3,6 +3,7 @@
 extern crate winapi;
 extern crate kernel32;
 extern crate uuid;
+extern crate directwrite;
 
 pub use factory::Factory;
 pub use render_target::RenderTarget;
