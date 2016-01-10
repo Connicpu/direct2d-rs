@@ -1,14 +1,14 @@
 [package]
 name = "direct2d"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["Connor Hilarides <connorcpu@live.com>"]
 description = "A safe abstraction for drawing Direct2D"
 repository = "https://github.com/Connorcpu/direct2d-rs"
-license = "MIT"
+license = "MIT/Apache-2.0"
 
 [dependencies]
 winapi = "0.2"
 uuid = "0.1"
 kernel32-sys = "0.2"
 user32-sys = "0.1"
-directwrite = "0.0.3"
+directwrite = "0.0.4"
