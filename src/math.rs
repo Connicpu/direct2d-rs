@@ -3,41 +3,20 @@ use std::ops::{Add, Sub, Neg, Mul, Div};
 use winapi::*;
 use std::f32::EPSILON;
 
-#[derive(Copy, Clone, Debug)] #[repr(C)]
-pub struct Point2F(pub D2D1_POINT_2F);
-
-#[derive(Copy, Clone, Debug)] #[repr(C)]
-pub struct Vector2F(pub D2D_VECTOR_2F);
-
-#[derive(Copy, Clone, Debug)] #[repr(C)]
-pub struct SizeF(pub D2D1_SIZE_F);
-
-#[derive(Copy, Clone, Debug)] #[repr(C)]
-pub struct RectF(pub D2D1_RECT_F);
-
-#[derive(Copy, Clone, Debug)] #[repr(C)]
-pub struct RoundedRect(pub D2D1_ROUNDED_RECT);
-
-#[derive(Copy, Clone, Debug)] #[repr(C)]
-pub struct Ellipse(pub D2D1_ELLIPSE);
-
-#[derive(Copy, Clone, Debug)] #[repr(C)]
-pub struct ColorF(pub D2D1_COLOR_F);
-
-#[derive(Copy, Clone, Debug)] #[repr(C)]
-pub struct Matrix3x2F(pub D2D1_MATRIX_3X2_F);
-
-#[derive(Copy, Clone, Debug)] #[repr(C)]
-pub struct BezierSegment(pub D2D1_BEZIER_SEGMENT);
-
-#[derive(Copy, Clone, Debug)] #[repr(C)]
-pub struct QuadBezierSegment(pub D2D1_QUADRATIC_BEZIER_SEGMENT);
-
-#[derive(Copy, Clone, Debug)] #[repr(C)]
-pub struct ArcSegment(pub D2D1_ARC_SEGMENT);
-
-#[derive(Copy, Clone, Debug)] #[repr(C)]
-pub struct BrushProperties(pub D2D1_BRUSH_PROPERTIES);
+math_wrappers! {
+    pub struct Point2F(pub D2D1_POINT_2F);
+    pub struct Vector2F(pub D2D_VECTOR_2F);
+    pub struct SizeF(pub D2D1_SIZE_F);
+    pub struct RectF(pub D2D1_RECT_F);
+    pub struct RoundedRect(pub D2D1_ROUNDED_RECT);
+    pub struct Ellipse(pub D2D1_ELLIPSE);
+    pub struct ColorF(pub D2D1_COLOR_F);
+    pub struct Matrix3x2F(pub D2D1_MATRIX_3X2_F);
+    pub struct BezierSegment(pub D2D1_BEZIER_SEGMENT);
+    pub struct QuadBezierSegment(pub D2D1_QUADRATIC_BEZIER_SEGMENT);
+    pub struct ArcSegment(pub D2D1_ARC_SEGMENT);
+    pub struct BrushProperties(pub D2D1_BRUSH_PROPERTIES);
+}
 
 pub enum SweepDirection {
     CounterClockwise = 0,
@@ -178,6 +157,15 @@ impl SizeF {
     }
 }
 
+impl PartialEq for SizeF {
+    #[inline]
+    fn eq(&self, rhs: &SizeF) -> bool {
+        return
+            self.width == rhs.width &&
+            self.height == rhs.height;
+    }
+}
+
 impl RectF {
     #[inline]
     pub fn new(left: f32, top: f32, right: f32, bottom: f32) -> RectF {
@@ -197,6 +185,45 @@ impl RectF {
             f32::max(p1.0.x, p2.0.x),
             f32::max(p1.0.y, p2.0.y),
         )
+    }
+    
+    #[inline]
+    pub fn with_size(old_rect: RectF, size: SizeF) -> RectF {
+        RectF::new(
+            old_rect.left,
+            old_rect.top,
+            old_rect.left + size.width,
+            old_rect.top + size.height,
+        )
+    }
+    
+    #[inline]
+    pub fn adjusted_by(old_rect: RectF, size: SizeF) -> RectF {
+        RectF::new(
+            old_rect.left + size.width,
+            old_rect.top + size.height,
+            old_rect.right,
+            old_rect.bottom,
+        )
+    }
+    
+    #[inline]
+    pub fn contains(&self, point: Point2F) -> bool {
+        return
+            self.0.left < point.0.x &&
+            self.0.top < point.0.y &&
+            self.0.right > point.0.x &&
+            self.0.bottom > point.0.y;
+    }
+    
+    #[inline]
+    pub fn width(&self) -> f32 {
+        self.0.right - self.0.left
+    }
+    
+    #[inline]
+    pub fn height(&self) -> f32 {
+        self.0.bottom - self.0.top
     }
 }
 

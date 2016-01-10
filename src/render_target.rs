@@ -8,7 +8,7 @@ use stroke_style::StrokeStyle;
 use factory::Factory;
 use comptr::ComPtr;
 use helpers::{GetRaw, FromRaw, ToWide};
-use directwrite::text_format::TextFormat;
+use directwrite::{TextFormat, TextLayout};
 
 /// This trait is intended to be implemented by external APIs who would
 /// like to allow a Direct2D interface for drawing onto them. Since the
@@ -283,8 +283,8 @@ impl RenderTarget {
     }
     
     pub fn draw_text<B: Brush>(
-        &mut self, text: &str, format: &TextFormat, layout_rect: &RectF,
-        foreground_brush: &B, options: &[DrawTextOption],
+        &mut self, text: &str, format: &TextFormat, layout_rect: &RectF, foreground_brush: &B,
+        options: &[DrawTextOption],
     ) {
         let text = text.to_wide_null();
         let mut draw_options = D2D1_DRAW_TEXT_OPTIONS_NONE.0;
@@ -293,15 +293,34 @@ impl RenderTarget {
         }
         
         unsafe {
-            let format = format.get_ptr();
+            let format = format.get_raw();
             self.rt().DrawText(
                 text.as_ptr(),
                 text.len() as u32,
-                format.raw_value(),
+                format,
                 &layout_rect.0,
                 foreground_brush.get_ptr(),
                 D2D1_DRAW_TEXT_OPTIONS(draw_options),
                 DWRITE_MEASURING_MODE_NATURAL,
+            );
+        }
+    }
+    
+    pub fn draw_text_layout<B: Brush>(
+        &mut self, origin: &Point2F, layout: &TextLayout, brush: &B, options: &[DrawTextOption],
+    ) {
+        let mut draw_options = D2D1_DRAW_TEXT_OPTIONS_NONE.0;
+        for &option in options {
+            draw_options |= option as u32;
+        }
+        
+        unsafe {
+            let layout = layout.get_raw();
+            self.rt().DrawTextLayout(
+                origin.0,
+                layout,
+                brush.get_ptr(),
+                D2D1_DRAW_TEXT_OPTIONS(draw_options),
             );
         }
     }

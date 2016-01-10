@@ -29,7 +29,7 @@ impl Factory {
         }
     }
     
-    pub fn create() -> Result<Factory, D2D1Error> {
+    pub fn new() -> Result<Factory, D2D1Error> {
         let d2d1 = match load_dll::D2D1::load() {
             Ok(d2d1) => Arc::new(d2d1),
             Err(_) => return Err(D2D1Error::MissingLibrary),
