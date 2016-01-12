@@ -260,6 +260,24 @@ impl RenderTarget {
         }
     }
     
+    pub fn draw_geometry<G: Geometry, B: Brush>(
+        &mut self, geometry: &G, brush: &B, stroke_width: f32, stroke_style: Option<&StrokeStyle>
+    ) {
+        unsafe {
+            let stroke_style = match stroke_style {
+                Some(s) => s.get_ptr(),
+                None => ptr::null_mut(),
+            };
+            
+            self.rt().DrawGeometry(
+                geometry.get_ptr(),
+                brush.get_ptr(),
+                stroke_width,
+                stroke_style,
+            );
+        }
+    }
+    
     pub fn fill_geometry<G: Geometry, B: Brush>(&mut self, geometry: &G, brush: &B) {
         unsafe {
             self.rt().FillGeometry(
