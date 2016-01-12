@@ -86,12 +86,12 @@ impl RenderTarget {
         }
     }
     
-    pub fn create_solid_color_brush(
-        &self, color: &ColorF, props: &BrushProperties
+    pub fn create_solid_color_brush<C: Into<ColorF>>(
+        &self, color: C, props: &BrushProperties
     ) -> Result<brush::SolidColor, D2D1Error> {
         unsafe {
             let mut ptr = ComPtr::<ID2D1SolidColorBrush>::new();
-            let result = self.rt().CreateSolidColorBrush(&color.0, &props.0, ptr.raw_addr());
+            let result = self.rt().CreateSolidColorBrush(&color.into().0, &props.0, ptr.raw_addr());
             
             if SUCCEEDED(result) {
                 Ok(FromRaw::from_raw(ptr.raw_value()))

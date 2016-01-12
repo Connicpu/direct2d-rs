@@ -30,15 +30,23 @@ pub enum ArcSize {
 
 impl Point2F {
     #[inline]
-    pub fn new(x: f32, y: f32) -> Point2F {
+    pub const fn new(x: f32, y: f32) -> Point2F {
         Point2F(D2D1_POINT_2F {
             x: x,
             y: y,
         })
     }
     
-    pub fn origin() -> Point2F {
+    #[inline]
+    pub const fn origin() -> Point2F {
         Point2F::new(0.0, 0.0)
+    }
+}
+
+impl From<(f32, f32)> for Point2F {
+    #[inline]
+    fn from((x, y): (f32, f32)) -> Point2F {
+        Point2F::new(x, y)
     }
 }
 
@@ -81,6 +89,13 @@ impl Vector2F {
     #[inline]
     pub fn zero() -> Vector2F {
         Vector2F::new(0.0, 0.0)
+    }
+}
+
+impl From<(f32, f32)> for Vector2F {
+    #[inline]
+    fn from((x, y): (f32, f32)) -> Vector2F {
+        Vector2F::new(x, y)
     }
 }
 
@@ -157,6 +172,13 @@ impl SizeF {
     }
 }
 
+impl From<(f32, f32)> for SizeF {
+    #[inline]
+    fn from((x, y): (f32, f32)) -> SizeF {
+        SizeF::new(x, y)
+    }
+}
+
 impl PartialEq for SizeF {
     #[inline]
     fn eq(&self, rhs: &SizeF) -> bool {
@@ -208,6 +230,12 @@ impl RectF {
     }
     
     #[inline]
+    pub fn around(center: Point2F, size: SizeF) -> RectF {
+        let half_diag = (size.width / 2.0, size.height / 2.0).into();
+        RectF::bounds(center - half_diag, center + half_diag)
+    }
+    
+    #[inline]
     pub fn contains(&self, point: Point2F) -> bool {
         return
             self.0.left < point.0.x &&
@@ -224,6 +252,18 @@ impl RectF {
     #[inline]
     pub fn height(&self) -> f32 {
         self.0.bottom - self.0.top
+    }
+    
+    #[inline]
+    pub fn top_left(&self) -> Point2F {
+        (self.left, self.top).into()
+    }
+}
+
+impl From<(f32, f32, f32, f32)> for RectF {
+    #[inline]
+    fn from((left, top, right, bottom): (f32, f32, f32, f32)) -> RectF {
+        RectF::new(left, top, right, bottom)
     }
 }
 
@@ -260,6 +300,27 @@ impl ColorF {
     }
 }
 
+impl<'a> From<&'a ColorF> for ColorF {
+    #[inline]
+    fn from(color: &'a ColorF) -> ColorF {
+        *color
+    }
+}
+
+impl From<u32> for ColorF {
+    #[inline]
+    fn from(rgb: u32) -> ColorF {
+        ColorF::uint_rgb(rgb, 1.0)
+    }
+}
+
+impl From<(u32, f32)> for ColorF {
+    #[inline]
+    fn from((rgb, a): (u32, f32)) -> ColorF {
+        ColorF::uint_rgb(rgb, a)
+    }
+}
+
 impl PartialEq for ColorF {
     #[inline]
     fn eq(&self, rhs: &ColorF) -> bool {
@@ -289,7 +350,6 @@ impl Matrix3x2F {
     
     #[inline]
     pub fn translation(v: Vector2F) -> Matrix3x2F {
-        let v = v.0;
         Matrix3x2F::new([
             [1.0, 0.0],
             [0.0, 1.0],
@@ -298,13 +358,16 @@ impl Matrix3x2F {
     }
     
     #[inline]
+    pub fn translate_to(p: Point2F) -> Matrix3x2F {
+        Matrix3x2F::translation(Vector2F::new(p.x, p.y))
+    }
+    
+    #[inline]
     pub fn scale(scale: SizeF, center: Point2F) -> Matrix3x2F {
-        let scale = scale.0;
-        let center = center.0;
         let trans = Vector2F::new(
             center.x - scale.width * center.x,
             center.y - scale.height * center.y,
-        ).0;
+        );
         
         Matrix3x2F::new([
             [scale.width,          0.0],
@@ -317,8 +380,8 @@ impl Matrix3x2F {
     pub fn rotation(angle: f32, center: Point2F) -> Matrix3x2F {
         let cos = angle.cos();
         let sin = angle.sin();
-        let x = center.0.x;
-        let y = center.0.y;
+        let x = center.x;
+        let y = center.y;
         let tx = x - cos*x - sin*y;
         let ty = y - cos*y - sin*x;
         
@@ -333,8 +396,8 @@ impl Matrix3x2F {
     pub fn skew(angle_x: f32, angle_y: f32, center: Point2F) -> Matrix3x2F {
         let tanx = angle_x.tan();
         let tany = angle_y.tan();
-        let x = center.0.x;
-        let y = center.0.y;
+        let x = center.x;
+        let y = center.y;
         
         Matrix3x2F::new([
             [    1.0,    tanx],
@@ -345,7 +408,7 @@ impl Matrix3x2F {
     
     #[inline]
     pub fn determinant(&self) -> f32 {
-        let [[a, b], [c, d], _] = self.0.matrix;
+        let [[a, b], [c, d], _] = self.matrix;
         
         a * d - b * c
     }
@@ -362,7 +425,7 @@ impl Matrix3x2F {
         }
         
         let det = self.determinant();
-        let [[a, b], [c, d], [x, y]] = self.0.matrix;
+        let [[a, b], [c, d], [x, y]] = self.matrix;
         
         Some(Matrix3x2F::new([
             [        d /  det,         b / -det],

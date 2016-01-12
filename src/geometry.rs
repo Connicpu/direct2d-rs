@@ -615,11 +615,11 @@ impl<'a> GeometryBuilder<'a> {
         self
     }
     
-    pub fn begin_figure(
-        mut self, start: math::Point2F, begin: FigureBegin, end: FigureEnd
+    pub fn begin_figure<P: Into<math::Point2F>>(
+        mut self, start: P, begin: FigureBegin, end: FigureEnd
     ) -> FigureBuilder<'a> {
         unsafe {
-            self.sink.BeginFigure(start.0, D2D1_FIGURE_BEGIN(begin as u32));
+            self.sink.BeginFigure(start.into().0, D2D1_FIGURE_BEGIN(begin as u32));
         }
         FigureBuilder {
             builder: self,
@@ -661,8 +661,8 @@ impl<'a> FigureBuilder<'a> {
         }
     }
     
-    pub fn add_line(mut self, point: math::Point2F) -> Self {
-        unsafe { self.builder.sink.AddLine(point.0) };
+    pub fn add_line<P: Into<math::Point2F>>(mut self, point: P) -> Self {
+        unsafe { self.builder.sink.AddLine(point.into().0) };
         self
     }
     
