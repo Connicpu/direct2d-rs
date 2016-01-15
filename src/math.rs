@@ -55,7 +55,7 @@ impl Add<Vector2F> for Point2F {
     
     #[inline]
     fn add(self, rhs: Vector2F) -> Point2F {
-        Point2F::new(self.0.x + rhs.0.x, self.0.y + rhs.0.y)
+        Point2F::new(self.x + rhs.x, self.y + rhs.y)
     }
 }
 
@@ -64,7 +64,7 @@ impl Sub for Point2F {
     
     #[inline]
     fn sub(self, rhs: Point2F) -> Vector2F {
-        Vector2F::new(self.0.x - rhs.0.x, self.0.y - rhs.0.y)
+        Vector2F::new(self.x - rhs.x, self.y - rhs.y)
     }
 }
 
@@ -73,7 +73,25 @@ impl Sub<Vector2F> for Point2F {
     
     #[inline]
     fn sub(self, rhs: Vector2F) -> Point2F {
-        Point2F::new(self.0.x - rhs.0.x, self.0.y - rhs.0.y)
+        Point2F::new(self.x - rhs.x, self.y - rhs.y)
+    }
+}
+
+impl Mul<f32> for Point2F {
+    type Output = Point2F;
+    
+    #[inline]
+    fn mul(self, rhs: f32) -> Point2F {
+        Point2F::new(self.x * rhs, self.y * rhs)
+    }
+}
+
+impl Mul<Point2F> for f32 {
+    type Output = Point2F;
+    
+    #[inline]
+    fn mul(self, rhs: Point2F) -> Point2F {
+        Point2F::new(self * rhs.x, self * rhs.y)
     }
 }
 
@@ -104,7 +122,7 @@ impl Add for Vector2F {
     
     #[inline]
     fn add(self, rhs: Vector2F) -> Vector2F {
-        Vector2F::new(self.0.x + rhs.0.x, self.0.y + rhs.0.y)
+        Vector2F::new(self.x + rhs.x, self.y + rhs.y)
     }
 }
 
@@ -122,7 +140,7 @@ impl Neg for Vector2F {
     
     #[inline]
     fn neg(self) -> Vector2F {
-        Vector2F::new(-self.0.x, -self.0.y)
+        Vector2F::new(-self.x, -self.y)
     }
 }
 
@@ -131,7 +149,7 @@ impl Mul<f32> for Vector2F {
     
     #[inline]
     fn mul(self, rhs: f32) -> Vector2F {
-        Vector2F::new(self.0.x * rhs, self.0.y * rhs)
+        Vector2F::new(self.x * rhs, self.y * rhs)
     }
 }
 
@@ -149,7 +167,7 @@ impl Div<f32> for Vector2F {
     
     #[inline]
     fn div(self, rhs: f32) -> Vector2F {
-        Vector2F::new(self.0.x / rhs, self.0.y / rhs)
+        Vector2F::new(self.x / rhs, self.y / rhs)
     }
 }
 
@@ -238,20 +256,20 @@ impl RectF {
     #[inline]
     pub fn contains(&self, point: Point2F) -> bool {
         return
-            self.0.left < point.0.x &&
-            self.0.top < point.0.y &&
-            self.0.right > point.0.x &&
-            self.0.bottom > point.0.y;
+            self.left < point.0.x &&
+            self.top < point.0.y &&
+            self.right > point.0.x &&
+            self.bottom > point.0.y;
     }
     
     #[inline]
     pub fn width(&self) -> f32 {
-        self.0.right - self.0.left
+        self.right - self.left
     }
     
     #[inline]
     pub fn height(&self) -> f32 {
-        self.0.bottom - self.0.top
+        self.bottom - self.top
     }
     
     #[inline]
@@ -270,10 +288,10 @@ impl From<(f32, f32, f32, f32)> for RectF {
 impl PartialEq for RectF {
     #[inline]
     fn eq(&self, rhs: &RectF) -> bool {
-        self.0.left == rhs.0.left &&
-        self.0.top == rhs.0.top &&
-        self.0.right == rhs.0.right &&
-        self.0.bottom == rhs.0.bottom
+        self.left == rhs.left &&
+        self.top == rhs.top &&
+        self.right == rhs.right &&
+        self.bottom == rhs.bottom
     }
 }
 
@@ -324,10 +342,10 @@ impl From<(u32, f32)> for ColorF {
 impl PartialEq for ColorF {
     #[inline]
     fn eq(&self, rhs: &ColorF) -> bool {
-        self.0.r == rhs.0.r &&
-        self.0.g == rhs.0.g &&
-        self.0.b == rhs.0.b &&
-        self.0.a == rhs.0.a
+        self.r == rhs.r &&
+        self.g == rhs.g &&
+        self.b == rhs.b &&
+        self.a == rhs.a
     }
 }
 
@@ -445,8 +463,8 @@ impl Mul for Matrix3x2F {
     
     #[inline]
     fn mul(self, rhs: Matrix3x2F) -> Matrix3x2F {
-        let [[a1, b1], [c1, d1], [x1, y1]] = self.0.matrix;
-        let [[a2, b2], [c2, d2], [x2, y2]] = rhs.0.matrix;
+        let [[a1, b1], [c1, d1], [x1, y1]] = self.matrix;
+        let [[a2, b2], [c2, d2], [x2, y2]] = rhs.matrix;
         
         Matrix3x2F::new([
             [     a1 * a2 + b1 * c2,      a1 * b2 + b1 * d2],
@@ -461,7 +479,7 @@ impl Mul<Matrix3x2F> for Point2F {
     
     #[inline]
     fn mul(self, rhs: Matrix3x2F) -> Point2F {
-        let [[a, b], [c, d], [x, y]] = rhs.0.matrix;
+        let [[a, b], [c, d], [x, y]] = rhs.matrix;
         let D2D1_POINT_2F { x: px, y: py } = self.0;
         
         Point2F::new(x + a*px + c*py, y + b*px + d*py)
@@ -473,7 +491,7 @@ impl Mul<Matrix3x2F> for Vector2F {
     
     #[inline]
     fn mul(self, rhs: Matrix3x2F) -> Vector2F {
-        let [[a, b], [c, d], _] = rhs.0.matrix;
+        let [[a, b], [c, d], _] = rhs.matrix;
         let D2D_VECTOR_2F { x: px, y: py } = self.0;
         
         Vector2F::new(a*px + c*py, b*px + d*py)
@@ -483,7 +501,7 @@ impl Mul<Matrix3x2F> for Vector2F {
 impl PartialEq for Matrix3x2F {
     #[inline]
     fn eq(&self, rhs: &Matrix3x2F) -> bool {
-        self.0.matrix == rhs.0.matrix
+        self.matrix == rhs.matrix
     }
 }
 
@@ -560,13 +578,13 @@ impl BrushProperties {
     
     #[inline]
     pub fn opacity(mut self, opacity: f32) -> Self {
-        self.0.opacity = opacity;
+        self.opacity = opacity;
         self
     }
     
     #[inline]
     pub fn transform(mut self, transform: &Matrix3x2F) -> Self {
-        self.0.transform = transform.0;
+        self.transform = transform.0;
         self
     }
 }
