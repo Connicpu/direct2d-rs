@@ -8,6 +8,7 @@ math_wrappers! {
     pub struct Vector2F(pub D2D_VECTOR_2F);
     pub struct SizeF(pub D2D1_SIZE_F);
     pub struct RectF(pub D2D1_RECT_F);
+    pub struct ThicknessF(pub D2D1_RECT_F);
     pub struct RoundedRect(pub D2D1_ROUNDED_RECT);
     pub struct Ellipse(pub D2D1_ELLIPSE);
     pub struct ColorF(pub D2D1_COLOR_F);
@@ -292,6 +293,56 @@ impl PartialEq for RectF {
         self.top == rhs.top &&
         self.right == rhs.right &&
         self.bottom == rhs.bottom
+    }
+}
+
+impl ThicknessF {
+    #[inline]
+    pub fn new(left: f32, top: f32, right: f32, bottom: f32) -> ThicknessF {
+        ThicknessF(D2D1_RECT_F {
+            left: left,
+            top: top,
+            right: right,
+            bottom: bottom,
+        })
+    }
+    
+    #[inline]
+    pub fn width(&self) -> f32 {
+        self.right + self.left
+    }
+    
+    #[inline]
+    pub fn height(&self) -> f32 {
+        self.bottom + self.top
+    }
+}
+
+impl From<(f32, f32, f32, f32)> for ThicknessF {
+    #[inline]
+    fn from((left, top, right, bottom): (f32, f32, f32, f32)) -> ThicknessF {
+        ThicknessF::new(left, top, right, bottom)
+    }
+}
+
+impl Neg for ThicknessF {
+    type Output = ThicknessF;
+    fn neg(self) -> ThicknessF {
+        ThicknessF::new(-self.left, -self.top, -self.right, -self.bottom)
+    }
+}
+
+impl Mul<f32> for ThicknessF {
+    type Output = ThicknessF;
+    fn mul(self, rhs: f32) -> ThicknessF {
+        ThicknessF::new(self.left * rhs, self.top * rhs, self.right * rhs, self.bottom * rhs)
+    }
+}
+
+impl Div<f32> for ThicknessF {
+    type Output = ThicknessF;
+    fn div(self, rhs: f32) -> ThicknessF {
+        ThicknessF::new(self.left / rhs, self.top / rhs, self.right / rhs, self.bottom / rhs)
     }
 }
 
