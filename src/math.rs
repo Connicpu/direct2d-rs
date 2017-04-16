@@ -32,12 +32,9 @@ pub enum ArcSize {
 impl Point2F {
     #[inline]
     pub const fn new(x: f32, y: f32) -> Point2F {
-        Point2F(D2D1_POINT_2F {
-            x: x,
-            y: y,
-        })
+        Point2F(D2D1_POINT_2F { x: x, y: y })
     }
-    
+
     #[inline]
     pub const fn origin() -> Point2F {
         Point2F::new(0.0, 0.0)
@@ -53,7 +50,7 @@ impl From<(f32, f32)> for Point2F {
 
 impl Add<Vector2F> for Point2F {
     type Output = Point2F;
-    
+
     #[inline]
     fn add(self, rhs: Vector2F) -> Point2F {
         Point2F::new(self.x + rhs.x, self.y + rhs.y)
@@ -62,7 +59,7 @@ impl Add<Vector2F> for Point2F {
 
 impl Sub for Point2F {
     type Output = Vector2F;
-    
+
     #[inline]
     fn sub(self, rhs: Point2F) -> Vector2F {
         Vector2F::new(self.x - rhs.x, self.y - rhs.y)
@@ -71,7 +68,7 @@ impl Sub for Point2F {
 
 impl Sub<Vector2F> for Point2F {
     type Output = Point2F;
-    
+
     #[inline]
     fn sub(self, rhs: Vector2F) -> Point2F {
         Point2F::new(self.x - rhs.x, self.y - rhs.y)
@@ -80,7 +77,7 @@ impl Sub<Vector2F> for Point2F {
 
 impl Mul<f32> for Point2F {
     type Output = Point2F;
-    
+
     #[inline]
     fn mul(self, rhs: f32) -> Point2F {
         Point2F::new(self.x * rhs, self.y * rhs)
@@ -89,7 +86,7 @@ impl Mul<f32> for Point2F {
 
 impl Mul<Point2F> for f32 {
     type Output = Point2F;
-    
+
     #[inline]
     fn mul(self, rhs: Point2F) -> Point2F {
         Point2F::new(self * rhs.x, self * rhs.y)
@@ -99,12 +96,9 @@ impl Mul<Point2F> for f32 {
 impl Vector2F {
     #[inline]
     pub fn new(x: f32, y: f32) -> Vector2F {
-        Vector2F(D2D_VECTOR_2F {
-            x: x,
-            y: y,
-        })
+        Vector2F(D2D_VECTOR_2F { x: x, y: y })
     }
-    
+
     #[inline]
     pub fn zero() -> Vector2F {
         Vector2F::new(0.0, 0.0)
@@ -120,7 +114,7 @@ impl From<(f32, f32)> for Vector2F {
 
 impl Add for Vector2F {
     type Output = Vector2F;
-    
+
     #[inline]
     fn add(self, rhs: Vector2F) -> Vector2F {
         Vector2F::new(self.x + rhs.x, self.y + rhs.y)
@@ -129,7 +123,7 @@ impl Add for Vector2F {
 
 impl Add<Point2F> for Vector2F {
     type Output = Point2F;
-    
+
     #[inline]
     fn add(self, rhs: Point2F) -> Point2F {
         rhs + self
@@ -138,7 +132,7 @@ impl Add<Point2F> for Vector2F {
 
 impl Neg for Vector2F {
     type Output = Vector2F;
-    
+
     #[inline]
     fn neg(self) -> Vector2F {
         Vector2F::new(-self.x, -self.y)
@@ -147,7 +141,7 @@ impl Neg for Vector2F {
 
 impl Mul<f32> for Vector2F {
     type Output = Vector2F;
-    
+
     #[inline]
     fn mul(self, rhs: f32) -> Vector2F {
         Vector2F::new(self.x * rhs, self.y * rhs)
@@ -156,7 +150,7 @@ impl Mul<f32> for Vector2F {
 
 impl Mul<Vector2F> for f32 {
     type Output = Vector2F;
-    
+
     #[inline]
     fn mul(self, rhs: Vector2F) -> Vector2F {
         rhs * self
@@ -165,7 +159,7 @@ impl Mul<Vector2F> for f32 {
 
 impl Div<f32> for Vector2F {
     type Output = Vector2F;
-    
+
     #[inline]
     fn div(self, rhs: f32) -> Vector2F {
         Vector2F::new(self.x / rhs, self.y / rhs)
@@ -174,7 +168,7 @@ impl Div<f32> for Vector2F {
 
 impl Div<Vector2F> for f32 {
     type Output = Vector2F;
-    
+
     #[inline]
     fn div(self, rhs: Vector2F) -> Vector2F {
         rhs / self
@@ -201,9 +195,7 @@ impl From<(f32, f32)> for SizeF {
 impl PartialEq for SizeF {
     #[inline]
     fn eq(&self, rhs: &SizeF) -> bool {
-        return
-            self.width == rhs.width &&
-            self.height == rhs.height;
+        return self.width == rhs.width && self.height == rhs.height;
     }
 }
 
@@ -217,62 +209,53 @@ impl RectF {
             bottom: bottom,
         })
     }
-    
+
     #[inline]
     pub fn bounds(p1: Point2F, p2: Point2F) -> RectF {
-        RectF::new(
-            f32::min(p1.0.x, p2.0.x),
-            f32::min(p1.0.y, p2.0.y),
-            f32::max(p1.0.x, p2.0.x),
-            f32::max(p1.0.y, p2.0.y),
-        )
+        RectF::new(f32::min(p1.0.x, p2.0.x),
+                   f32::min(p1.0.y, p2.0.y),
+                   f32::max(p1.0.x, p2.0.x),
+                   f32::max(p1.0.y, p2.0.y))
     }
-    
+
     #[inline]
     pub fn with_size(old_rect: RectF, size: SizeF) -> RectF {
-        RectF::new(
-            old_rect.left,
-            old_rect.top,
-            old_rect.left + size.width,
-            old_rect.top + size.height,
-        )
+        RectF::new(old_rect.left,
+                   old_rect.top,
+                   old_rect.left + size.width,
+                   old_rect.top + size.height)
     }
-    
+
     #[inline]
     pub fn adjusted_by(old_rect: RectF, size: SizeF) -> RectF {
-        RectF::new(
-            old_rect.left + size.width,
-            old_rect.top + size.height,
-            old_rect.right,
-            old_rect.bottom,
-        )
+        RectF::new(old_rect.left + size.width,
+                   old_rect.top + size.height,
+                   old_rect.right,
+                   old_rect.bottom)
     }
-    
+
     #[inline]
     pub fn around(center: Point2F, size: SizeF) -> RectF {
         let half_diag = (size.width / 2.0, size.height / 2.0).into();
         RectF::bounds(center - half_diag, center + half_diag)
     }
-    
+
     #[inline]
     pub fn contains(&self, point: Point2F) -> bool {
-        return
-            self.left < point.0.x &&
-            self.top < point.0.y &&
-            self.right > point.0.x &&
-            self.bottom > point.0.y;
+        return self.left < point.0.x && self.top < point.0.y && self.right > point.0.x &&
+               self.bottom > point.0.y;
     }
-    
+
     #[inline]
     pub fn width(&self) -> f32 {
         self.right - self.left
     }
-    
+
     #[inline]
     pub fn height(&self) -> f32 {
         self.bottom - self.top
     }
-    
+
     #[inline]
     pub fn top_left(&self) -> Point2F {
         (self.left, self.top).into()
@@ -289,9 +272,7 @@ impl From<(f32, f32, f32, f32)> for RectF {
 impl PartialEq for RectF {
     #[inline]
     fn eq(&self, rhs: &RectF) -> bool {
-        self.left == rhs.left &&
-        self.top == rhs.top &&
-        self.right == rhs.right &&
+        self.left == rhs.left && self.top == rhs.top && self.right == rhs.right &&
         self.bottom == rhs.bottom
     }
 }
@@ -306,12 +287,12 @@ impl ThicknessF {
             bottom: bottom,
         })
     }
-    
+
     #[inline]
     pub fn width(&self) -> f32 {
         self.right + self.left
     }
-    
+
     #[inline]
     pub fn height(&self) -> f32 {
         self.bottom + self.top
@@ -335,14 +316,20 @@ impl Neg for ThicknessF {
 impl Mul<f32> for ThicknessF {
     type Output = ThicknessF;
     fn mul(self, rhs: f32) -> ThicknessF {
-        ThicknessF::new(self.left * rhs, self.top * rhs, self.right * rhs, self.bottom * rhs)
+        ThicknessF::new(self.left * rhs,
+                        self.top * rhs,
+                        self.right * rhs,
+                        self.bottom * rhs)
     }
 }
 
 impl Div<f32> for ThicknessF {
     type Output = ThicknessF;
     fn div(self, rhs: f32) -> ThicknessF {
-        ThicknessF::new(self.left / rhs, self.top / rhs, self.right / rhs, self.bottom / rhs)
+        ThicknessF::new(self.left / rhs,
+                        self.top / rhs,
+                        self.right / rhs,
+                        self.bottom / rhs)
     }
 }
 
@@ -393,116 +380,87 @@ impl From<(u32, f32)> for ColorF {
 impl PartialEq for ColorF {
     #[inline]
     fn eq(&self, rhs: &ColorF) -> bool {
-        self.r == rhs.r &&
-        self.g == rhs.g &&
-        self.b == rhs.b &&
-        self.a == rhs.a
+        self.r == rhs.r && self.g == rhs.g && self.b == rhs.b && self.a == rhs.a
     }
 }
 
 impl Matrix3x2F {
     #[inline]
     pub fn new(data: [[f32; 2]; 3]) -> Matrix3x2F {
-        Matrix3x2F(D2D1_MATRIX_3X2_F {
-            matrix: data,
-        })
+        Matrix3x2F(D2D1_MATRIX_3X2_F { matrix: data })
     }
-    
+
     #[inline]
     pub fn identity() -> Matrix3x2F {
-        Matrix3x2F::new([
-            [1.0, 0.0],
-            [0.0, 1.0],
-            [0.0, 0.0],
-        ])
+        Matrix3x2F::new([[1.0, 0.0], [0.0, 1.0], [0.0, 0.0]])
     }
-    
+
     #[inline]
     pub fn translation(v: Vector2F) -> Matrix3x2F {
-        Matrix3x2F::new([
-            [1.0, 0.0],
-            [0.0, 1.0],
-            [v.x, v.y],
-        ])
+        Matrix3x2F::new([[1.0, 0.0], [0.0, 1.0], [v.x, v.y]])
     }
-    
+
     #[inline]
     pub fn translate_to(p: Point2F) -> Matrix3x2F {
         Matrix3x2F::translation(Vector2F::new(p.x, p.y))
     }
-    
+
     #[inline]
     pub fn scale(scale: SizeF, center: Point2F) -> Matrix3x2F {
-        let trans = Vector2F::new(
-            center.x - scale.width * center.x,
-            center.y - scale.height * center.y,
-        );
-        
-        Matrix3x2F::new([
-            [scale.width,          0.0],
-            [        0.0, scale.height],
-            [    trans.x,      trans.y],
-        ])
+        let trans = Vector2F::new(center.x - scale.width * center.x,
+                                  center.y - scale.height * center.y);
+
+        Matrix3x2F::new([[scale.width, 0.0], [0.0, scale.height], [trans.x, trans.y]])
     }
-    
+
     #[inline]
     pub fn rotation(angle: f32, center: Point2F) -> Matrix3x2F {
         let cos = angle.cos();
         let sin = angle.sin();
         let x = center.x;
         let y = center.y;
-        let tx = x - cos*x - sin*y;
-        let ty = y - cos*y - sin*x;
-        
-        Matrix3x2F::new([
-            [cos, -sin],
-            [sin,  cos],
-            [ tx,   ty],
-        ])
+        let tx = x - cos * x - sin * y;
+        let ty = y - cos * y - sin * x;
+
+        Matrix3x2F::new([[cos, -sin], [sin, cos], [tx, ty]])
     }
-    
+
     #[inline]
     pub fn skew(angle_x: f32, angle_y: f32, center: Point2F) -> Matrix3x2F {
         let tanx = angle_x.tan();
         let tany = angle_y.tan();
         let x = center.x;
         let y = center.y;
-        
-        Matrix3x2F::new([
-            [    1.0,    tanx],
-            [   tany,     1.0],
-            [-y*tany, -x*tanx],
-        ])
+
+        Matrix3x2F::new([[1.0, tanx], [tany, 1.0], [-y * tany, -x * tanx]])
     }
-    
+
     #[inline]
     pub fn determinant(&self) -> f32 {
         let [[a, b], [c, d], _] = self.matrix;
-        
+
         a * d - b * c
     }
-    
+
     #[inline]
     pub fn is_invertible(&self) -> bool {
         self.determinant().abs() > EPSILON
     }
-    
+
     #[inline]
     pub fn invert(&self) -> Option<Matrix3x2F> {
         if !self.is_invertible() {
             return None;
         }
-        
+
         let det = self.determinant();
         let [[a, b], [c, d], [x, y]] = self.matrix;
-        
-        Some(Matrix3x2F::new([
-            [        d /  det,         b / -det],
-            [        c / -det,         a /  det],
-            [(d*x-c*y) / -det, (b*x-a*y) /  det],
-        ]))
+
+        Some(Matrix3x2F::new([[d / det, b / -det],
+                              [c / -det, a / det],
+                              [(d * x - c * y) / -det, (b * x - a * y) / det]]))
     }
-    
+
     #[inline]
     pub fn is_identity(&self) -> bool {
         *self == Matrix3x2F::identity()
@@ -511,41 +469,39 @@ impl Matrix3x2F {
 
 impl Mul for Matrix3x2F {
     type Output = Self;
-    
+
     #[inline]
     fn mul(self, rhs: Matrix3x2F) -> Matrix3x2F {
         let [[a1, b1], [c1, d1], [x1, y1]] = self.matrix;
         let [[a2, b2], [c2, d2], [x2, y2]] = rhs.matrix;
-        
-        Matrix3x2F::new([
-            [     a1 * a2 + b1 * c2,      a1 * b2 + b1 * d2],
-            [     a2 * c1 + c2 * d1,      b2 * c1 + d1 * d2],
-            [x2 + a2 * x1 + c2 * y1, y2 + b2 * x1 + d2 * y1],
-        ])
+
+        Matrix3x2F::new([[a1 * a2 + b1 * c2, a1 * b2 + b1 * d2],
+                         [a2 * c1 + c2 * d1, b2 * c1 + d1 * d2],
+                         [x2 + a2 * x1 + c2 * y1, y2 + b2 * x1 + d2 * y1]])
     }
 }
 
 impl Mul<Matrix3x2F> for Point2F {
     type Output = Point2F;
-    
+
     #[inline]
     fn mul(self, rhs: Matrix3x2F) -> Point2F {
         let [[a, b], [c, d], [x, y]] = rhs.matrix;
         let D2D1_POINT_2F { x: px, y: py } = self.0;
-        
-        Point2F::new(x + a*px + c*py, y + b*px + d*py)
+
+        Point2F::new(x + a * px + c * py, y + b * px + d * py)
     }
 }
 
 impl Mul<Matrix3x2F> for Vector2F {
     type Output = Vector2F;
-    
+
     #[inline]
     fn mul(self, rhs: Matrix3x2F) -> Vector2F {
         let [[a, b], [c, d], _] = rhs.matrix;
         let D2D_VECTOR_2F { x: px, y: py } = self.0;
-        
-        Vector2F::new(a*px + c*py, b*px + d*py)
+
+        Vector2F::new(a * px + c * py, b * px + d * py)
     }
 }
 
@@ -579,9 +535,12 @@ impl QuadBezierSegment {
 
 impl ArcSegment {
     #[inline]
-    pub fn new(
-        point: Point2F, size: SizeF, angle: f32, sweep_dir: SweepDirection, arc_size: ArcSize
-    ) -> ArcSegment {
+    pub fn new(point: Point2F,
+               size: SizeF,
+               angle: f32,
+               sweep_dir: SweepDirection,
+               arc_size: ArcSize)
+               -> ArcSegment {
         ArcSegment(D2D1_ARC_SEGMENT {
             point: point.0,
             size: size.0,
@@ -590,31 +549,47 @@ impl ArcSegment {
             arcSize: D2D1_ARC_SIZE(arc_size as u32),
         })
     }
-    
+
     /// Create a counter-clockwise small arc
     #[inline]
     pub fn new_cc_sm(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
-        ArcSegment::new(point, size, angle, SweepDirection::CounterClockwise, ArcSize::Small)
+        ArcSegment::new(point,
+                        size,
+                        angle,
+                        SweepDirection::CounterClockwise,
+                        ArcSize::Small)
     }
-    
+
     /// Create a counter-clockwise large arc
     #[inline]
     pub fn new_cc_lg(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
-        ArcSegment::new(point, size, angle, SweepDirection::CounterClockwise, ArcSize::Large)
+        ArcSegment::new(point,
+                        size,
+                        angle,
+                        SweepDirection::CounterClockwise,
+                        ArcSize::Large)
     }
-    
-    
+
+
     /// Create a clockwise small arc
     #[inline]
     pub fn new_cw_sm(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
-        ArcSegment::new(point, size, angle, SweepDirection::Clockwise, ArcSize::Small)
+        ArcSegment::new(point,
+                        size,
+                        angle,
+                        SweepDirection::Clockwise,
+                        ArcSize::Small)
     }
-    
-    
+
+
     /// Create a counter-clockwise small arc
     #[inline]
     pub fn new_cw_lg(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
-        ArcSegment::new(point, size, angle, SweepDirection::Clockwise, ArcSize::Large)
+        ArcSegment::new(point,
+                        size,
+                        angle,
+                        SweepDirection::Clockwise,
+                        ArcSize::Large)
     }
 }
 
@@ -626,13 +601,13 @@ impl BrushProperties {
             transform: transform.0,
         })
     }
-    
+
     #[inline]
     pub fn opacity(mut self, opacity: f32) -> Self {
         self.opacity = opacity;
         self
     }
-    
+
     #[inline]
     pub fn transform(mut self, transform: &Matrix3x2F) -> Self {
         self.transform = transform.0;

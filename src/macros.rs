@@ -46,6 +46,12 @@ macro_rules! brush_type {
                 }
             }
         }
+
+        unsafe impl ::directwrite::drawing_effect::DrawingEffect for $ty {
+            unsafe fn get_effect_ptr(&self) -> *mut IUnknown {
+                self.ptr.raw_value() as *mut IUnknown
+            }
+        }
     };
     (pub struct $ty:ident($ptrty:ty);) => {
         pub struct $ty {
@@ -64,6 +70,12 @@ macro_rules! brush_type {
                 $ty {
                     ptr: $crate::comptr::ComPtr::from_existing(raw),
                 }
+            }
+        }
+
+        unsafe impl ::directwrite::drawing_effect::DrawingEffect for $ty {
+            unsafe fn get_effect_ptr(&self) -> *mut IUnknown {
+                self.ptr.raw_value() as *mut IUnknown
             }
         }
     };

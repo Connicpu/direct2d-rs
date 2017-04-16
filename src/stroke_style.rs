@@ -34,7 +34,7 @@ impl<'a> StrokeStyleProperties<'a> {
             dashes: None,
         }
     }
-    
+
     pub unsafe fn get_d2d1_data(&self) -> D2D1_STROKE_STYLE_PROPERTIES {
         D2D1_STROKE_STYLE_PROPERTIES {
             startCap: D2D1_CAP_STYLE(self.start_cap as u32),
@@ -60,55 +60,39 @@ impl StrokeStyle {
         assert!(!ptr.is_null());
         ptr
     }
-    
+
     pub fn get_start_cap(&self) -> Result<CapStyle, D2D1Error> {
-        unsafe {
-            CapStyle::from_raw((*self.get_ptr()).GetStartCap())
-        }
+        unsafe { CapStyle::from_raw((*self.get_ptr()).GetStartCap()) }
     }
-    
+
     pub fn get_end_cap(&self) -> Result<CapStyle, D2D1Error> {
-        unsafe {
-            CapStyle::from_raw((*self.get_ptr()).GetEndCap())
-        }
+        unsafe { CapStyle::from_raw((*self.get_ptr()).GetEndCap()) }
     }
-    
+
     pub fn get_dash_cap(&self) -> Result<CapStyle, D2D1Error> {
-        unsafe {
-            CapStyle::from_raw((*self.get_ptr()).GetDashCap())
-        }
+        unsafe { CapStyle::from_raw((*self.get_ptr()).GetDashCap()) }
     }
-    
+
     pub fn get_miter_limit(&self) -> f32 {
-        unsafe {
-            (*self.get_ptr()).GetMiterLimit()
-        }
+        unsafe { (*self.get_ptr()).GetMiterLimit() }
     }
-    
+
     pub fn get_line_join(&self) -> Result<LineJoin, D2D1Error> {
-        unsafe {
-            LineJoin::from_raw((*self.get_ptr()).GetLineJoin())
-        }
+        unsafe { LineJoin::from_raw((*self.get_ptr()).GetLineJoin()) }
     }
-    
+
     pub fn get_dash_offset(&self) -> f32 {
-        unsafe {
-            (*self.get_ptr()).GetDashOffset()
-        }
+        unsafe { (*self.get_ptr()).GetDashOffset() }
     }
-    
+
     pub fn get_dash_style(&self) -> Result<DashStyle, D2D1Error> {
-        unsafe {
-            DashStyle::from_raw((*self.get_ptr()).GetDashStyle())
-        }
+        unsafe { DashStyle::from_raw((*self.get_ptr()).GetDashStyle()) }
     }
-    
+
     pub fn get_dashes_count(&self) -> u32 {
-        unsafe {
-            (*self.get_ptr()).GetDashesCount()
-        }
+        unsafe { (*self.get_ptr()).GetDashesCount() }
     }
-    
+
     pub fn get_dashes(&self) -> Vec<f32> {
         let count = self.get_dashes_count();
         let mut data = vec![0.0; count as usize];
@@ -129,9 +113,7 @@ impl GetRaw for StrokeStyle {
 impl FromRaw for StrokeStyle {
     type Raw = ID2D1StrokeStyle;
     unsafe fn from_raw(raw: *mut ID2D1StrokeStyle) -> Self {
-        StrokeStyle {
-            stroke: ComPtr::from_existing(raw)
-        }
+        StrokeStyle { stroke: ComPtr::from_existing(raw) }
     }
 }
 

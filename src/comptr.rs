@@ -47,7 +47,7 @@ impl<T: ComUnknown> ComPtr<T> {
     pub fn new() -> Self {
         ComPtr { ptr: ptr::null_mut() }
     }
-    
+
     pub fn release(&mut self) {
         unsafe {
             if self.ptr != ptr::null_mut() {
@@ -56,17 +56,17 @@ impl<T: ComUnknown> ComPtr<T> {
             }
         }
     }
-    
+
     pub fn is_null(&self) -> bool {
         self.ptr == ptr::null_mut()
     }
-    
+
     pub fn query_interface<U: ComUnknown + HasIID>(&self) -> Result<ComPtr<U>, HRESULT> {
         unsafe {
             if self.ptr == ptr::null_mut() {
                 return Err(From::from(E_POINTER));
             }
-            
+
             let mut ptr: ComPtr<U> = ComPtr::new();
             let iid = U::iid();
             let hr = ComUnknown::query_interface(self.ptr, &iid, ptr.raw_void());
@@ -77,32 +77,32 @@ impl<T: ComUnknown> ComPtr<T> {
             }
         }
     }
-    
+
     pub unsafe fn from_existing(ptr: *mut T) -> Self {
         let temp = ComPtr { ptr: ptr };
         mem::forget(temp.clone());
         temp
     }
-    
+
     pub unsafe fn attach(ptr: *mut T) -> Self {
         ComPtr { ptr: ptr }
     }
-    
+
     pub unsafe fn detach(&mut self) -> *mut T {
         let ptr = self.ptr;
         self.ptr = ptr::null_mut();
         ptr
     }
-    
+
     pub unsafe fn raw_value(&self) -> *mut T {
         self.ptr
     }
-    
+
     pub unsafe fn raw_addr(&mut self) -> *mut *mut T {
         assert!(self.ptr == ptr::null_mut());
         &mut self.ptr
     }
-    
+
     pub unsafe fn raw_void(&mut self) -> *mut *mut c_void {
         assert!(self.ptr == ptr::null_mut());
         self.raw_addr() as *mut *mut c_void
