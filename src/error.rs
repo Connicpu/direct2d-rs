@@ -1,4 +1,4 @@
-use winapi::*;
+use winapi::shared::ntdef::HRESULT;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum D2D1Error {

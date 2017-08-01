@@ -1,7 +1,16 @@
-use winapi::*;
-use std::{ptr, mem};
+use std::{mem, ptr};
 use std::cmp::PartialEq;
-use std::ops::{Drop, Deref, DerefMut};
+use std::ops::{Deref, DerefMut, Drop};
+use std::fmt;
+
+use winapi::ctypes::c_void;
+use winapi::shared::ntdef::HRESULT;
+use winapi::shared::minwindef::*;
+use winapi::shared::winerror::{E_POINTER, SUCCEEDED};
+use winapi::shared::guiddef::{IID, REFIID};
+use winapi::um::unknwnbase::IUnknown;
+use winapi::um::d2d1::*;
+use winapi::um::d2d1_1::*;
 
 pub trait ComUnknown {
     unsafe fn add_ref(ptr: *mut Self) -> ULONG;
@@ -16,6 +25,7 @@ pub trait HasIID {
 // Base types
 impl_com_refcount! { IUnknown, "00000000-0000-0000-C000-000000000046" }
 impl_com_refcount! { ID2D1Factory, "06152247-6f50-465a-9245-118bfd3b6007" }
+impl_com_refcount! { ID2D1Factory1, "bb12d362-daee-4b9a-aa1d-14ba401cfa1f" }
 impl_com_refcount! { ID2D1RenderTarget, "2cd90694-12e2-11dc-9fed-001143a055f9" }
 impl_com_refcount! { ID2D1HwndRenderTarget, "2cd90698-12e2-11dc-9fed-001143a055f9" }
 
@@ -31,21 +41,30 @@ impl_com_refcount! { ID2D1EllipseGeometry, "2cd906a4-12e2-11dc-9fed-001143a055f9
 impl_com_refcount! { ID2D1GeometryGroup, "2cd906a6-12e2-11dc-9fed-001143a055f9" }
 impl_com_refcount! { ID2D1TransformedGeometry, "2cd906bb-12e2-11dc-9fed-001143a055f9" }
 impl_com_refcount! { ID2D1PathGeometry, "2cd906a5-12e2-11dc-9fed-001143a055f9" }
+impl_com_refcount! { ID2D1PathGeometry1, "62baa2d2-ab54-41b7-b872-787e0106a421" }
 impl_com_refcount! { ID2D1SimplifiedGeometrySink, "2cd9069e-12e2-11dc-9fed-001143a055f9" }
 impl_com_refcount! { ID2D1GeometrySink, "2cd9069f-12e2-11dc-9fed-001143a055f9" }
 
 // Stroke
 impl_com_refcount! { ID2D1StrokeStyle, "2cd9069d-12e2-11dc-9fed-001143a055f9" }
+impl_com_refcount! { ID2D1StrokeStyle1, "10a72a66-e91c-43f4-993f-ddf4b82b0b4a" }
 
-#[derive(Debug)]
 pub struct ComPtr<T: ComUnknown> {
     ptr: *mut T,
+}
+
+impl<T: ComUnknown> fmt::Debug for ComPtr<T> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fmt.debug_tuple("ComPtr").field(&self.ptr).finish()
+    }
 }
 
 #[allow(dead_code)] // I'm not done, I'll need at least some of it :P
 impl<T: ComUnknown> ComPtr<T> {
     pub fn new() -> Self {
-        ComPtr { ptr: ptr::null_mut() }
+        ComPtr {
+            ptr: ptr::null_mut(),
+        }
     }
 
     pub fn release(&mut self) {

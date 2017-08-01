@@ -2,7 +2,6 @@
 #![feature(slice_patterns, const_fn)]
 
 extern crate winapi;
-extern crate kernel32;
 extern crate uuid;
 extern crate directwrite;
 

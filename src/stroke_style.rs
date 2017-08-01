@@ -1,11 +1,13 @@
-use winapi::*;
 use comptr::ComPtr;
 use error::D2D1Error;
-use helpers::{GetRaw, FromRaw};
+use helpers::{FromRaw, GetRaw};
+
+use winapi::um::d2d1::*;
+use winapi::um::d2d1_1::*;
 
 #[derive(Clone, Debug)]
 pub struct StrokeStyle {
-    stroke: ComPtr<ID2D1StrokeStyle>,
+    stroke: ComPtr<ID2D1StrokeStyle1>,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -35,15 +37,16 @@ impl<'a> StrokeStyleProperties<'a> {
         }
     }
 
-    pub unsafe fn get_d2d1_data(&self) -> D2D1_STROKE_STYLE_PROPERTIES {
-        D2D1_STROKE_STYLE_PROPERTIES {
-            startCap: D2D1_CAP_STYLE(self.start_cap as u32),
-            endCap: D2D1_CAP_STYLE(self.end_cap as u32),
-            dashCap: D2D1_CAP_STYLE(self.dash_cap as u32),
-            lineJoin: D2D1_LINE_JOIN(self.line_join as u32),
+    pub unsafe fn get_d2d1_data(&self) -> D2D1_STROKE_STYLE_PROPERTIES1 {
+        D2D1_STROKE_STYLE_PROPERTIES1 {
+            startCap: self.start_cap as u32,
+            endCap: self.end_cap as u32,
+            dashCap: self.dash_cap as u32,
+            lineJoin: self.line_join as u32,
             miterLimit: self.miter_limit,
-            dashStyle: D2D1_DASH_STYLE(self.dash_style as u32),
+            dashStyle: self.dash_style as u32,
             dashOffset: self.dash_offset,
+            transformType: D2D1_STROKE_TRANSFORM_TYPE_NORMAL,
         }
     }
 }
@@ -55,7 +58,7 @@ impl<'a> Default for StrokeStyleProperties<'a> {
 }
 
 impl StrokeStyle {
-    pub unsafe fn get_ptr(&self) -> *mut ID2D1StrokeStyle {
+    pub unsafe fn get_ptr(&self) -> *mut ID2D1StrokeStyle1 {
         let ptr = self.stroke.raw_value();
         assert!(!ptr.is_null());
         ptr
@@ -104,16 +107,18 @@ impl StrokeStyle {
 }
 
 impl GetRaw for StrokeStyle {
-    type Raw = ID2D1StrokeStyle;
-    unsafe fn get_raw(&self) -> *mut ID2D1StrokeStyle {
+    type Raw = ID2D1StrokeStyle1;
+    unsafe fn get_raw(&self) -> *mut ID2D1StrokeStyle1 {
         self.stroke.raw_value()
     }
 }
 
 impl FromRaw for StrokeStyle {
-    type Raw = ID2D1StrokeStyle;
-    unsafe fn from_raw(raw: *mut ID2D1StrokeStyle) -> Self {
-        StrokeStyle { stroke: ComPtr::from_existing(raw) }
+    type Raw = ID2D1StrokeStyle1;
+    unsafe fn from_raw(raw: *mut ID2D1StrokeStyle1) -> Self {
+        StrokeStyle {
+            stroke: ComPtr::from_existing(raw),
+        }
     }
 }
 

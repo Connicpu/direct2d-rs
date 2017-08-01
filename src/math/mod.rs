@@ -1,7 +1,11 @@
 use std::cmp::PartialEq;
-use std::ops::{Add, Sub, Neg, Mul, Div};
-use winapi::*;
+use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::f32::EPSILON;
+
+use winapi::um::d2dbasetypes::*;
+use winapi::um::d2d1::*;
+
+pub mod debug;
 
 math_wrappers! {
     pub struct Point2F(pub D2D1_POINT_2F);
@@ -212,26 +216,32 @@ impl RectF {
 
     #[inline]
     pub fn bounds(p1: Point2F, p2: Point2F) -> RectF {
-        RectF::new(f32::min(p1.0.x, p2.0.x),
-                   f32::min(p1.0.y, p2.0.y),
-                   f32::max(p1.0.x, p2.0.x),
-                   f32::max(p1.0.y, p2.0.y))
+        RectF::new(
+            f32::min(p1.0.x, p2.0.x),
+            f32::min(p1.0.y, p2.0.y),
+            f32::max(p1.0.x, p2.0.x),
+            f32::max(p1.0.y, p2.0.y),
+        )
     }
 
     #[inline]
     pub fn with_size(old_rect: RectF, size: SizeF) -> RectF {
-        RectF::new(old_rect.left,
-                   old_rect.top,
-                   old_rect.left + size.width,
-                   old_rect.top + size.height)
+        RectF::new(
+            old_rect.left,
+            old_rect.top,
+            old_rect.left + size.width,
+            old_rect.top + size.height,
+        )
     }
 
     #[inline]
     pub fn adjusted_by(old_rect: RectF, size: SizeF) -> RectF {
-        RectF::new(old_rect.left + size.width,
-                   old_rect.top + size.height,
-                   old_rect.right,
-                   old_rect.bottom)
+        RectF::new(
+            old_rect.left + size.width,
+            old_rect.top + size.height,
+            old_rect.right,
+            old_rect.bottom,
+        )
     }
 
     #[inline]
@@ -243,7 +253,7 @@ impl RectF {
     #[inline]
     pub fn contains(&self, point: Point2F) -> bool {
         return self.left < point.0.x && self.top < point.0.y && self.right > point.0.x &&
-               self.bottom > point.0.y;
+            self.bottom > point.0.y;
     }
 
     #[inline]
@@ -273,7 +283,7 @@ impl PartialEq for RectF {
     #[inline]
     fn eq(&self, rhs: &RectF) -> bool {
         self.left == rhs.left && self.top == rhs.top && self.right == rhs.right &&
-        self.bottom == rhs.bottom
+            self.bottom == rhs.bottom
     }
 }
 
@@ -316,20 +326,24 @@ impl Neg for ThicknessF {
 impl Mul<f32> for ThicknessF {
     type Output = ThicknessF;
     fn mul(self, rhs: f32) -> ThicknessF {
-        ThicknessF::new(self.left * rhs,
-                        self.top * rhs,
-                        self.right * rhs,
-                        self.bottom * rhs)
+        ThicknessF::new(
+            self.left * rhs,
+            self.top * rhs,
+            self.right * rhs,
+            self.bottom * rhs,
+        )
     }
 }
 
 impl Div<f32> for ThicknessF {
     type Output = ThicknessF;
     fn div(self, rhs: f32) -> ThicknessF {
-        ThicknessF::new(self.left / rhs,
-                        self.top / rhs,
-                        self.right / rhs,
-                        self.bottom / rhs)
+        ThicknessF::new(
+            self.left / rhs,
+            self.top / rhs,
+            self.right / rhs,
+            self.bottom / rhs,
+        )
     }
 }
 
@@ -407,10 +421,16 @@ impl Matrix3x2F {
 
     #[inline]
     pub fn scale(scale: SizeF, center: Point2F) -> Matrix3x2F {
-        let trans = Vector2F::new(center.x - scale.width * center.x,
-                                  center.y - scale.height * center.y);
+        let trans = Vector2F::new(
+            center.x - scale.width * center.x,
+            center.y - scale.height * center.y,
+        );
 
-        Matrix3x2F::new([[scale.width, 0.0], [0.0, scale.height], [trans.x, trans.y]])
+        Matrix3x2F::new([
+            [scale.width, 0.0],
+            [0.0, scale.height],
+            [trans.x, trans.y],
+        ])
     }
 
     #[inline]
@@ -456,9 +476,11 @@ impl Matrix3x2F {
         let det = self.determinant();
         let [[a, b], [c, d], [x, y]] = self.matrix;
 
-        Some(Matrix3x2F::new([[d / det, b / -det],
-                              [c / -det, a / det],
-                              [(d * x - c * y) / -det, (b * x - a * y) / det]]))
+        Some(Matrix3x2F::new([
+            [d / det, b / -det],
+            [c / -det, a / det],
+            [(d * x - c * y) / -det, (b * x - a * y) / det],
+        ]))
     }
 
     #[inline]
@@ -475,9 +497,11 @@ impl Mul for Matrix3x2F {
         let [[a1, b1], [c1, d1], [x1, y1]] = self.matrix;
         let [[a2, b2], [c2, d2], [x2, y2]] = rhs.matrix;
 
-        Matrix3x2F::new([[a1 * a2 + b1 * c2, a1 * b2 + b1 * d2],
-                         [a2 * c1 + c2 * d1, b2 * c1 + d1 * d2],
-                         [x2 + a2 * x1 + c2 * y1, y2 + b2 * x1 + d2 * y1]])
+        Matrix3x2F::new([
+            [a1 * a2 + b1 * c2, a1 * b2 + b1 * d2],
+            [a2 * c1 + c2 * d1, b2 * c1 + d1 * d2],
+            [x2 + a2 * x1 + c2 * y1, y2 + b2 * x1 + d2 * y1],
+        ])
     }
 }
 
@@ -535,61 +559,70 @@ impl QuadBezierSegment {
 
 impl ArcSegment {
     #[inline]
-    pub fn new(point: Point2F,
-               size: SizeF,
-               angle: f32,
-               sweep_dir: SweepDirection,
-               arc_size: ArcSize)
-               -> ArcSegment {
+    pub fn new(
+        point: Point2F,
+        size: SizeF,
+        angle: f32,
+        sweep_dir: SweepDirection,
+        arc_size: ArcSize,
+    ) -> ArcSegment {
         ArcSegment(D2D1_ARC_SEGMENT {
             point: point.0,
             size: size.0,
             rotationAngle: angle,
-            sweepDirection: D2D1_SWEEP_DIRECTION(sweep_dir as u32),
-            arcSize: D2D1_ARC_SIZE(arc_size as u32),
+            sweepDirection: (sweep_dir as u32),
+            arcSize: (arc_size as u32),
         })
     }
 
     /// Create a counter-clockwise small arc
     #[inline]
     pub fn new_cc_sm(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
-        ArcSegment::new(point,
-                        size,
-                        angle,
-                        SweepDirection::CounterClockwise,
-                        ArcSize::Small)
+        ArcSegment::new(
+            point,
+            size,
+            angle,
+            SweepDirection::CounterClockwise,
+            ArcSize::Small,
+        )
     }
 
     /// Create a counter-clockwise large arc
     #[inline]
     pub fn new_cc_lg(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
-        ArcSegment::new(point,
-                        size,
-                        angle,
-                        SweepDirection::CounterClockwise,
-                        ArcSize::Large)
+        ArcSegment::new(
+            point,
+            size,
+            angle,
+            SweepDirection::CounterClockwise,
+            ArcSize::Large,
+        )
     }
 
 
     /// Create a clockwise small arc
     #[inline]
     pub fn new_cw_sm(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
-        ArcSegment::new(point,
-                        size,
-                        angle,
-                        SweepDirection::Clockwise,
-                        ArcSize::Small)
+        ArcSegment::new(
+            point,
+            size,
+            angle,
+            SweepDirection::Clockwise,
+            ArcSize::Small,
+        )
     }
 
 
     /// Create a counter-clockwise small arc
     #[inline]
     pub fn new_cw_lg(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
-        ArcSegment::new(point,
-                        size,
-                        angle,
-                        SweepDirection::Clockwise,
-                        ArcSize::Large)
+        ArcSegment::new(
+            point,
+            size,
+            angle,
+            SweepDirection::Clockwise,
+            ArcSize::Large,
+        )
     }
 }
 

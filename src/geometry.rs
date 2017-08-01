@@ -1,12 +1,17 @@
 use std::{mem, ptr};
 use std::marker::PhantomData;
-use winapi::*;
 use comptr::ComPtr;
 use error::D2D1Error;
 use stroke_style::StrokeStyle;
 use factory::Factory;
-use helpers::{GetRaw, FromRaw};
+use helpers::{FromRaw, GetRaw};
 use math;
+
+use winapi::shared::minwindef::*;
+use winapi::shared::winerror::*;
+use winapi::um::d2dbasetypes::*;
+use winapi::um::d2d1::*;
+use winapi::um::d2d1_1::*;
 
 pub trait Geometry {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry;
@@ -17,21 +22,24 @@ pub trait Geometry {
             let mut factory = ComPtr::<ID2D1Factory>::new();
             (*ptr).GetFactory(factory.raw_addr());
 
-            Factory::from_ptr(factory)
+            Factory::from_ptr(factory.query_interface().unwrap())
         }
     }
 
     fn to_generic(&self) -> GenericGeometry {
-        GenericGeometry { geom: unsafe { ComPtr::from_existing(self.get_ptr()) } }
+        GenericGeometry {
+            geom: unsafe { ComPtr::from_existing(self.get_ptr()) },
+        }
     }
 
     /// Retrieve the bounds of the geometry, with an optional applied transform.
     ///
     /// **NOTE:** I'm not sure if this will ever return None, but the API has an
     /// error code so it could. The MSDN documentation is very vague on this.
-    fn get_bounds(&self,
-                  world_transform: Option<&math::Matrix3x2F>)
-                  -> Result<math::RectF, D2D1Error> {
+    fn get_bounds(
+        &self,
+        world_transform: Option<&math::Matrix3x2F>,
+    ) -> Result<math::RectF, D2D1Error> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -51,11 +59,12 @@ pub trait Geometry {
 
     /// Get the bounds of the corresponding geometry after it has been widened or have
     /// an optional pen style applied.
-    fn get_widened_bounds(&self,
-                          stroke_width: f32,
-                          stroke_style: Option<&StrokeStyle>,
-                          world_transform: Option<&math::Matrix3x2F>)
-                          -> Result<math::RectF, D2D1Error> {
+    fn get_widened_bounds(
+        &self,
+        stroke_width: f32,
+        stroke_style: Option<&StrokeStyle>,
+        world_transform: Option<&math::Matrix3x2F>,
+    ) -> Result<math::RectF, D2D1Error> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -63,16 +72,18 @@ pub trait Geometry {
                 None => ptr::null(),
             };
             let stroke_style = match stroke_style {
-                Some(stroke) => stroke.get_ptr(),
+                Some(stroke) => stroke.get_ptr() as *mut _,
                 None => ptr::null_mut(),
             };
 
             let mut rect: D2D1_RECT_F = mem::uninitialized();
-            let result = (*ptr).GetWidenedBounds(stroke_width,
-                                                 stroke_style,
-                                                 matrix,
-                                                 D2D1_DEFAULT_FLATTENING_TOLERANCE,
-                                                 &mut rect);
+            let result = (*ptr).GetWidenedBounds(
+                stroke_width,
+                stroke_style,
+                matrix,
+                D2D1_DEFAULT_FLATTENING_TOLERANCE,
+                &mut rect,
+            );
 
             if SUCCEEDED(result) {
                 Ok(math::RectF(rect))
@@ -84,12 +95,13 @@ pub trait Geometry {
 
     /// Checks to see whether the corresponding penned and widened geometry contains the
     /// given point.
-    fn stroke_contains_point(&self,
-                             point: math::Point2F,
-                             stroke_width: f32,
-                             stroke_style: Option<&StrokeStyle>,
-                             world_transform: Option<&math::Matrix3x2F>)
-                             -> Result<bool, D2D1Error> {
+    fn stroke_contains_point(
+        &self,
+        point: math::Point2F,
+        stroke_width: f32,
+        stroke_style: Option<&StrokeStyle>,
+        world_transform: Option<&math::Matrix3x2F>,
+    ) -> Result<bool, D2D1Error> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -97,17 +109,19 @@ pub trait Geometry {
                 None => ptr::null(),
             };
             let stroke_style = match stroke_style {
-                Some(stroke) => stroke.get_ptr(),
+                Some(stroke) => stroke.get_ptr() as *mut _,
                 None => ptr::null_mut(),
             };
 
             let mut contains: BOOL = 0;
-            let result = (*ptr).StrokeContainsPoint(point.0,
-                                                    stroke_width,
-                                                    stroke_style,
-                                                    matrix,
-                                                    D2D1_DEFAULT_FLATTENING_TOLERANCE,
-                                                    &mut contains);
+            let result = (*ptr).StrokeContainsPoint(
+                point.0,
+                stroke_width,
+                stroke_style,
+                matrix,
+                D2D1_DEFAULT_FLATTENING_TOLERANCE,
+                &mut contains,
+            );
 
             if SUCCEEDED(result) {
                 Ok(contains != 0)
@@ -118,10 +132,11 @@ pub trait Geometry {
     }
 
     /// Test whether the given fill of this geometry would contain this point.
-    fn fill_contains_point(&self,
-                           point: math::Point2F,
-                           world_transform: Option<&math::Matrix3x2F>)
-                           -> Result<bool, D2D1Error> {
+    fn fill_contains_point(
+        &self,
+        point: math::Point2F,
+        world_transform: Option<&math::Matrix3x2F>,
+    ) -> Result<bool, D2D1Error> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -130,10 +145,12 @@ pub trait Geometry {
             };
 
             let mut contains: BOOL = 0;
-            let result = (*ptr).FillContainsPoint(point.0,
-                                                  matrix,
-                                                  D2D1_DEFAULT_FLATTENING_TOLERANCE,
-                                                  &mut contains);
+            let result = (*ptr).FillContainsPoint(
+                point.0,
+                matrix,
+                D2D1_DEFAULT_FLATTENING_TOLERANCE,
+                &mut contains,
+            );
 
             if SUCCEEDED(result) {
                 Ok(contains != 0)
@@ -144,10 +161,11 @@ pub trait Geometry {
     }
 
     /// Compare how one geometry intersects or contains another geometry.
-    fn compare_with_geometry<T: Geometry>(&self,
-                                          input: &T,
-                                          input_transform: Option<&math::Matrix3x2F>)
-                                          -> Result<GeometryRelation, D2D1Error> {
+    fn compare_with_geometry<T: Geometry>(
+        &self,
+        input: &T,
+        input_transform: Option<&math::Matrix3x2F>,
+    ) -> Result<GeometryRelation, D2D1Error> {
         unsafe {
             let self_ptr = self.get_ptr();
             let input_ptr = input.get_ptr();
@@ -158,10 +176,12 @@ pub trait Geometry {
             };
 
             let mut relation: D2D1_GEOMETRY_RELATION = D2D1_GEOMETRY_RELATION_UNKNOWN;
-            let result = (*self_ptr).CompareWithGeometry(input_ptr,
-                                                         matrix,
-                                                         D2D1_DEFAULT_FLATTENING_TOLERANCE,
-                                                         &mut relation);
+            let result = (*self_ptr).CompareWithGeometry(
+                input_ptr,
+                matrix,
+                D2D1_DEFAULT_FLATTENING_TOLERANCE,
+                &mut relation,
+            );
 
             if SUCCEEDED(result) {
                 use self::GeometryRelation::*;
@@ -209,8 +229,8 @@ pub trait Geometry {
             };
 
             let mut length = 0.0;
-            let result = (*ptr)
-                .ComputeLength(matrix, D2D1_DEFAULT_FLATTENING_TOLERANCE, &mut length);
+            let result =
+                (*ptr).ComputeLength(matrix, D2D1_DEFAULT_FLATTENING_TOLERANCE, &mut length);
 
             if SUCCEEDED(result) {
                 Ok(length)
@@ -221,10 +241,11 @@ pub trait Geometry {
     }
 
     /// Computes the point and tangent at a given distance along the path.
-    fn compute_point_at_length(&self,
-                               length: f32,
-                               world_transform: Option<&math::Matrix3x2F>)
-                               -> Result<(math::Point2F, math::Vector2F), D2D1Error> {
+    fn compute_point_at_length(
+        &self,
+        length: f32,
+        world_transform: Option<&math::Matrix3x2F>,
+    ) -> Result<(math::Point2F, math::Vector2F), D2D1Error> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -234,18 +255,22 @@ pub trait Geometry {
 
             let mut point: D2D1_POINT_2F = mem::uninitialized();
             let mut tangent: D2D1_POINT_2F = mem::uninitialized();
-            let result = (*ptr).ComputePointAtLength(length,
-                                                     matrix,
-                                                     D2D1_DEFAULT_FLATTENING_TOLERANCE,
-                                                     &mut point,
-                                                     &mut tangent);
+            let result = (*ptr).ComputePointAtLength(
+                length,
+                matrix,
+                D2D1_DEFAULT_FLATTENING_TOLERANCE,
+                &mut point,
+                &mut tangent,
+            );
 
             if SUCCEEDED(result) {
-                Ok((math::Point2F(point),
+                Ok((
+                    math::Point2F(point),
                     math::Vector2F(D2D_VECTOR_2F {
                         x: tangent.x,
                         y: tangent.y,
-                    })))
+                    }),
+                ))
             } else {
                 Err(From::from(result))
             }
@@ -318,7 +343,7 @@ impl GenericGeometry {
     }
 
     pub fn as_path(&self) -> Option<Path> {
-        match self.geom.query_interface::<ID2D1PathGeometry>() {
+        match self.geom.query_interface::<ID2D1PathGeometry1>() {
             Ok(ptr) => Some(Path { geom: ptr }),
             Err(_) => None,
         }
@@ -334,7 +359,9 @@ impl Geometry for GenericGeometry {
 impl FromRaw for GenericGeometry {
     type Raw = ID2D1Geometry;
     unsafe fn from_raw(raw: *mut ID2D1Geometry) -> Self {
-        GenericGeometry { geom: ComPtr::from_existing(raw) }
+        GenericGeometry {
+            geom: ComPtr::from_existing(raw),
+        }
     }
 }
 
@@ -356,14 +383,16 @@ impl Rectangle {
 
 impl Geometry for Rectangle {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-        &mut **(&mut *self.geom.raw_value())
+        self.geom.raw_value() as *mut _
     }
 }
 
 impl FromRaw for Rectangle {
     type Raw = ID2D1RectangleGeometry;
     unsafe fn from_raw(raw: *mut ID2D1RectangleGeometry) -> Self {
-        Rectangle { geom: ComPtr::from_existing(raw) }
+        Rectangle {
+            geom: ComPtr::from_existing(raw),
+        }
     }
 }
 
@@ -385,14 +414,16 @@ impl RoundedRectangle {
 
 impl Geometry for RoundedRectangle {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-        &mut **(&mut *self.geom.raw_value())
+        self.geom.raw_value() as *mut _
     }
 }
 
 impl FromRaw for RoundedRectangle {
     type Raw = ID2D1RoundedRectangleGeometry;
     unsafe fn from_raw(raw: *mut ID2D1RoundedRectangleGeometry) -> Self {
-        RoundedRectangle { geom: ComPtr::from_existing(raw) }
+        RoundedRectangle {
+            geom: ComPtr::from_existing(raw),
+        }
     }
 }
 
@@ -414,14 +445,16 @@ impl Ellipse {
 
 impl Geometry for Ellipse {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-        &mut **(&mut *self.geom.raw_value())
+        self.geom.raw_value() as *mut _
     }
 }
 
 impl FromRaw for Ellipse {
     type Raw = ID2D1EllipseGeometry;
     unsafe fn from_raw(raw: *mut ID2D1EllipseGeometry) -> Self {
-        Ellipse { geom: ComPtr::from_existing(raw) }
+        Ellipse {
+            geom: ComPtr::from_existing(raw),
+        }
     }
 }
 
@@ -443,8 +476,12 @@ impl Group {
     pub fn get_source_geometries(&self) -> Vec<GenericGeometry> {
         unsafe {
             let count = self.get_source_geometry_count();
-            let mut data: Vec<GenericGeometry> =
-                vec![GenericGeometry { geom: ComPtr::new() }; count as usize];
+            let mut data: Vec<GenericGeometry> = vec![
+                GenericGeometry {
+                    geom: ComPtr::new(),
+                };
+                count as usize
+            ];
             (*self.geom.raw_value()).GetSourceGeometries(data.as_mut_ptr() as *mut _, count);
             data
         }
@@ -453,14 +490,16 @@ impl Group {
 
 impl Geometry for Group {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-        &mut **(&mut *self.geom.raw_value())
+        self.geom.raw_value() as *mut _
     }
 }
 
 impl FromRaw for Group {
     type Raw = ID2D1GeometryGroup;
     unsafe fn from_raw(raw: *mut ID2D1GeometryGroup) -> Self {
-        Group { geom: ComPtr::from_existing(raw) }
+        Group {
+            geom: ComPtr::from_existing(raw),
+        }
     }
 }
 
@@ -490,21 +529,23 @@ impl Transformed {
 
 impl Geometry for Transformed {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-        &mut **(&mut *self.geom.raw_value())
+        self.geom.raw_value() as *mut _
     }
 }
 
 impl FromRaw for Transformed {
     type Raw = ID2D1TransformedGeometry;
     unsafe fn from_raw(raw: *mut ID2D1TransformedGeometry) -> Self {
-        Transformed { geom: ComPtr::from_existing(raw) }
+        Transformed {
+            geom: ComPtr::from_existing(raw),
+        }
     }
 }
 
 /// Custom-shaped geometry made of lines and curves
 #[derive(Clone, PartialEq)]
 pub struct Path {
-    geom: ComPtr<ID2D1PathGeometry>,
+    geom: ComPtr<ID2D1PathGeometry1>,
 }
 
 impl Path {
@@ -550,14 +591,16 @@ impl Path {
 
 impl Geometry for Path {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-        &mut **(&mut *self.geom.raw_value())
+        self.geom.raw_value() as *mut _
     }
 }
 
 impl FromRaw for Path {
-    type Raw = ID2D1PathGeometry;
-    unsafe fn from_raw(raw: *mut ID2D1PathGeometry) -> Self {
-        Path { geom: ComPtr::from_existing(raw) }
+    type Raw = ID2D1PathGeometry1;
+    unsafe fn from_raw(raw: *mut ID2D1PathGeometry1) -> Self {
+        Path {
+            geom: ComPtr::from_existing(raw),
+        }
     }
 }
 
@@ -568,27 +611,28 @@ pub struct GeometryBuilder<'a> {
 }
 
 impl<'a> GeometryBuilder<'a> {
-    pub fn fill_mode(mut self, fill_mode: FillMode) -> Self {
-        unsafe { self.sink.SetFillMode(D2D1_FILL_MODE(fill_mode as u32)) };
+    pub fn fill_mode(self, fill_mode: FillMode) -> Self {
+        unsafe { self.sink.SetFillMode((fill_mode as u32)) };
         self
     }
 
-    pub fn set_segment_flags(mut self, flags: PathSegment) -> Self {
-        unsafe { self.sink.SetSegmentFlags(D2D1_PATH_SEGMENT(flags as u32)) };
+    pub fn set_segment_flags(self, flags: PathSegment) -> Self {
+        unsafe { self.sink.SetSegmentFlags((flags as u32)) };
         self
     }
 
-    pub fn begin_figure<P: Into<math::Point2F>>(mut self,
-                                                start: P,
-                                                begin: FigureBegin,
-                                                end: FigureEnd)
-                                                -> FigureBuilder<'a> {
+    pub fn begin_figure<P: Into<math::Point2F>>(
+        self,
+        start: P,
+        begin: FigureBegin,
+        end: FigureEnd,
+    ) -> FigureBuilder<'a> {
         unsafe {
-            self.sink.BeginFigure(start.into().0, D2D1_FIGURE_BEGIN(begin as u32));
+            self.sink.BeginFigure(start.into().0, (begin as u32));
         }
         FigureBuilder {
             builder: self,
-            end: D2D1_FIGURE_END(end as u32),
+            end: (end as u32),
         }
     }
 
@@ -626,32 +670,40 @@ impl<'a> FigureBuilder<'a> {
         }
     }
 
-    pub fn add_line<P: Into<math::Point2F>>(mut self, point: P) -> Self {
+    pub fn add_line<P: Into<math::Point2F>>(self, point: P) -> Self {
         unsafe { self.builder.sink.AddLine(point.into().0) };
         self
     }
 
-    pub fn add_lines(mut self, points: &[math::Point2F]) -> Self {
-        unsafe { self.builder.sink.AddLines(points.as_ptr() as *const _, points.len() as u32) };
+    pub fn add_lines(self, points: &[math::Point2F]) -> Self {
+        unsafe {
+            self.builder
+                .sink
+                .AddLines(points.as_ptr() as *const _, points.len() as u32)
+        };
         self
     }
 
-    pub fn add_bezier(mut self, bezier: &math::BezierSegment) -> Self {
+    pub fn add_bezier(self, bezier: &math::BezierSegment) -> Self {
         unsafe { self.builder.sink.AddBezier(&bezier.0) };
         self
     }
 
-    pub fn add_beziers(mut self, beziers: &[math::BezierSegment]) -> Self {
-        unsafe { self.builder.sink.AddBeziers(beziers.as_ptr() as *const _, beziers.len() as u32) };
+    pub fn add_beziers(self, beziers: &[math::BezierSegment]) -> Self {
+        unsafe {
+            self.builder
+                .sink
+                .AddBeziers(beziers.as_ptr() as *const _, beziers.len() as u32)
+        };
         self
     }
 
-    pub fn add_quadratic_bezier(mut self, bezier: &math::QuadBezierSegment) -> Self {
+    pub fn add_quadratic_bezier(self, bezier: &math::QuadBezierSegment) -> Self {
         unsafe { self.builder.sink.AddQuadraticBezier(&bezier.0) };
         self
     }
 
-    pub fn add_quadratic_beziers(mut self, beziers: &[math::QuadBezierSegment]) -> Self {
+    pub fn add_quadratic_beziers(self, beziers: &[math::QuadBezierSegment]) -> Self {
         unsafe {
             self.builder
                 .sink
@@ -660,7 +712,7 @@ impl<'a> FigureBuilder<'a> {
         self
     }
 
-    pub fn add_arc(mut self, arc: &math::ArcSegment) -> Self {
+    pub fn add_arc(self, arc: &math::ArcSegment) -> Self {
         unsafe { self.builder.sink.AddArc(&arc.0) };
         self
     }

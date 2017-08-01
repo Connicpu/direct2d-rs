@@ -1,8 +1,13 @@
-use std::{ptr, slice, mem};
+use std::{mem, ptr, slice};
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
-use winapi::*;
-use kernel32;
+
+use winapi::shared::minwindef::*;
+use winapi::shared::guiddef::IID;
+use winapi::shared::winerror::FACILITY_WIN32;
+use winapi::um::winnt::*;
+use winapi::um::winbase::*;
+use winapi::um::errhandlingapi::*;
 
 pub trait GetRaw {
     type Raw;
@@ -34,29 +39,30 @@ pub fn uuid_to_iid(uuid: ::uuid::Uuid) -> IID {
 pub fn hresult_to_string(hr: HRESULT) -> Option<String> {
     unsafe {
         let mut buffer: *mut u8 = ptr::null_mut();
-        let num_chars = kernel32::FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-                                                 FORMAT_MESSAGE_FROM_SYSTEM |
-                                                 FORMAT_MESSAGE_IGNORE_INSERTS,
-                                                 ptr::null_mut(),
-                                                 hr as DWORD,
-                                                 0, // unknown lang-id, use default
-                                                 (&mut buffer) as *mut *mut u8 as *mut i8,
-                                                 0, // minimum buffer size
-                                                 ptr::null_mut());
+        let num_chars = FormatMessageA(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                FORMAT_MESSAGE_IGNORE_INSERTS,
+            ptr::null_mut(),
+            hr as DWORD,
+            0, // unknown lang-id, use default
+            (&mut buffer) as *mut *mut u8 as *mut i8,
+            0, // minimum buffer size
+            ptr::null_mut(),
+        );
         if num_chars == 0 {
             return None;
         }
 
         let bytes = slice::from_raw_parts(buffer, num_chars as usize);
         let message = String::from_utf8_lossy(bytes).into_owned();
-        kernel32::LocalFree(buffer as *mut _);
+        LocalFree(buffer as *mut _);
 
         Some(message)
     }
 }
 
 pub fn last_error_hr() -> HRESULT {
-    hresult_from_win32(unsafe { kernel32::GetLastError() })
+    hresult_from_win32(unsafe { GetLastError() })
 }
 
 pub fn last_error_string() -> Option<String> {
@@ -69,7 +75,8 @@ pub trait ToWide {
 }
 
 impl<T> ToWide for T
-    where T: AsRef<OsStr>
+where
+    T: AsRef<OsStr>,
 {
     fn to_wide(&self) -> Vec<u16> {
         self.as_ref().encode_wide().collect()

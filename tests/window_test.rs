@@ -1,17 +1,25 @@
 #![feature(const_fn)]
 
 extern crate winapi;
-extern crate user32;
-extern crate kernel32;
 extern crate direct2d;
 
 use std::{ptr, mem};
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
-use winapi::*;
 use direct2d::{Factory, RenderTarget};
 use direct2d::render_target::RenderTargetBacking;
 use direct2d::math::*;
+
+use winapi::ctypes::c_int;
+use winapi::shared::minwindef::*;
+use winapi::shared::windef::HWND;
+use winapi::shared::winerror::*;
+use winapi::shared::dxgiformat::*;
+use winapi::um::dcommon::*;
+use winapi::um::d2d1::*;
+use winapi::um::d2d1_1::*;
+use winapi::um::winuser::*;
+use winapi::um::libloaderapi::*;
 
 pub const BACKGROUND: ColorF = ColorF::uint_rgb(0x2A14CC, 1.0);
 pub const HIGHLIGHT: ColorF = ColorF::uint_rgb(0x483D99, 1.0);
@@ -46,7 +54,7 @@ struct WindowCreate {
 }
 
 unsafe impl RenderTargetBacking for WindowCreate {
-    fn create_target(self, factory: &mut ID2D1Factory) -> Result<*mut ID2D1RenderTarget, HRESULT> {
+    fn create_target(self, factory: &mut ID2D1Factory1) -> Result<*mut ID2D1RenderTarget, HRESULT> {
         unsafe {
             let mut ptr: *mut ID2D1HwndRenderTarget = ptr::null_mut();
             let hr = factory.CreateHwndRenderTarget(
@@ -55,10 +63,8 @@ unsafe impl RenderTargetBacking for WindowCreate {
                 &mut ptr as *mut _,
             );
             
-            let ptr: *mut _ = &mut **ptr;
-            
             if SUCCEEDED(hr) {
-                Ok(ptr)
+                Ok(ptr as *mut _)
             } else {
                 Err(From::from(hr))
             }
@@ -71,7 +77,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND, msg: UINT, wp: WPARAM, lp: LPARAM
         WM_CREATE => {
             // Set the window pointer into the creation parameters
             let cs: &CREATESTRUCTW = mem::transmute(lp);
-            user32::SetWindowLongPtrW(hwnd, GWLP_USERDATA, mem::transmute(cs.lpCreateParams));
+            SetWindowLongPtrW(hwnd, GWLP_USERDATA, mem::transmute(cs.lpCreateParams));
             
             // Create the direct2d stuff
             let params = WindowCreate {
@@ -102,22 +108,22 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND, msg: UINT, wp: WPARAM, lp: LPARAM
             0
         },
         WM_PAINT => {
-            let window: &mut Window = mem::transmute(user32::GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+            let window: &mut Window = mem::transmute(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
             paint_window(window);
             
-            user32::DefWindowProcW(hwnd, msg, wp, lp)
+            DefWindowProcW(hwnd, msg, wp, lp)
         },
         WM_TIMER => {
-            user32::DestroyWindow(hwnd);
+            DestroyWindow(hwnd);
             
             0
         },
-        _ => user32::DefWindowProcW(hwnd, msg, wp, lp)
+        _ => DefWindowProcW(hwnd, msg, wp, lp)
     }
 }
 
 unsafe fn real_window_test() {
-    let factory = Factory::create().unwrap();
+    let factory = Factory::new().unwrap();
     
     let mut window = Window {
         hwnd: ptr::null_mut(),
@@ -125,11 +131,11 @@ unsafe fn real_window_test() {
         target: None,
     };
     
-    let hinst: HINSTANCE = kernel32::GetModuleHandleW(ptr::null());
+    let hinst: HINSTANCE = GetModuleHandleW(ptr::null());
     let class_name = "Test D2D1 Window Class".to_wide_null();
     let window_name = "Test D2D1 Window".to_wide_null();
     
-    user32::RegisterClassW(&WNDCLASSW {
+    RegisterClassW(&WNDCLASSW {
         style: CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW,
         lpfnWndProc: Some(wnd_proc),
         cbWndExtra: mem::size_of::<&mut Window>() as c_int,
@@ -139,7 +145,7 @@ unsafe fn real_window_test() {
         .. mem::zeroed()
     });
     
-    let hwnd = user32::CreateWindowExW(
+    let hwnd = CreateWindowExW(
         0, // dwExStyle
         class_name.as_ptr(),
         window_name.as_ptr(),
@@ -157,16 +163,16 @@ unsafe fn real_window_test() {
     assert!(hwnd != ptr::null_mut());
     window.hwnd = hwnd;
     
-    user32::ShowWindow(hwnd, SW_SHOW);
-    user32::SetTimer(hwnd, 0, 1000, None);
+    ShowWindow(hwnd, SW_SHOW);
+    SetTimer(hwnd, 0, 1000, None);
     
     let mut msg: MSG = mem::uninitialized();
     loop {
-        match user32::GetMessageW(&mut msg, hwnd, 0, 0) {
+        match GetMessageW(&mut msg, hwnd, 0, 0) {
             -1 => break,
             _ => {
-                user32::TranslateMessage(&msg);
-                user32::DispatchMessageW(&msg);
+                TranslateMessage(&msg);
+                DispatchMessageW(&msg);
             }
         }
     }

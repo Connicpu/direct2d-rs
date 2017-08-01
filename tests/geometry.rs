@@ -8,7 +8,7 @@ const EPSILON: f32 = 0.0001;
 
 #[test]
 fn rectangle_area() {
-    let factory = Factory::create().unwrap();
+    let factory = Factory::new().unwrap();
     
     let rect = RectF::new(0.0, 0.0, 1.0, 1.0);
     let rectangle = factory.create_rectangle_geometry(&rect).unwrap();
@@ -19,7 +19,7 @@ fn rectangle_area() {
 
 #[test]
 fn rectangle_length() {
-    let factory = Factory::create().unwrap();
+    let factory = Factory::new().unwrap();
     
     let rect = RectF::new(0.0, 0.0, 1.0, 1.0);
     let rectangle = factory.create_rectangle_geometry(&rect).unwrap();
@@ -30,7 +30,7 @@ fn rectangle_length() {
 
 #[test]
 fn combined_area() {
-    let factory = Factory::create().unwrap();
+    let factory = Factory::new().unwrap();
     
     let rect1 = RectF::new(0.0, 0.0, 1.0, 1.0);
     let rectangle1 = factory.create_rectangle_geometry(&rect1).unwrap();
@@ -46,7 +46,7 @@ fn combined_area() {
 
 #[test]
 fn transformed_area() {
-    let factory = Factory::create().unwrap();
+    let factory = Factory::new().unwrap();
     
     let rect = RectF::new(0.0, 0.0, 1.0, 1.0);
     let rectangle = factory.create_rectangle_geometry(&rect).unwrap();
@@ -84,7 +84,7 @@ fn transformed_area() {
 
 #[test]
 fn path_geometry() {
-    let factory = Factory::create().unwrap();
+    let factory = Factory::new().unwrap();
     
     /* It looks something like this:
         - -
@@ -131,7 +131,7 @@ fn path_geometry() {
 
 #[test]
 fn to_generic_and_back() {
-    let factory = Factory::create().unwrap();
+    let factory = Factory::new().unwrap();
     
     let rect = RectF::new(0.0, 0.0, 1.0, 1.0);
     let rectangle = factory.create_rectangle_geometry(&rect).unwrap();

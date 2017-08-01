@@ -1,8 +1,9 @@
 use std::mem;
-use winapi::*;
 use math::*;
 use comptr::ComPtr;
 use factory::Factory;
+
+use winapi::um::d2d1::*;
 
 pub trait Brush {
     unsafe fn get_ptr(&self) -> *mut ID2D1Brush;
@@ -13,12 +14,14 @@ pub trait Brush {
             let mut factory = ComPtr::<ID2D1Factory>::new();
             (*ptr).GetFactory(factory.raw_addr());
 
-            Factory::from_ptr(factory)
+            Factory::from_ptr(factory.query_interface().unwrap())
         }
     }
 
     fn to_generic(&self) -> GenericBrush {
-        GenericBrush { ptr: unsafe { ComPtr::from_existing(self.get_ptr()) } }
+        GenericBrush {
+            ptr: unsafe { ComPtr::from_existing(self.get_ptr()) },
+        }
     }
 
     fn set_opacity(&mut self, opacity: f32) {
@@ -56,10 +59,6 @@ impl SolidColor {
     }
 
     pub fn get_color(&self) -> ColorF {
-        unsafe {
-            let mut color: ColorF = mem::uninitialized();
-            (*self.ptr.raw_value()).GetColor(&mut color.0);
-            color
-        }
+        unsafe { ColorF((*self.ptr.raw_value()).GetColor()) }
     }
 }

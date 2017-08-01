@@ -1,15 +1,23 @@
 extern crate winapi;
-extern crate user32;
-extern crate kernel32;
 extern crate direct2d;
 
 use std::{ptr, mem};
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
-use winapi::*;
+
 use direct2d::{Factory, RenderTarget};
 use direct2d::render_target::RenderTargetBacking;
 use direct2d::math::*;
+
+use winapi::shared::minwindef::*;
+use winapi::shared::windef::HWND;
+use winapi::shared::winerror::*;
+use winapi::shared::dxgiformat::*;
+use winapi::um::dcommon::*;
+use winapi::um::d2d1::*;
+use winapi::um::d2d1_1::*;
+use winapi::um::winuser::*;
+use winapi::um::libloaderapi::*;
 
 #[test]
 fn solid_color() {
@@ -42,27 +50,27 @@ struct RT {
 
 impl Drop for RT {
     fn drop(&mut self) {
-        unsafe { user32::DestroyWindow(self.hwnd) };
+        unsafe { DestroyWindow(self.hwnd) };
     }
 }
 
 fn make_rt() -> RT {
     unsafe {
-        let factory = Factory::create().unwrap();
+        let factory = Factory::new().unwrap();
         
-        let hinst: HINSTANCE = kernel32::GetModuleHandleW(ptr::null());
+        let hinst: HINSTANCE = GetModuleHandleW(ptr::null());
         let class_name = "Test D2D1 Window Class".to_wide_null();
         let window_name = "Test D2D1 Window".to_wide_null();
         
-        user32::RegisterClassW(&WNDCLASSW {
-            lpfnWndProc: Some(user32::DefWindowProcW),
+        RegisterClassW(&WNDCLASSW {
+            lpfnWndProc: Some(DefWindowProcW),
             hInstance: hinst,
             lpszClassName: class_name.as_ptr(),
             
             .. mem::zeroed()
         });
         
-        let hwnd = user32::CreateWindowExW(
+        let hwnd = CreateWindowExW(
             0, // dwExStyle
             class_name.as_ptr(),
             window_name.as_ptr(),
@@ -117,7 +125,7 @@ struct WindowCreate {
 }
 
 unsafe impl RenderTargetBacking for WindowCreate {
-    fn create_target(self, factory: &mut ID2D1Factory) -> Result<*mut ID2D1RenderTarget, HRESULT> {
+    fn create_target(self, factory: &mut ID2D1Factory1) -> Result<*mut ID2D1RenderTarget, HRESULT> {
         unsafe {
             let mut ptr: *mut ID2D1HwndRenderTarget = ptr::null_mut();
             let hr = factory.CreateHwndRenderTarget(
@@ -126,10 +134,8 @@ unsafe impl RenderTargetBacking for WindowCreate {
                 &mut ptr as *mut _,
             );
             
-            let ptr: *mut _ = &mut **ptr;
-            
             if SUCCEEDED(hr) {
-                Ok(ptr)
+                Ok(ptr as *mut _)
             } else {
                 Err(From::from(hr))
             }
