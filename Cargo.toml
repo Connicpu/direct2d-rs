@@ -15,7 +15,7 @@ directwrite = "0.0.7"
 [dependencies.winapi]
 git = "https://github.com/retep998/winapi-rs.git"
 branch = "dev"
-features = ["d2d1", "dwrite", "winbase", "libloaderapi", "errhandlingapi", "winuser"]
+features = ["d2d1_1", "dwrite", "winbase", "libloaderapi", "errhandlingapi", "winuser"]
 
 [patch.crates-io.directwrite]
 git = "https://github.com/Connicpu/directwrite-rs.git"
