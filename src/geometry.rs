@@ -1,6 +1,6 @@
 use std::{mem, ptr};
 use std::marker::PhantomData;
-use comptr::ComPtr;
+use wio::com::ComPtr;
 use error::D2D1Error;
 use stroke_style::StrokeStyle;
 use factory::Factory;
@@ -19,16 +19,16 @@ pub trait Geometry {
     fn get_factory(&self) -> Factory {
         unsafe {
             let ptr = self.get_ptr();
-            let mut factory = ComPtr::<ID2D1Factory>::new();
-            (*ptr).GetFactory(factory.raw_addr());
+            let mut factory: *mut ID2D1Factory = ptr::null_mut();
+            (*ptr).GetFactory(&mut factory);
 
-            Factory::from_ptr(factory.query_interface().unwrap())
+            Factory::from_ptr(ComPtr::from_raw(factory).cast().unwrap())
         }
     }
 
     fn to_generic(&self) -> GenericGeometry {
         GenericGeometry {
-            geom: unsafe { ComPtr::from_existing(self.get_ptr()) },
+            geom: unsafe { ComPtr::from_raw(self.get_ptr()) },
         }
     }
 
@@ -281,12 +281,12 @@ pub trait Geometry {
         let factory = self.get_factory();
         unsafe {
             let raw_factory = factory.get_raw();
-            let mut transformed: ComPtr<ID2D1TransformedGeometry> = ComPtr::new();
+            let mut transformed: *mut ID2D1TransformedGeometry = ptr::null_mut();
             let result = (*raw_factory)
-                .CreateTransformedGeometry(self.get_ptr(), &transform.0, transformed.raw_addr());
+                .CreateTransformedGeometry(self.get_ptr(), &transform.0, &mut transformed);
 
             if SUCCEEDED(result) {
-                Ok(Transformed { geom: transformed })
+                Ok(Transformed { geom: ComPtr::from_raw(transformed) })
             } else {
                 Err(From::from(result))
             }
@@ -308,42 +308,42 @@ pub struct GenericGeometry {
 
 impl GenericGeometry {
     pub fn as_rectangle(&self) -> Option<Rectangle> {
-        match self.geom.query_interface::<ID2D1RectangleGeometry>() {
+        match self.geom.cast::<ID2D1RectangleGeometry>() {
             Ok(ptr) => Some(Rectangle { geom: ptr }),
             Err(_) => None,
         }
     }
 
     pub fn as_rounded_rectangle(&self) -> Option<RoundedRectangle> {
-        match self.geom.query_interface::<ID2D1RoundedRectangleGeometry>() {
+        match self.geom.cast::<ID2D1RoundedRectangleGeometry>() {
             Ok(ptr) => Some(RoundedRectangle { geom: ptr }),
             Err(_) => None,
         }
     }
 
     pub fn as_ellipse(&self) -> Option<Ellipse> {
-        match self.geom.query_interface::<ID2D1EllipseGeometry>() {
+        match self.geom.cast::<ID2D1EllipseGeometry>() {
             Ok(ptr) => Some(Ellipse { geom: ptr }),
             Err(_) => None,
         }
     }
 
     pub fn as_group(&self) -> Option<Group> {
-        match self.geom.query_interface::<ID2D1GeometryGroup>() {
+        match self.geom.cast::<ID2D1GeometryGroup>() {
             Ok(ptr) => Some(Group { geom: ptr }),
             Err(_) => None,
         }
     }
 
     pub fn as_transformed(&self) -> Option<Transformed> {
-        match self.geom.query_interface::<ID2D1TransformedGeometry>() {
+        match self.geom.cast::<ID2D1TransformedGeometry>() {
             Ok(ptr) => Some(Transformed { geom: ptr }),
             Err(_) => None,
         }
     }
 
     pub fn as_path(&self) -> Option<Path> {
-        match self.geom.query_interface::<ID2D1PathGeometry1>() {
+        match self.geom.cast::<ID2D1PathGeometry1>() {
             Ok(ptr) => Some(Path { geom: ptr }),
             Err(_) => None,
         }
@@ -352,7 +352,7 @@ impl GenericGeometry {
 
 impl Geometry for GenericGeometry {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-        &mut *(&mut *self.geom.raw_value())
+        &mut *(&mut *self.geom.as_raw())
     }
 }
 
@@ -360,7 +360,7 @@ impl FromRaw for GenericGeometry {
     type Raw = ID2D1Geometry;
     unsafe fn from_raw(raw: *mut ID2D1Geometry) -> Self {
         GenericGeometry {
-            geom: ComPtr::from_existing(raw),
+            geom: ComPtr::from_raw(raw),
         }
     }
 }
@@ -375,7 +375,7 @@ impl Rectangle {
     pub fn get_rect(&self) -> math::RectF {
         unsafe {
             let mut rect: D2D1_RECT_F = mem::uninitialized();
-            (*self.geom.raw_value()).GetRect(&mut rect);
+            self.geom.GetRect(&mut rect);
             math::RectF(rect)
         }
     }
@@ -383,7 +383,7 @@ impl Rectangle {
 
 impl Geometry for Rectangle {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-        self.geom.raw_value() as *mut _
+        self.geom.as_raw() as *mut _
     }
 }
 
@@ -391,7 +391,7 @@ impl FromRaw for Rectangle {
     type Raw = ID2D1RectangleGeometry;
     unsafe fn from_raw(raw: *mut ID2D1RectangleGeometry) -> Self {
         Rectangle {
-            geom: ComPtr::from_existing(raw),
+            geom: ComPtr::from_raw(raw),
         }
     }
 }
@@ -406,7 +406,7 @@ impl RoundedRectangle {
     pub fn get_rounded_rect(&self) -> math::RoundedRect {
         unsafe {
             let mut rect: D2D1_ROUNDED_RECT = mem::uninitialized();
-            (*self.geom.raw_value()).GetRoundedRect(&mut rect);
+            self.geom.GetRoundedRect(&mut rect);
             math::RoundedRect(rect)
         }
     }
@@ -414,7 +414,7 @@ impl RoundedRectangle {
 
 impl Geometry for RoundedRectangle {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-        self.geom.raw_value() as *mut _
+        self.geom.as_raw() as *mut _
     }
 }
 
@@ -422,7 +422,7 @@ impl FromRaw for RoundedRectangle {
     type Raw = ID2D1RoundedRectangleGeometry;
     unsafe fn from_raw(raw: *mut ID2D1RoundedRectangleGeometry) -> Self {
         RoundedRectangle {
-            geom: ComPtr::from_existing(raw),
+            geom: ComPtr::from_raw(raw),
         }
     }
 }
@@ -437,7 +437,7 @@ impl Ellipse {
     pub fn get_ellipse(&self) -> math::Ellipse {
         unsafe {
             let mut ellipse: D2D1_ELLIPSE = mem::uninitialized();
-            (*self.geom.raw_value()).GetEllipse(&mut ellipse);
+            self.geom.GetEllipse(&mut ellipse);
             math::Ellipse(ellipse)
         }
     }
@@ -445,7 +445,7 @@ impl Ellipse {
 
 impl Geometry for Ellipse {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-        self.geom.raw_value() as *mut _
+        self.geom.as_raw() as *mut _
     }
 }
 
@@ -453,7 +453,7 @@ impl FromRaw for Ellipse {
     type Raw = ID2D1EllipseGeometry;
     unsafe fn from_raw(raw: *mut ID2D1EllipseGeometry) -> Self {
         Ellipse {
-            geom: ComPtr::from_existing(raw),
+            geom: ComPtr::from_raw(raw),
         }
     }
 }
@@ -466,23 +466,19 @@ pub struct Group {
 
 impl Group {
     pub fn get_fill_mode(&self) -> Result<FillMode, D2D1Error> {
-        unsafe { FillMode::from_raw((*self.geom.raw_value()).GetFillMode()) }
+        unsafe { FillMode::from_raw(self.geom.GetFillMode()) }
     }
 
     pub fn get_source_geometry_count(&self) -> u32 {
-        unsafe { (*self.geom.raw_value()).GetSourceGeometryCount() }
+        unsafe { self.geom.GetSourceGeometryCount() }
     }
 
     pub fn get_source_geometries(&self) -> Vec<GenericGeometry> {
         unsafe {
             let count = self.get_source_geometry_count();
-            let mut data: Vec<GenericGeometry> = vec![
-                GenericGeometry {
-                    geom: ComPtr::new(),
-                };
-                count as usize
-            ];
-            (*self.geom.raw_value()).GetSourceGeometries(data.as_mut_ptr() as *mut _, count);
+            let mut data: Vec<GenericGeometry> = Vec::with_capacity(count as usize);
+            self.geom.GetSourceGeometries(data.as_mut_ptr() as *mut _, count);
+            data.set_len(count as usize);
             data
         }
     }
@@ -490,7 +486,7 @@ impl Group {
 
 impl Geometry for Group {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-        self.geom.raw_value() as *mut _
+        self.geom.as_raw() as *mut _
     }
 }
 
@@ -498,7 +494,7 @@ impl FromRaw for Group {
     type Raw = ID2D1GeometryGroup;
     unsafe fn from_raw(raw: *mut ID2D1GeometryGroup) -> Self {
         Group {
-            geom: ComPtr::from_existing(raw),
+            geom: ComPtr::from_raw(raw),
         }
     }
 }
@@ -512,16 +508,16 @@ pub struct Transformed {
 impl Transformed {
     pub fn get_source_geometry(&self) -> GenericGeometry {
         unsafe {
-            let mut ptr: ComPtr<ID2D1Geometry> = ComPtr::new();
-            (*self.geom.raw_value()).GetSourceGeometry(ptr.raw_addr());
-            GenericGeometry { geom: ptr }
+            let mut ptr: *mut ID2D1Geometry = ptr::null_mut();
+            self.geom.GetSourceGeometry(&mut ptr);
+            GenericGeometry { geom: ComPtr::from_raw(ptr) }
         }
     }
 
     pub fn get_transform(&self) -> math::Matrix3x2F {
         unsafe {
             let mut matrix: D2D1_MATRIX_3X2_F = mem::uninitialized();
-            (*self.geom.raw_value()).GetTransform(&mut matrix);
+            self.geom.GetTransform(&mut matrix);
             math::Matrix3x2F(matrix)
         }
     }
@@ -529,7 +525,7 @@ impl Transformed {
 
 impl Geometry for Transformed {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-        self.geom.raw_value() as *mut _
+        self.geom.as_raw() as *mut _
     }
 }
 
@@ -537,7 +533,7 @@ impl FromRaw for Transformed {
     type Raw = ID2D1TransformedGeometry;
     unsafe fn from_raw(raw: *mut ID2D1TransformedGeometry) -> Self {
         Transformed {
-            geom: ComPtr::from_existing(raw),
+            geom: ComPtr::from_raw(raw),
         }
     }
 }
@@ -550,12 +546,12 @@ pub struct Path {
 
 impl Path {
     pub fn open<'a>(&'a mut self) -> Result<GeometryBuilder<'a>, D2D1Error> {
-        let mut ptr: ComPtr<ID2D1GeometrySink> = ComPtr::new();
+        let mut ptr: *mut ID2D1GeometrySink = ptr::null_mut();
         unsafe {
-            let result = self.geom.Open(ptr.raw_addr());
+            let result = self.geom.Open(&mut ptr);
             if SUCCEEDED(result) {
                 Ok(GeometryBuilder {
-                    sink: ptr,
+                    sink: ComPtr::from_raw(ptr),
                     phantom: PhantomData,
                 })
             } else {
@@ -567,7 +563,7 @@ impl Path {
     pub fn get_segment_count(&self) -> Result<u32, D2D1Error> {
         unsafe {
             let mut count = 0;
-            let result = (*self.geom.raw_value()).GetSegmentCount(&mut count);
+            let result = self.geom.GetSegmentCount(&mut count);
             if SUCCEEDED(result) {
                 Ok(count)
             } else {
@@ -579,7 +575,7 @@ impl Path {
     pub fn get_figure_count(&self) -> Result<u32, D2D1Error> {
         unsafe {
             let mut count = 0;
-            let result = (*self.geom.raw_value()).GetFigureCount(&mut count);
+            let result = self.geom.GetFigureCount(&mut count);
             if SUCCEEDED(result) {
                 Ok(count)
             } else {
@@ -591,7 +587,7 @@ impl Path {
 
 impl Geometry for Path {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-        self.geom.raw_value() as *mut _
+        self.geom.as_raw() as *mut _
     }
 }
 
@@ -599,7 +595,7 @@ impl FromRaw for Path {
     type Raw = ID2D1PathGeometry1;
     unsafe fn from_raw(raw: *mut ID2D1PathGeometry1) -> Self {
         Path {
-            geom: ComPtr::from_existing(raw),
+            geom: ComPtr::from_raw(raw),
         }
     }
 }
@@ -631,7 +627,7 @@ impl<'a> GeometryBuilder<'a> {
             self.sink.BeginFigure(start.into().0, begin as u32);
         }
         FigureBuilder {
-            builder: self,
+            builder: Some(self),
             end: (end as u32),
         }
     }
@@ -644,40 +640,35 @@ impl<'a> GeometryBuilder<'a> {
 impl<'a> Drop for GeometryBuilder<'a> {
     fn drop(&mut self) {
         unsafe {
-            if !self.sink.is_null() {
-                let result = self.sink.Close();
-                assert!(SUCCEEDED(result));
-            }
+            let result = self.sink.Close();
+            assert!(SUCCEEDED(result));
         }
     }
 }
 
 pub struct FigureBuilder<'a> {
-    builder: GeometryBuilder<'a>,
+    // Note: this is always Some, with the exception of the drop after
+    // end. We could avoid the Option, for example by doing a ptr::read
+    // then forgetting self, in end.
+    builder: Option<GeometryBuilder<'a>>,
     end: D2D1_FIGURE_END,
 }
 
 impl<'a> FigureBuilder<'a> {
     pub fn end(mut self) -> GeometryBuilder<'a> {
-        unsafe { self.builder.sink.EndFigure(self.end) };
+        unsafe { self.builder.as_ref().unwrap().sink.EndFigure(self.end) };
 
-        let mut ptr = ComPtr::new();
-        mem::swap(&mut ptr, &mut self.builder.sink);
-
-        GeometryBuilder {
-            sink: ptr,
-            phantom: PhantomData,
-        }
+        self.builder.take().unwrap()
     }
 
     pub fn add_line<P: Into<math::Point2F>>(self, point: P) -> Self {
-        unsafe { self.builder.sink.AddLine(point.into().0) };
+        unsafe { self.builder.as_ref().unwrap().sink.AddLine(point.into().0) };
         self
     }
 
     pub fn add_lines(self, points: &[math::Point2F]) -> Self {
         unsafe {
-            self.builder
+            self.builder.as_ref().unwrap()
                 .sink
                 .AddLines(points.as_ptr() as *const _, points.len() as u32)
         };
@@ -685,13 +676,13 @@ impl<'a> FigureBuilder<'a> {
     }
 
     pub fn add_bezier(self, bezier: &math::BezierSegment) -> Self {
-        unsafe { self.builder.sink.AddBezier(&bezier.0) };
+        unsafe { self.builder.as_ref().unwrap().sink.AddBezier(&bezier.0) };
         self
     }
 
     pub fn add_beziers(self, beziers: &[math::BezierSegment]) -> Self {
         unsafe {
-            self.builder
+            self.builder.as_ref().unwrap()
                 .sink
                 .AddBeziers(beziers.as_ptr() as *const _, beziers.len() as u32)
         };
@@ -699,13 +690,13 @@ impl<'a> FigureBuilder<'a> {
     }
 
     pub fn add_quadratic_bezier(self, bezier: &math::QuadBezierSegment) -> Self {
-        unsafe { self.builder.sink.AddQuadraticBezier(&bezier.0) };
+        unsafe { self.builder.as_ref().unwrap().sink.AddQuadraticBezier(&bezier.0) };
         self
     }
 
     pub fn add_quadratic_beziers(self, beziers: &[math::QuadBezierSegment]) -> Self {
         unsafe {
-            self.builder
+            self.builder.as_ref().unwrap()
                 .sink
                 .AddQuadraticBeziers(beziers.as_ptr() as *const _, beziers.len() as u32)
         };
@@ -713,7 +704,7 @@ impl<'a> FigureBuilder<'a> {
     }
 
     pub fn add_arc(self, arc: &math::ArcSegment) -> Self {
-        unsafe { self.builder.sink.AddArc(&arc.0) };
+        unsafe { self.builder.as_ref().unwrap().sink.AddArc(&arc.0) };
         self
     }
 }
@@ -721,8 +712,8 @@ impl<'a> FigureBuilder<'a> {
 impl<'a> Drop for FigureBuilder<'a> {
     fn drop(&mut self) {
         unsafe {
-            if !self.builder.sink.is_null() {
-                self.builder.sink.EndFigure(self.end);
+            if let Some(ref builder) = self.builder {
+                builder.sink.EndFigure(self.end);
             }
         }
     }

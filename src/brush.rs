@@ -1,6 +1,6 @@
-use std::mem;
+use std::{mem, ptr};
 use math::*;
-use comptr::ComPtr;
+use wio::com::ComPtr;
 use factory::Factory;
 
 use winapi::um::d2d1::*;
@@ -10,17 +10,16 @@ pub trait Brush {
 
     fn get_factory(&self) -> Factory {
         unsafe {
-            let ptr = self.get_ptr();
-            let mut factory = ComPtr::<ID2D1Factory>::new();
-            (*ptr).GetFactory(factory.raw_addr());
+            let mut ptr: *mut ID2D1Factory = ptr::null_mut();
+            (*self.get_ptr()).GetFactory(&mut ptr);
 
-            Factory::from_ptr(factory.query_interface().unwrap())
+            Factory::from_ptr(ComPtr::from_raw(ptr).cast().unwrap())
         }
     }
 
     fn to_generic(&self) -> GenericBrush {
         GenericBrush {
-            ptr: unsafe { ComPtr::from_existing(self.get_ptr()) },
+            ptr: unsafe { ComPtr::from_raw(self.get_ptr()) },
         }
     }
 
@@ -55,10 +54,10 @@ brush_type! { pub struct SolidColor(ID2D1SolidColorBrush); }
 
 impl SolidColor {
     pub fn set_color(&mut self, color: &ColorF) {
-        unsafe { (*self.ptr.raw_value()).SetColor(&color.0) };
+        unsafe { self.ptr.SetColor(&color.0) };
     }
 
     pub fn get_color(&self) -> ColorF {
-        unsafe { ColorF((*self.ptr.raw_value()).GetColor()) }
+        unsafe { ColorF(self.ptr.GetColor()) }
     }
 }
