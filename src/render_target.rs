@@ -340,6 +340,21 @@ impl RenderTarget {
                 .DrawTextLayout(origin.0, layout, brush.get_ptr(), (draw_options));
         }
     }
+
+    pub fn set_transform(&mut self, transform: &Matrix3x2F) {
+        unsafe {
+            self.rt().SetTransform(&transform.0)
+        }
+    }
+
+    pub fn get_transform(&self) -> Matrix3x2F {
+        unsafe {
+            let mut mat: Matrix3x2F = mem::uninitialized();
+            self.rt().GetTransform(&mut mat.0);
+            mat
+        }
+    }
+
 }
 
 impl GetRaw for RenderTarget {
