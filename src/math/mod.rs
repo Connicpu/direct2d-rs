@@ -35,12 +35,14 @@ pub enum ArcSize {
 
 impl Point2F {
     #[inline]
-    pub const fn new(x: f32, y: f32) -> Point2F {
+    // Note: can be made const when that becomes stable
+    pub fn new(x: f32, y: f32) -> Point2F {
         Point2F(D2D1_POINT_2F { x: x, y: y })
     }
 
     #[inline]
-    pub const fn origin() -> Point2F {
+    // Note: can be made const when that becomes stable
+    pub fn origin() -> Point2F {
         Point2F::new(0.0, 0.0)
     }
 }
@@ -359,8 +361,9 @@ impl Ellipse {
 }
 
 impl ColorF {
+    // Note: can be made const when that becomes stable
     #[inline]
-    pub const fn uint_rgb(rgb: u32, a: f32) -> ColorF {
+    pub fn uint_rgb(rgb: u32, a: f32) -> ColorF {
         ColorF(D2D1_COLOR_F {
             r: ((rgb >> 16) & 0xFF) as f32 / 255.0,
             g: ((rgb >> 8) & 0xFF) as f32 / 255.0,
@@ -402,6 +405,14 @@ impl Matrix3x2F {
     #[inline]
     pub fn new(data: [[f32; 2]; 3]) -> Matrix3x2F {
         Matrix3x2F(D2D1_MATRIX_3X2_F { matrix: data })
+    }
+
+    // Used for destructuring; if and when slice pattern syntax lands, this
+    // could be removed.
+    fn as_tuple(&self) -> ((f32, f32), (f32, f32), (f32, f32)) {
+        ((self.matrix[0][0], self.matrix[0][1]),
+            (self.matrix[1][0], self.matrix[1][1]),
+            (self.matrix[2][0], self.matrix[2][1]))
     }
 
     #[inline]
@@ -457,7 +468,7 @@ impl Matrix3x2F {
 
     #[inline]
     pub fn determinant(&self) -> f32 {
-        let [[a, b], [c, d], _] = self.matrix;
+        let ((a, b), (c, d), _) = self.as_tuple();
 
         a * d - b * c
     }
@@ -474,7 +485,7 @@ impl Matrix3x2F {
         }
 
         let det = self.determinant();
-        let [[a, b], [c, d], [x, y]] = self.matrix;
+        let ((a, b), (c, d), (x, y)) = self.as_tuple();
 
         Some(Matrix3x2F::new([
             [d / det, b / -det],
@@ -494,8 +505,8 @@ impl Mul for Matrix3x2F {
 
     #[inline]
     fn mul(self, rhs: Matrix3x2F) -> Matrix3x2F {
-        let [[a1, b1], [c1, d1], [x1, y1]] = self.matrix;
-        let [[a2, b2], [c2, d2], [x2, y2]] = rhs.matrix;
+        let ((a1, b1), (c1, d1), (x1, y1)) = self.as_tuple();
+        let ((a2, b2), (c2, d2), (x2, y2)) = rhs.as_tuple();
 
         Matrix3x2F::new([
             [a1 * a2 + b1 * c2, a1 * b2 + b1 * d2],
@@ -510,7 +521,7 @@ impl Mul<Matrix3x2F> for Point2F {
 
     #[inline]
     fn mul(self, rhs: Matrix3x2F) -> Point2F {
-        let [[a, b], [c, d], [x, y]] = rhs.matrix;
+        let ((a, b), (c, d), (x, y)) = rhs.as_tuple();
         let D2D1_POINT_2F { x: px, y: py } = self.0;
 
         Point2F::new(x + a * px + c * py, y + b * px + d * py)
@@ -522,7 +533,7 @@ impl Mul<Matrix3x2F> for Vector2F {
 
     #[inline]
     fn mul(self, rhs: Matrix3x2F) -> Vector2F {
-        let [[a, b], [c, d], _] = rhs.matrix;
+        let ((a, b), (c, d), _) = rhs.as_tuple();
         let D2D_VECTOR_2F { x: px, y: py } = self.0;
 
         Vector2F::new(a * px + c * py, b * px + d * py)

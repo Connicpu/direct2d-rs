@@ -1,5 +1,4 @@
 #![cfg(windows)]
-#![feature(slice_patterns, const_fn)]
 
 extern crate winapi;
 extern crate uuid;
