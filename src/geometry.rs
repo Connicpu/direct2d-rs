@@ -612,12 +612,12 @@ pub struct GeometryBuilder<'a> {
 
 impl<'a> GeometryBuilder<'a> {
     pub fn fill_mode(self, fill_mode: FillMode) -> Self {
-        unsafe { self.sink.SetFillMode((fill_mode as u32)) };
+        unsafe { self.sink.SetFillMode(fill_mode as u32) };
         self
     }
 
     pub fn set_segment_flags(self, flags: PathSegment) -> Self {
-        unsafe { self.sink.SetSegmentFlags((flags as u32)) };
+        unsafe { self.sink.SetSegmentFlags(flags as u32) };
         self
     }
 
@@ -628,7 +628,7 @@ impl<'a> GeometryBuilder<'a> {
         end: FigureEnd,
     ) -> FigureBuilder<'a> {
         unsafe {
-            self.sink.BeginFigure(start.into().0, (begin as u32));
+            self.sink.BeginFigure(start.into().0, begin as u32);
         }
         FigureBuilder {
             builder: self,

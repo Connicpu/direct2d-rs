@@ -316,7 +316,7 @@ impl RenderTarget {
                 format,
                 &layout_rect.0,
                 foreground_brush.get_ptr(),
-                (draw_options),
+                draw_options,
                 DWRITE_MEASURING_MODE_NATURAL,
             );
         }
@@ -337,7 +337,7 @@ impl RenderTarget {
         unsafe {
             let layout = layout.get_raw();
             self.rt()
-                .DrawTextLayout(origin.0, layout, brush.get_ptr(), (draw_options));
+                .DrawTextLayout(origin.0, layout, brush.get_ptr(), draw_options);
         }
     }
 
