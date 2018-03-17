@@ -1,6 +1,6 @@
 [package]
 name = "direct2d"
-version = "0.0.8"
+version = "0.0.9"
 authors = ["Conni Hilarides <connorcpu@live.com>"]
 description = "A safe abstraction for drawing with Direct2D"
 repository = "https://github.com/Connicpu/direct2d-rs"
@@ -8,10 +8,9 @@ documentation = "https://docs.rs/direct2d/*/x86_64-pc-windows-msvc/direct2d/"
 license = "MIT/Apache-2.0"
 
 [dependencies]
-uuid = "0.4"
-directwrite = "0.0.8"
+directwrite = "0.0.9"
+wio = "0.2"
 
-# Eventually: Use 0.3 when it's pushed to crates.io
 [dependencies.winapi]
 version = "0.3"
 features = ["d2d1_1", "dwrite", "winbase", "libloaderapi", "errhandlingapi", "winuser"]

@@ -1,7 +1,7 @@
 #![cfg(windows)]
 
 extern crate winapi;
-extern crate uuid;
+extern crate wio;
 extern crate directwrite;
 
 pub use factory::Factory;
@@ -17,7 +17,6 @@ pub mod math;
 pub mod geometry;
 pub mod stroke_style;
 pub mod brush;
-pub mod comptr;
 
 mod load_dll;
 mod helpers;

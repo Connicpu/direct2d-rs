@@ -1,11 +1,11 @@
-use comptr::ComPtr;
+use wio::com::ComPtr;
 use error::D2D1Error;
 use helpers::{FromRaw, GetRaw};
 
 use winapi::um::d2d1::*;
 use winapi::um::d2d1_1::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct StrokeStyle {
     stroke: ComPtr<ID2D1StrokeStyle1>,
 }
@@ -59,7 +59,7 @@ impl<'a> Default for StrokeStyleProperties<'a> {
 
 impl StrokeStyle {
     pub unsafe fn get_ptr(&self) -> *mut ID2D1StrokeStyle1 {
-        let ptr = self.stroke.raw_value();
+        let ptr = self.stroke.as_raw();
         assert!(!ptr.is_null());
         ptr
     }
@@ -109,7 +109,7 @@ impl StrokeStyle {
 impl GetRaw for StrokeStyle {
     type Raw = ID2D1StrokeStyle1;
     unsafe fn get_raw(&self) -> *mut ID2D1StrokeStyle1 {
-        self.stroke.raw_value()
+        self.stroke.as_raw()
     }
 }
 
@@ -117,7 +117,7 @@ impl FromRaw for StrokeStyle {
     type Raw = ID2D1StrokeStyle1;
     unsafe fn from_raw(raw: *mut ID2D1StrokeStyle1) -> Self {
         StrokeStyle {
-            stroke: ComPtr::from_existing(raw),
+            stroke: ComPtr::from_raw(raw),
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::ptr;
 use std::sync::Arc;
-use comptr::ComPtr;
+use wio::com::ComPtr;
 use load_dll;
 use error::D2D1Error;
 use helpers::{FromRaw, GetRaw};
@@ -9,11 +9,13 @@ use geometry;
 use stroke_style;
 use math;
 
+use winapi::Interface;
+use winapi::ctypes::c_void;
 use winapi::shared::winerror::*;
 use winapi::um::d2d1::*;
 use winapi::um::d2d1_1::*;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Factory {
     ptr: ComPtr<ID2D1Factory1>,
 }
@@ -21,7 +23,7 @@ pub struct Factory {
 impl GetRaw for Factory {
     type Raw = ID2D1Factory1;
     unsafe fn get_raw(&self) -> *mut ID2D1Factory1 {
-        self.ptr.raw_value()
+        self.ptr.as_raw()
     }
 }
 
@@ -36,23 +38,23 @@ impl Factory {
             Err(_) => return Err(D2D1Error::MissingLibrary),
         };
 
-        let mut ptr: ComPtr<ID2D1Factory1> = ComPtr::new();
+        let mut ptr: *mut ID2D1Factory1 = ptr::null_mut();
         unsafe {
             let hr = d2d1.create_factory(
                 D2D1_FACTORY_TYPE_MULTI_THREADED,
-                &ptr.iid(),
+                &ID2D1Factory::uuidof(),
                 &D2D1_FACTORY_OPTIONS {
                     debugLevel: D2D1_DEBUG_LEVEL_WARNING,
                 },
-                ptr.raw_void(),
+                &mut ptr as *mut _ as *mut *mut c_void,
             );
 
             if !SUCCEEDED(hr) {
                 return Err(From::from(hr));
             }
-        }
 
-        Ok(Factory { ptr: ptr })
+            Ok(Factory { ptr: ComPtr::from_raw(ptr) })
+        }
     }
 
     pub fn create_rectangle_geometry(
@@ -60,12 +62,12 @@ impl Factory {
         rectangle: &math::RectF,
     ) -> Result<geometry::Rectangle, D2D1Error> {
         unsafe {
-            let mut ptr: ComPtr<ID2D1RectangleGeometry> = ComPtr::new();
+            let mut ptr: *mut ID2D1RectangleGeometry = ptr::null_mut();
             let result =
-                (*self.ptr.raw_value()).CreateRectangleGeometry(&rectangle.0, ptr.raw_addr());
+                self.ptr.CreateRectangleGeometry(&rectangle.0, &mut ptr);
 
             if SUCCEEDED(result) {
-                Ok(FromRaw::from_raw(ptr.raw_value()))
+                Ok(FromRaw::from_raw(ptr))
             } else {
                 Err(From::from(result))
             }
@@ -77,12 +79,12 @@ impl Factory {
         rounded_rectangle: &math::RoundedRect,
     ) -> Result<geometry::RoundedRectangle, D2D1Error> {
         unsafe {
-            let mut ptr: ComPtr<ID2D1RoundedRectangleGeometry> = ComPtr::new();
-            let result = (*self.ptr.raw_value())
-                .CreateRoundedRectangleGeometry(&rounded_rectangle.0, ptr.raw_addr());
+            let mut ptr: *mut ID2D1RoundedRectangleGeometry = ptr::null_mut();
+            let result = self.ptr
+                .CreateRoundedRectangleGeometry(&rounded_rectangle.0, &mut ptr);
 
             if SUCCEEDED(result) {
-                Ok(FromRaw::from_raw(ptr.raw_value()))
+                Ok(FromRaw::from_raw(ptr))
             } else {
                 Err(From::from(result))
             }
@@ -94,11 +96,11 @@ impl Factory {
         ellipse: &math::Ellipse,
     ) -> Result<geometry::Ellipse, D2D1Error> {
         unsafe {
-            let mut ptr: ComPtr<ID2D1EllipseGeometry> = ComPtr::new();
-            let result = (*self.ptr.raw_value()).CreateEllipseGeometry(&ellipse.0, ptr.raw_addr());
+            let mut ptr: *mut ID2D1EllipseGeometry = ptr::null_mut();
+            let result = self.ptr.CreateEllipseGeometry(&ellipse.0, &mut ptr);
 
             if SUCCEEDED(result) {
-                Ok(FromRaw::from_raw(ptr.raw_value()))
+                Ok(FromRaw::from_raw(ptr))
             } else {
                 Err(From::from(result))
             }
@@ -112,17 +114,17 @@ impl Factory {
     ) -> Result<geometry::Group, D2D1Error> {
         unsafe {
             let mut ptrs: Vec<_> = geometries.iter().map(|g| g.get_ptr()).collect();
-            let mut ptr: ComPtr<ID2D1GeometryGroup> = ComPtr::new();
+            let mut ptr: *mut ID2D1GeometryGroup = ptr::null_mut();
 
-            let result = (*self.ptr.raw_value()).CreateGeometryGroup(
+            let result = self.ptr.CreateGeometryGroup(
                 fill_mode as u32,
                 ptrs.as_mut_ptr(),
                 ptrs.len() as u32,
-                ptr.raw_addr(),
+                &mut ptr,
             );
 
             if SUCCEEDED(result) {
-                Ok(FromRaw::from_raw(ptr.raw_value()))
+                Ok(FromRaw::from_raw(ptr))
             } else {
                 Err(From::from(result))
             }
@@ -131,11 +133,11 @@ impl Factory {
 
     pub fn create_path_geometry(&self) -> Result<geometry::Path, D2D1Error> {
         unsafe {
-            let mut ptr: ComPtr<ID2D1PathGeometry1> = ComPtr::new();
-            let result = (*self.ptr.raw_value()).CreatePathGeometry(ptr.raw_addr());
+            let mut ptr: *mut ID2D1PathGeometry1 = ptr::null_mut();
+            let result = self.ptr.CreatePathGeometry(&mut ptr);
 
             if SUCCEEDED(result) {
-                Ok(FromRaw::from_raw(ptr.raw_value()))
+                Ok(FromRaw::from_raw(ptr))
             } else {
                 Err(From::from(result))
             }
@@ -147,18 +149,18 @@ impl Factory {
         props: &stroke_style::StrokeStyleProperties,
     ) -> Result<stroke_style::StrokeStyle, D2D1Error> {
         unsafe {
-            let mut ptr: ComPtr<ID2D1StrokeStyle1> = ComPtr::new();
+            let mut ptr: *mut ID2D1StrokeStyle1 = ptr::null_mut();
             let pdata = props.get_d2d1_data();
             let (dashes, dashes_count) = match props.dashes {
                 Some(dashes) => (dashes.as_ptr(), dashes.len() as u32),
                 None => (ptr::null(), 0),
             };
 
-            let result = (*self.ptr.raw_value())
-                .CreateStrokeStyle(&pdata, dashes, dashes_count, ptr.raw_addr());
+            let result = self.ptr
+                .CreateStrokeStyle(&pdata, dashes, dashes_count, &mut ptr);
 
             if SUCCEEDED(result) {
-                Ok(FromRaw::from_raw(ptr.raw_value()))
+                Ok(FromRaw::from_raw(ptr))
             } else {
                 Err(From::from(result))
             }
@@ -170,7 +172,7 @@ impl Factory {
         backing: T,
     ) -> Result<RenderTarget, D2D1Error> {
         unsafe {
-            let factory = &mut *self.ptr.raw_value();
+            let factory = &mut *self.ptr.as_raw();
             let rt_ptr = try!(backing.create_target(factory));
             assert!(!rt_ptr.is_null());
 

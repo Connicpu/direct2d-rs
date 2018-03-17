@@ -5,7 +5,7 @@ use geometry::Geometry;
 use error::D2D1Error;
 use stroke_style::StrokeStyle;
 use factory::Factory;
-use comptr::ComPtr;
+use wio::com::ComPtr;
 use helpers::{FromRaw, GetRaw, ToWide};
 use directwrite::{TextFormat, TextLayout};
 
@@ -26,7 +26,7 @@ pub unsafe trait RenderTargetBacking {
     fn create_target(self, factory: &mut ID2D1Factory1) -> Result<*mut ID2D1RenderTarget, HRESULT>;
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct RenderTarget {
     ptr: ComPtr<ID2D1RenderTarget>,
 }
@@ -56,11 +56,11 @@ macro_rules! set_render_tag {
 
 impl RenderTarget {
     unsafe fn rt<'a>(&self) -> &'a mut ID2D1RenderTarget {
-        &mut *self.ptr.raw_value()
+        &mut *self.ptr.as_raw()
     }
 
     pub unsafe fn hwnd_rt(&self) -> Option<ComPtr<ID2D1HwndRenderTarget>> {
-        self.ptr.query_interface().ok()
+        self.ptr.cast().ok()
     }
 
     unsafe fn make_tag(tag1: D2D1_TAG, tag2: D2D1_TAG) -> Option<RenderTag> {
@@ -75,10 +75,10 @@ impl RenderTarget {
 
     pub fn get_factory(&mut self) -> Factory {
         unsafe {
-            let mut factory = ComPtr::<ID2D1Factory>::new();
-            self.rt().GetFactory(factory.raw_addr());
+            let mut factory: *mut ID2D1Factory = ptr::null_mut();
+            self.rt().GetFactory(&mut factory);
 
-            Factory::from_ptr(factory.query_interface().unwrap())
+            Factory::from_ptr(ComPtr::from_raw(factory).cast().unwrap())
         }
     }
 
@@ -92,12 +92,12 @@ impl RenderTarget {
         props: &BrushProperties,
     ) -> Result<brush::SolidColor, D2D1Error> {
         unsafe {
-            let mut ptr = ComPtr::<ID2D1SolidColorBrush>::new();
+            let mut ptr: *mut ID2D1SolidColorBrush = ptr::null_mut();
             let result = self.rt()
-                .CreateSolidColorBrush(&color.into().0, &props.0, ptr.raw_addr());
+                .CreateSolidColorBrush(&color.into().0, &props.0, &mut ptr);
 
             if SUCCEEDED(result) {
-                Ok(FromRaw::from_raw(ptr.raw_value()))
+                Ok(FromRaw::from_raw(ptr))
             } else {
                 Err(From::from(result))
             }
@@ -360,7 +360,7 @@ impl RenderTarget {
 impl GetRaw for RenderTarget {
     type Raw = ID2D1RenderTarget;
     unsafe fn get_raw(&self) -> *mut ID2D1RenderTarget {
-        self.ptr.raw_value()
+        self.ptr.as_raw()
     }
 }
 
@@ -368,7 +368,7 @@ impl FromRaw for RenderTarget {
     type Raw = ID2D1RenderTarget;
     unsafe fn from_raw(raw: *mut ID2D1RenderTarget) -> Self {
         RenderTarget {
-            ptr: ComPtr::attach(raw),
+            ptr: ComPtr::from_raw(raw),
         }
     }
 }
