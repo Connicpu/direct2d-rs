@@ -627,7 +627,7 @@ impl<'a> GeometryBuilder<'a> {
             self.sink.BeginFigure(start.into().0, begin as u32);
         }
         FigureBuilder {
-            builder: Some(self),
+            builder: self,
             end: (end as u32),
         }
     }
@@ -647,28 +647,30 @@ impl<'a> Drop for GeometryBuilder<'a> {
 }
 
 pub struct FigureBuilder<'a> {
-    // Note: this is always Some, with the exception of the drop after
-    // end. We could avoid the Option, for example by doing a ptr::read
-    // then forgetting self, in end.
-    builder: Option<GeometryBuilder<'a>>,
+    builder: GeometryBuilder<'a>,
     end: D2D1_FIGURE_END,
 }
 
 impl<'a> FigureBuilder<'a> {
-    pub fn end(mut self) -> GeometryBuilder<'a> {
-        unsafe { self.builder.as_ref().unwrap().sink.EndFigure(self.end) };
+    pub fn end(self) -> GeometryBuilder<'a> {
+        unsafe {
+            self.builder.sink.EndFigure(self.end);
 
-        self.builder.take().unwrap()
+            // Move builder out of self without invoking drop.
+            let builder = ptr::read(&self.builder);
+            mem::forget(self);
+            builder
+        }
     }
 
     pub fn add_line<P: Into<math::Point2F>>(self, point: P) -> Self {
-        unsafe { self.builder.as_ref().unwrap().sink.AddLine(point.into().0) };
+        unsafe { self.builder.sink.AddLine(point.into().0) };
         self
     }
 
     pub fn add_lines(self, points: &[math::Point2F]) -> Self {
         unsafe {
-            self.builder.as_ref().unwrap()
+            self.builder
                 .sink
                 .AddLines(points.as_ptr() as *const _, points.len() as u32)
         };
@@ -676,13 +678,13 @@ impl<'a> FigureBuilder<'a> {
     }
 
     pub fn add_bezier(self, bezier: &math::BezierSegment) -> Self {
-        unsafe { self.builder.as_ref().unwrap().sink.AddBezier(&bezier.0) };
+        unsafe { self.builder.sink.AddBezier(&bezier.0) };
         self
     }
 
     pub fn add_beziers(self, beziers: &[math::BezierSegment]) -> Self {
         unsafe {
-            self.builder.as_ref().unwrap()
+            self.builder
                 .sink
                 .AddBeziers(beziers.as_ptr() as *const _, beziers.len() as u32)
         };
@@ -690,13 +692,13 @@ impl<'a> FigureBuilder<'a> {
     }
 
     pub fn add_quadratic_bezier(self, bezier: &math::QuadBezierSegment) -> Self {
-        unsafe { self.builder.as_ref().unwrap().sink.AddQuadraticBezier(&bezier.0) };
+        unsafe { self.builder.sink.AddQuadraticBezier(&bezier.0) };
         self
     }
 
     pub fn add_quadratic_beziers(self, beziers: &[math::QuadBezierSegment]) -> Self {
         unsafe {
-            self.builder.as_ref().unwrap()
+            self.builder
                 .sink
                 .AddQuadraticBeziers(beziers.as_ptr() as *const _, beziers.len() as u32)
         };
@@ -704,7 +706,7 @@ impl<'a> FigureBuilder<'a> {
     }
 
     pub fn add_arc(self, arc: &math::ArcSegment) -> Self {
-        unsafe { self.builder.as_ref().unwrap().sink.AddArc(&arc.0) };
+        unsafe { self.builder.sink.AddArc(&arc.0) };
         self
     }
 }
@@ -712,9 +714,7 @@ impl<'a> FigureBuilder<'a> {
 impl<'a> Drop for FigureBuilder<'a> {
     fn drop(&mut self) {
         unsafe {
-            if let Some(ref builder) = self.builder {
-                builder.sink.EndFigure(self.end);
-            }
+            self.builder.sink.EndFigure(self.end);
         }
     }
 }
