@@ -1,17 +1,18 @@
-use std::{mem, ptr};
-use std::marker::PhantomData;
-use wio::com::ComPtr;
-use error::D2D1Error;
+use error::Error;
 use stroke_style::StrokeStyle;
 use factory::Factory;
 use helpers::{FromRaw, GetRaw};
 use math;
 
+use std::{mem, ptr};
+use std::marker::PhantomData;
+
 use winapi::shared::minwindef::*;
 use winapi::shared::winerror::*;
-use winapi::um::d2dbasetypes::*;
 use winapi::um::d2d1::*;
 use winapi::um::d2d1_1::*;
+use winapi::um::d2dbasetypes::*;
+use wio::com::ComPtr;
 
 pub trait Geometry {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry;
@@ -27,19 +28,16 @@ pub trait Geometry {
     }
 
     fn to_generic(&self) -> GenericGeometry {
-        GenericGeometry {
-            geom: unsafe { ComPtr::from_raw(self.get_ptr()) },
-        }
+        let ptr = unsafe { ComPtr::from_raw(self.get_ptr()) };
+        mem::forget(ptr.clone());
+        GenericGeometry { geom: ptr }
     }
 
     /// Retrieve the bounds of the geometry, with an optional applied transform.
     ///
     /// **NOTE:** I'm not sure if this will ever return None, but the API has an
     /// error code so it could. The MSDN documentation is very vague on this.
-    fn get_bounds(
-        &self,
-        world_transform: Option<&math::Matrix3x2F>,
-    ) -> Result<math::RectF, D2D1Error> {
+    fn get_bounds(&self, world_transform: Option<&math::Matrix3x2F>) -> Result<math::RectF, Error> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -64,7 +62,7 @@ pub trait Geometry {
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
         world_transform: Option<&math::Matrix3x2F>,
-    ) -> Result<math::RectF, D2D1Error> {
+    ) -> Result<math::RectF, Error> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -101,7 +99,7 @@ pub trait Geometry {
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
         world_transform: Option<&math::Matrix3x2F>,
-    ) -> Result<bool, D2D1Error> {
+    ) -> Result<bool, Error> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -136,7 +134,7 @@ pub trait Geometry {
         &self,
         point: math::Point2F,
         world_transform: Option<&math::Matrix3x2F>,
-    ) -> Result<bool, D2D1Error> {
+    ) -> Result<bool, Error> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -165,7 +163,7 @@ pub trait Geometry {
         &self,
         input: &T,
         input_transform: Option<&math::Matrix3x2F>,
-    ) -> Result<GeometryRelation, D2D1Error> {
+    ) -> Result<GeometryRelation, Error> {
         unsafe {
             let self_ptr = self.get_ptr();
             let input_ptr = input.get_ptr();
@@ -191,7 +189,7 @@ pub trait Geometry {
                     D2D1_GEOMETRY_RELATION_IS_CONTAINED => Ok(IsContained),
                     D2D1_GEOMETRY_RELATION_CONTAINS => Ok(Contains),
                     D2D1_GEOMETRY_RELATION_OVERLAP => Ok(Overlap),
-                    _ => Err(D2D1Error::UnknownEnumValue),
+                    _ => Err(Error::UnknownEnumValue),
                 }
             } else {
                 Err(From::from(result))
@@ -200,7 +198,7 @@ pub trait Geometry {
     }
 
     /// Computes the area of the geometry.
-    fn compute_area(&self, world_transform: Option<&math::Matrix3x2F>) -> Result<f32, D2D1Error> {
+    fn compute_area(&self, world_transform: Option<&math::Matrix3x2F>) -> Result<f32, Error> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -220,7 +218,7 @@ pub trait Geometry {
     }
 
     /// Computes the length of the geometry.
-    fn compute_length(&self, world_transform: Option<&math::Matrix3x2F>) -> Result<f32, D2D1Error> {
+    fn compute_length(&self, world_transform: Option<&math::Matrix3x2F>) -> Result<f32, Error> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -245,7 +243,7 @@ pub trait Geometry {
         &self,
         length: f32,
         world_transform: Option<&math::Matrix3x2F>,
-    ) -> Result<(math::Point2F, math::Vector2F), D2D1Error> {
+    ) -> Result<(math::Point2F, math::Vector2F), Error> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -277,16 +275,21 @@ pub trait Geometry {
         }
     }
 
-    fn transformed(&self, transform: &math::Matrix3x2F) -> Result<Transformed, D2D1Error> {
+    fn transformed(&self, transform: &math::Matrix3x2F) -> Result<Transformed, Error> {
         let factory = self.get_factory();
         unsafe {
             let raw_factory = factory.get_raw();
             let mut transformed: *mut ID2D1TransformedGeometry = ptr::null_mut();
-            let result = (*raw_factory)
-                .CreateTransformedGeometry(self.get_ptr(), &transform.0, &mut transformed);
+            let result = (*raw_factory).CreateTransformedGeometry(
+                self.get_ptr(),
+                &transform.0,
+                &mut transformed,
+            );
 
             if SUCCEEDED(result) {
-                Ok(Transformed { geom: ComPtr::from_raw(transformed) })
+                Ok(Transformed {
+                    geom: ComPtr::from_raw(transformed),
+                })
             } else {
                 Err(From::from(result))
             }
@@ -465,7 +468,7 @@ pub struct Group {
 }
 
 impl Group {
-    pub fn get_fill_mode(&self) -> Result<FillMode, D2D1Error> {
+    pub fn get_fill_mode(&self) -> Result<FillMode, Error> {
         unsafe { FillMode::from_raw(self.geom.GetFillMode()) }
     }
 
@@ -477,7 +480,8 @@ impl Group {
         unsafe {
             let count = self.get_source_geometry_count();
             let mut data: Vec<GenericGeometry> = Vec::with_capacity(count as usize);
-            self.geom.GetSourceGeometries(data.as_mut_ptr() as *mut _, count);
+            self.geom
+                .GetSourceGeometries(data.as_mut_ptr() as *mut _, count);
             data.set_len(count as usize);
             data
         }
@@ -510,7 +514,9 @@ impl Transformed {
         unsafe {
             let mut ptr: *mut ID2D1Geometry = ptr::null_mut();
             self.geom.GetSourceGeometry(&mut ptr);
-            GenericGeometry { geom: ComPtr::from_raw(ptr) }
+            GenericGeometry {
+                geom: ComPtr::from_raw(ptr),
+            }
         }
     }
 
@@ -545,7 +551,7 @@ pub struct Path {
 }
 
 impl Path {
-    pub fn open<'a>(&'a mut self) -> Result<GeometryBuilder<'a>, D2D1Error> {
+    pub fn open<'a>(&'a mut self) -> Result<GeometryBuilder<'a>, Error> {
         let mut ptr: *mut ID2D1GeometrySink = ptr::null_mut();
         unsafe {
             let result = self.geom.Open(&mut ptr);
@@ -560,7 +566,7 @@ impl Path {
         }
     }
 
-    pub fn get_segment_count(&self) -> Result<u32, D2D1Error> {
+    pub fn get_segment_count(&self) -> Result<u32, Error> {
         unsafe {
             let mut count = 0;
             let result = self.geom.GetSegmentCount(&mut count);
@@ -572,7 +578,7 @@ impl Path {
         }
     }
 
-    pub fn get_figure_count(&self) -> Result<u32, D2D1Error> {
+    pub fn get_figure_count(&self) -> Result<u32, Error> {
         unsafe {
             let mut count = 0;
             let result = self.geom.GetFigureCount(&mut count);
@@ -733,12 +739,12 @@ pub enum FillMode {
 }
 
 impl FillMode {
-    pub fn from_raw(value: D2D1_FILL_MODE) -> Result<FillMode, D2D1Error> {
+    pub fn from_raw(value: D2D1_FILL_MODE) -> Result<FillMode, Error> {
         use self::FillMode::*;
         match value {
             D2D1_FILL_MODE_ALTERNATE => Ok(Alternate),
             D2D1_FILL_MODE_WINDING => Ok(Winding),
-            _ => Err(D2D1Error::UnknownEnumValue),
+            _ => Err(Error::UnknownEnumValue),
         }
     }
 }

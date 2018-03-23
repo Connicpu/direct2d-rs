@@ -1,19 +1,20 @@
-use std::ptr;
-use std::sync::Arc;
-use wio::com::ComPtr;
-use load_dll;
-use error::D2D1Error;
-use helpers::{FromRaw, GetRaw};
-use render_target::{RenderTarget, RenderTargetBacking};
+use error::Error;
 use geometry;
-use stroke_style;
+use helpers::{FromRaw, GetRaw};
 use math;
+use render_target::{RenderTarget, RenderTargetBacking};
+use stroke_style;
+
+use std::ptr;
 
 use winapi::Interface;
 use winapi::ctypes::c_void;
-use winapi::shared::winerror::*;
-use winapi::um::d2d1::*;
-use winapi::um::d2d1_1::*;
+use winapi::shared::winerror::SUCCEEDED;
+use winapi::um::d2d1::{D2D1CreateFactory, D2D1_DEBUG_LEVEL_WARNING, D2D1_FACTORY_OPTIONS,
+                       D2D1_FACTORY_TYPE_MULTI_THREADED, ID2D1EllipseGeometry, ID2D1GeometryGroup,
+                       ID2D1RectangleGeometry, ID2D1RoundedRectangleGeometry};
+use winapi::um::d2d1_1::{ID2D1Factory1, ID2D1PathGeometry1, ID2D1StrokeStyle1};
+use wio::com::ComPtr;
 
 #[derive(Clone, PartialEq)]
 pub struct Factory {
@@ -32,17 +33,12 @@ impl Factory {
         Factory { ptr: ptr }
     }
 
-    pub fn new() -> Result<Factory, D2D1Error> {
-        let d2d1 = match load_dll::D2D1::load() {
-            Ok(d2d1) => Arc::new(d2d1),
-            Err(_) => return Err(D2D1Error::MissingLibrary),
-        };
-
+    pub fn new() -> Result<Factory, Error> {
         let mut ptr: *mut ID2D1Factory1 = ptr::null_mut();
         unsafe {
-            let hr = d2d1.create_factory(
+            let hr = D2D1CreateFactory(
                 D2D1_FACTORY_TYPE_MULTI_THREADED,
-                &ID2D1Factory::uuidof(),
+                &ID2D1Factory1::uuidof(),
                 &D2D1_FACTORY_OPTIONS {
                     debugLevel: D2D1_DEBUG_LEVEL_WARNING,
                 },
@@ -53,18 +49,19 @@ impl Factory {
                 return Err(From::from(hr));
             }
 
-            Ok(Factory { ptr: ComPtr::from_raw(ptr) })
+            Ok(Factory {
+                ptr: ComPtr::from_raw(ptr),
+            })
         }
     }
 
     pub fn create_rectangle_geometry(
         &self,
         rectangle: &math::RectF,
-    ) -> Result<geometry::Rectangle, D2D1Error> {
+    ) -> Result<geometry::Rectangle, Error> {
         unsafe {
             let mut ptr: *mut ID2D1RectangleGeometry = ptr::null_mut();
-            let result =
-                self.ptr.CreateRectangleGeometry(&rectangle.0, &mut ptr);
+            let result = self.ptr.CreateRectangleGeometry(&rectangle.0, &mut ptr);
 
             if SUCCEEDED(result) {
                 Ok(FromRaw::from_raw(ptr))
@@ -77,7 +74,7 @@ impl Factory {
     pub fn create_rounded_rectangle_geometry(
         &self,
         rounded_rectangle: &math::RoundedRect,
-    ) -> Result<geometry::RoundedRectangle, D2D1Error> {
+    ) -> Result<geometry::RoundedRectangle, Error> {
         unsafe {
             let mut ptr: *mut ID2D1RoundedRectangleGeometry = ptr::null_mut();
             let result = self.ptr
@@ -94,7 +91,7 @@ impl Factory {
     pub fn create_ellipse_geometry(
         &self,
         ellipse: &math::Ellipse,
-    ) -> Result<geometry::Ellipse, D2D1Error> {
+    ) -> Result<geometry::Ellipse, Error> {
         unsafe {
             let mut ptr: *mut ID2D1EllipseGeometry = ptr::null_mut();
             let result = self.ptr.CreateEllipseGeometry(&ellipse.0, &mut ptr);
@@ -111,7 +108,7 @@ impl Factory {
         &self,
         fill_mode: geometry::FillMode,
         geometries: &[G],
-    ) -> Result<geometry::Group, D2D1Error> {
+    ) -> Result<geometry::Group, Error> {
         unsafe {
             let mut ptrs: Vec<_> = geometries.iter().map(|g| g.get_ptr()).collect();
             let mut ptr: *mut ID2D1GeometryGroup = ptr::null_mut();
@@ -131,7 +128,7 @@ impl Factory {
         }
     }
 
-    pub fn create_path_geometry(&self) -> Result<geometry::Path, D2D1Error> {
+    pub fn create_path_geometry(&self) -> Result<geometry::Path, Error> {
         unsafe {
             let mut ptr: *mut ID2D1PathGeometry1 = ptr::null_mut();
             let result = self.ptr.CreatePathGeometry(&mut ptr);
@@ -147,7 +144,7 @@ impl Factory {
     pub fn create_stroke_style(
         &self,
         props: &stroke_style::StrokeStyleProperties,
-    ) -> Result<stroke_style::StrokeStyle, D2D1Error> {
+    ) -> Result<stroke_style::StrokeStyle, Error> {
         unsafe {
             let mut ptr: *mut ID2D1StrokeStyle1 = ptr::null_mut();
             let pdata = props.get_d2d1_data();
@@ -170,7 +167,7 @@ impl Factory {
     pub fn create_render_target<T: RenderTargetBacking>(
         &self,
         backing: T,
-    ) -> Result<RenderTarget, D2D1Error> {
+    ) -> Result<RenderTarget, Error> {
         unsafe {
             let factory = &mut *self.ptr.as_raw();
             let rt_ptr = try!(backing.create_target(factory));

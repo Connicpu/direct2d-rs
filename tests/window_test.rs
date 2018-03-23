@@ -1,7 +1,10 @@
 #![feature(const_fn)]
 
-extern crate winapi;
+#[macro_use]
+extern crate lazy_static;
+
 extern crate direct2d;
+extern crate winapi;
 
 use std::{ptr, mem};
 use std::ffi::OsStr;
@@ -21,17 +24,19 @@ use winapi::um::d2d1_1::*;
 use winapi::um::winuser::*;
 use winapi::um::libloaderapi::*;
 
-pub const BACKGROUND: ColorF = ColorF::uint_rgb(0x2A14CC, 1.0);
-pub const HIGHLIGHT: ColorF = ColorF::uint_rgb(0x483D99, 1.0);
-pub const ACCENT: ColorF = ColorF::uint_rgb(0x006AFF, 1.0);
-pub const FOREGROUND: ColorF = ColorF::uint_rgb(0xFFA940, 1.0);
-pub const FADED: ColorF = ColorF::uint_rgb(0xCC5E14, 1.0);
+lazy_static! {
+    pub static ref BACKGROUND: ColorF = ColorF::uint_rgb(0x2A14CC, 1.0);
+    pub static ref HIGHLIGHT: ColorF = ColorF::uint_rgb(0x483D99, 1.0);
+    pub static ref ACCENT: ColorF = ColorF::uint_rgb(0x006AFF, 1.0);
+    pub static ref FOREGROUND: ColorF = ColorF::uint_rgb(0xFFA940, 1.0);
+    pub static ref FADED: ColorF = ColorF::uint_rgb(0xCC5E14, 1.0);
+}
 
 fn paint_window(window: &mut Window) {
     let rt = window.target.as_mut().unwrap();
     
-    let accent_brush = rt.create_solid_color_brush(&ACCENT, &BrushProperties::default()).unwrap();
-    let foreground_brush = rt.create_solid_color_brush(&FOREGROUND, &BrushProperties::default()).unwrap();
+    let accent_brush = rt.create_solid_color_brush(&*ACCENT, &BrushProperties::default()).unwrap();
+    let foreground_brush = rt.create_solid_color_brush(&*FOREGROUND, &BrushProperties::default()).unwrap();
         
     rt.begin_draw();
     rt.clear(&BACKGROUND);

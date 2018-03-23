@@ -18,9 +18,9 @@ pub trait Brush {
     }
 
     fn to_generic(&self) -> GenericBrush {
-        GenericBrush {
-            ptr: unsafe { ComPtr::from_raw(self.get_ptr()) },
-        }
+        let ptr = unsafe { ComPtr::from_raw(self.get_ptr()) };
+        mem::forget(ptr.clone());
+        GenericBrush { ptr }
     }
 
     fn set_opacity(&mut self, opacity: f32) {
@@ -48,9 +48,10 @@ pub trait Brush {
     }
 }
 
-brush_type! { pub struct GenericBrush(ID2D1Brush); }
-
-brush_type! { pub struct SolidColor(ID2D1SolidColorBrush); }
+brush_types! {
+    pub struct GenericBrush(ID2D1Brush);
+    pub struct SolidColor(ID2D1SolidColorBrush);
+}
 
 impl SolidColor {
     pub fn set_color(&mut self, color: &ColorF) {

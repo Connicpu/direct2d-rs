@@ -2,17 +2,19 @@ use std::{mem, ptr};
 use math::*;
 use brush::{self, Brush};
 use geometry::Geometry;
-use error::D2D1Error;
+use error::Error;
 use stroke_style::StrokeStyle;
 use factory::Factory;
 use wio::com::ComPtr;
-use helpers::{FromRaw, GetRaw, ToWide};
+use helpers::{FromRaw, GetRaw};
 use directwrite::{TextFormat, TextLayout};
 
-use winapi::shared::winerror::*;
-use winapi::um::d2d1::*;
-use winapi::um::d2d1_1::*;
-use winapi::um::dcommon::*;
+use winapi::shared::winerror::{HRESULT, SUCCEEDED};
+use winapi::um::d2d1::{D2D1_DRAW_TEXT_OPTIONS_NONE, D2D1_TAG, ID2D1Factory, ID2D1HwndRenderTarget,
+                       ID2D1RenderTarget, ID2D1SolidColorBrush};
+use winapi::um::d2d1_1::ID2D1Factory1;
+use winapi::um::dcommon::DWRITE_MEASURING_MODE_NATURAL;
+use wio::wide::ToWide;
 
 /// This trait is intended to be implemented by external APIs who would
 /// like to allow a Direct2D interface for drawing onto them. Since the
@@ -90,7 +92,7 @@ impl RenderTarget {
         &self,
         color: C,
         props: &BrushProperties,
-    ) -> Result<brush::SolidColor, D2D1Error> {
+    ) -> Result<brush::SolidColor, Error> {
         unsafe {
             let mut ptr: *mut ID2D1SolidColorBrush = ptr::null_mut();
             let result = self.rt()
@@ -110,7 +112,7 @@ impl RenderTarget {
         }
     }
 
-    pub fn end_draw(&mut self) -> Result<(), (D2D1Error, Option<RenderTag>)> {
+    pub fn end_draw(&mut self) -> Result<(), (Error, Option<RenderTag>)> {
         let mut tag1 = 0;
         let mut tag2 = 0;
         unsafe {
@@ -141,7 +143,7 @@ impl RenderTarget {
         }
     }
 
-    pub fn flush(&mut self) -> Result<(), (D2D1Error, Option<RenderTag>)> {
+    pub fn flush(&mut self) -> Result<(), (Error, Option<RenderTag>)> {
         let mut tag1 = 0;
         let mut tag2 = 0;
         unsafe {
@@ -342,9 +344,7 @@ impl RenderTarget {
     }
 
     pub fn set_transform(&mut self, transform: &Matrix3x2F) {
-        unsafe {
-            self.rt().SetTransform(&transform.0)
-        }
+        unsafe { self.rt().SetTransform(&transform.0) }
     }
 
     pub fn get_transform(&self) -> Matrix3x2F {
@@ -354,7 +354,6 @@ impl RenderTarget {
             mat
         }
     }
-
 }
 
 impl GetRaw for RenderTarget {

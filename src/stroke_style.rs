@@ -1,5 +1,5 @@
 use wio::com::ComPtr;
-use error::D2D1Error;
+use error::Error;
 use helpers::{FromRaw, GetRaw};
 
 use winapi::um::d2d1::*;
@@ -64,15 +64,15 @@ impl StrokeStyle {
         ptr
     }
 
-    pub fn get_start_cap(&self) -> Result<CapStyle, D2D1Error> {
+    pub fn get_start_cap(&self) -> Result<CapStyle, Error> {
         unsafe { CapStyle::from_raw((*self.get_ptr()).GetStartCap()) }
     }
 
-    pub fn get_end_cap(&self) -> Result<CapStyle, D2D1Error> {
+    pub fn get_end_cap(&self) -> Result<CapStyle, Error> {
         unsafe { CapStyle::from_raw((*self.get_ptr()).GetEndCap()) }
     }
 
-    pub fn get_dash_cap(&self) -> Result<CapStyle, D2D1Error> {
+    pub fn get_dash_cap(&self) -> Result<CapStyle, Error> {
         unsafe { CapStyle::from_raw((*self.get_ptr()).GetDashCap()) }
     }
 
@@ -80,7 +80,7 @@ impl StrokeStyle {
         unsafe { (*self.get_ptr()).GetMiterLimit() }
     }
 
-    pub fn get_line_join(&self) -> Result<LineJoin, D2D1Error> {
+    pub fn get_line_join(&self) -> Result<LineJoin, Error> {
         unsafe { LineJoin::from_raw((*self.get_ptr()).GetLineJoin()) }
     }
 
@@ -88,7 +88,7 @@ impl StrokeStyle {
         unsafe { (*self.get_ptr()).GetDashOffset() }
     }
 
-    pub fn get_dash_style(&self) -> Result<DashStyle, D2D1Error> {
+    pub fn get_dash_style(&self) -> Result<DashStyle, Error> {
         unsafe { DashStyle::from_raw((*self.get_ptr()).GetDashStyle()) }
     }
 
@@ -131,14 +131,14 @@ pub enum CapStyle {
 }
 
 impl CapStyle {
-    fn from_raw(value: D2D1_CAP_STYLE) -> Result<CapStyle, D2D1Error> {
+    fn from_raw(value: D2D1_CAP_STYLE) -> Result<CapStyle, Error> {
         use self::CapStyle::*;
         match value {
             D2D1_CAP_STYLE_FLAT => Ok(Flat),
             D2D1_CAP_STYLE_SQUARE => Ok(Square),
             D2D1_CAP_STYLE_ROUND => Ok(Round),
             D2D1_CAP_STYLE_TRIANGLE => Ok(Triangle),
-            _ => Err(D2D1Error::UnknownEnumValue),
+            _ => Err(Error::UnknownEnumValue),
         }
     }
 }
@@ -152,14 +152,14 @@ pub enum LineJoin {
 }
 
 impl LineJoin {
-    fn from_raw(value: D2D1_LINE_JOIN) -> Result<LineJoin, D2D1Error> {
+    fn from_raw(value: D2D1_LINE_JOIN) -> Result<LineJoin, Error> {
         use self::LineJoin::*;
         match value {
             D2D1_LINE_JOIN_MITER => Ok(Miter),
             D2D1_LINE_JOIN_BEVEL => Ok(Bevel),
             D2D1_LINE_JOIN_ROUND => Ok(Round),
             D2D1_LINE_JOIN_MITER_OR_BEVEL => Ok(MiterOrBevel),
-            _ => Err(D2D1Error::UnknownEnumValue),
+            _ => Err(Error::UnknownEnumValue),
         }
     }
 }
@@ -175,7 +175,7 @@ pub enum DashStyle {
 }
 
 impl DashStyle {
-    fn from_raw(value: D2D1_DASH_STYLE) -> Result<DashStyle, D2D1Error> {
+    fn from_raw(value: D2D1_DASH_STYLE) -> Result<DashStyle, Error> {
         use self::DashStyle::*;
         match value {
             D2D1_DASH_STYLE_SOLID => Ok(Solid),
@@ -184,7 +184,7 @@ impl DashStyle {
             D2D1_DASH_STYLE_DASH_DOT => Ok(DashDot),
             D2D1_DASH_STYLE_DASH_DOT_DOT => Ok(DashDotDot),
             D2D1_DASH_STYLE_CUSTOM => Ok(Custom),
-            _ => Err(D2D1Error::UnknownEnumValue),
+            _ => Err(Error::UnknownEnumValue),
         }
     }
 }
