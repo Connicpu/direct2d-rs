@@ -6,6 +6,7 @@ use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 
 use direct2d::{Factory, RenderTarget};
+use direct2d::render_target::ConcreteRenderTarget;
 use direct2d::render_target::RenderTargetBacking;
 use direct2d::math::*;
 
@@ -43,7 +44,7 @@ fn solid_color() {
 
 #[allow(dead_code)]
 struct RT {
-    target: RenderTarget,
+    target: ConcreteRenderTarget,
     factory: Factory,
     hwnd: HWND,
 }

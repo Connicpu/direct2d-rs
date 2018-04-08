@@ -11,6 +11,7 @@ math_wrappers! {
     pub struct Point2F(pub D2D1_POINT_2F);
     pub struct Vector2F(pub D2D_VECTOR_2F);
     pub struct SizeF(pub D2D1_SIZE_F);
+    pub struct SizeU(pub D2D1_SIZE_U);
     pub struct RectF(pub D2D1_RECT_F);
     pub struct ThicknessF(pub D2D1_RECT_F);
     pub struct RoundedRect(pub D2D1_ROUNDED_RECT);

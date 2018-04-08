@@ -1,10 +1,24 @@
-use helpers::{FromRaw, GetRaw};
+use device_context::DeviceContext;
+use error::Error;
+use helpers::{ret_obj, FromRaw, GetRaw};
+
+use std::ptr;
 
 use winapi::um::d2d1_1::ID2D1Device;
 use wio::com::ComPtr;
 
 pub struct Device {
     ptr: ComPtr<ID2D1Device>,
+}
+
+impl Device {
+    pub fn create_device_context(&self) -> Result<DeviceContext, Error> {
+        unsafe {
+            let mut ptr = ptr::null_mut();
+            let hr = self.ptr.CreateDeviceContext(0, &mut ptr);
+            ret_obj(hr, ptr)
+        }
+    }
 }
 
 impl FromRaw for Device {
@@ -22,3 +36,6 @@ impl GetRaw for Device {
         self.ptr.as_raw()
     }
 }
+
+unsafe impl Send for Device {}
+unsafe impl Sync for Device {}

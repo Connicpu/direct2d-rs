@@ -10,6 +10,7 @@ use std::{ptr, mem};
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 use direct2d::{Factory, RenderTarget};
+use direct2d::render_target::ConcreteRenderTarget;
 use direct2d::render_target::RenderTargetBacking;
 use direct2d::math::*;
 
@@ -50,7 +51,7 @@ fn paint_window(window: &mut Window) {
 struct Window {
     hwnd: HWND,
     factory: Factory,
-    target: Option<RenderTarget>,
+    target: Option<ConcreteRenderTarget>,
 }
 
 struct WindowCreate {

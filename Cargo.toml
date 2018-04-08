@@ -14,7 +14,15 @@ dxgi = "0.1"
 
 [target.'cfg(windows)'.dependencies.winapi]
 version = "0.3"
-features = ["d2d1_1", "dwrite", "winbase", "libloaderapi", "errhandlingapi", "winuser"]
+features = ["d2d1_1", "d3d11", "dwrite", "winbase", "libloaderapi", "errhandlingapi", "winuser"]
 
 [target.'cfg(windows)'.dev-dependencies]
 lazy_static = "1.0"
+
+[features]
+docs = []
+
+[package.metadata.docs.rs]
+features = ["docs"]
+default-target = "x86_64-pc-windows-msvc"
+
