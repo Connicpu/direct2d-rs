@@ -7,8 +7,12 @@ repository = "https://github.com/Connicpu/direct2d-rs"
 documentation = "https://docs.rs/direct2d/*/x86_64-pc-windows-msvc/direct2d/"
 license = "MIT/Apache-2.0"
 
+[package.metadata.docs.rs]
+features = ["docs"]
+default-target = "x86_64-pc-windows-msvc"
+
 [target.'cfg(windows)'.dependencies]
-directwrite = "0.0.9"
+directwrite = "0.1.2"
 wio = "0.2"
 dxgi = "0.1"
 
@@ -22,7 +26,6 @@ lazy_static = "1.0"
 [features]
 docs = []
 
-[package.metadata.docs.rs]
-features = ["docs"]
-default-target = "x86_64-pc-windows-msvc"
+[dependencies]
+either = "1.5.0"
 

@@ -1,4 +1,5 @@
 use device::Device;
+use enums::*;
 use error::Error;
 use geometry;
 use helpers::{ret_obj, FromRaw, GetRaw};
@@ -82,7 +83,7 @@ impl Factory {
 
     pub fn create_geometry_group<G: geometry::Geometry>(
         &self,
-        fill_mode: geometry::FillMode,
+        fill_mode: FillMode,
         geometries: &[G],
     ) -> Result<geometry::Group, Error> {
         unsafe {

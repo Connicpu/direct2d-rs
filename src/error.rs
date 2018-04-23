@@ -1,6 +1,8 @@
 use dxgi;
 use winapi::shared::ntdef::HRESULT;
 
+pub type D2DResult<T> = Result<T, Error>;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Error {
     /// A Direct2D API returned an enum value that this abstraction doesn't know about
@@ -28,5 +30,11 @@ impl Error {
 impl From<HRESULT> for Error {
     fn from(hr: HRESULT) -> Error {
         Error::ComError(hr)
+    }
+}
+
+impl<'a> From<&'a Error> for Error {
+    fn from(e: &'a Error) -> Error {
+        e.clone()
     }
 }

@@ -1,3 +1,4 @@
+use enums::*;
 use error::Error;
 use stroke_style::StrokeStyle;
 use factory::Factory;
@@ -305,19 +306,6 @@ impl<'a> Drop for FigureBuilder<'a> {
     }
 }
 
-pub enum GeometryRelation {
-    Unknown = 0,
-    Disjoint = 1,
-    IsContained = 2,
-    Contains = 3,
-    Overlap = 4,
-}
-
-pub enum FillMode {
-    Alternate = 0,
-    Winding = 1,
-}
-
 impl FillMode {
     pub fn from_raw(value: D2D1_FILL_MODE) -> Result<FillMode, Error> {
         use self::FillMode::*;
@@ -327,22 +315,6 @@ impl FillMode {
             _ => Err(Error::UnknownEnumValue),
         }
     }
-}
-
-pub enum FigureBegin {
-    Filled = 0,
-    Hollow = 1,
-}
-
-pub enum FigureEnd {
-    Open = 0,
-    Closed = 1,
-}
-
-pub enum PathSegment {
-    None = 0,
-    ForceUnstroked = 1,
-    ForceRoundLineJoin = 2,
 }
 
 pub trait Geometry {

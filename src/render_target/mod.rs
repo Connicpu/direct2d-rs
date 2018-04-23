@@ -1,18 +1,17 @@
-use std::{mem, ptr};
-use math::*;
-use brush::{self, Brush, ExtendMode, GradientStop, GradientStopCollection, LinearGradientBrush};
-use geometry::Geometry;
-use error::Error;
-use stroke_style::StrokeStyle;
-use factory::Factory;
-use wio::com::ComPtr;
-use helpers::{ret_obj, FromRaw, GetRaw};
+use brush::Brush;
 use directwrite::{TextFormat, TextLayout};
+use error::Error;
+use factory::Factory;
+use geometry::Geometry;
+use helpers::{FromRaw, GetRaw};
+use math::*;
+use std::{mem, ptr};
+use stroke_style::StrokeStyle;
+use wio::com::ComPtr;
 
 use winapi::shared::winerror::{HRESULT, SUCCEEDED};
-use winapi::um::d2d1::{D2D1_DRAW_TEXT_OPTIONS_NONE, D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES,
-                       D2D1_TAG, ID2D1Factory, ID2D1HwndRenderTarget, ID2D1RenderTarget,
-                       ID2D1SolidColorBrush};
+use winapi::um::d2d1::{D2D1_DRAW_TEXT_OPTIONS_NONE, D2D1_TAG, ID2D1Factory, ID2D1HwndRenderTarget,
+                       ID2D1RenderTarget};
 use winapi::um::d2d1_1::ID2D1Factory1;
 use winapi::um::dcommon::DWRITE_MEASURING_MODE_NATURAL;
 use wio::wide::ToWide;
@@ -47,16 +46,16 @@ struct RenderTagRaw(usize, usize);
 macro_rules! make_render_tag {
     () => {
         RenderTag {
-            file: concat!(file!(), ':', line!())
+            file: concat!(file!(), ':', line!()),
         }
-    }
+    };
 }
 
 #[macro_export]
 macro_rules! set_render_tag {
     ($rt:ident) => {
         $crate::render_target::RenderTarget::set_tag(&mut $rt, make_render_tag!());
-    }
+    };
 }
 
 impl ConcreteRenderTarget {
@@ -113,64 +112,6 @@ pub trait RenderTarget {
 
     fn get_size(&self) -> SizeF {
         unsafe { SizeF(self.rt().GetSize()) }
-    }
-
-    fn create_solid_color_brush<C: Into<ColorF>>(
-        &self,
-        color: C,
-        props: &BrushProperties,
-    ) -> Result<brush::SolidColor, Error> {
-        unsafe {
-            let mut ptr: *mut ID2D1SolidColorBrush = ptr::null_mut();
-            let hr = self.rt()
-                .CreateSolidColorBrush(&color.into().0, &props.0, &mut ptr);
-
-            ret_obj(hr, ptr)
-        }
-    }
-
-    fn create_gradient_stop_collection(
-        &self,
-        stops: &[GradientStop],
-        extend: ExtendMode,
-    ) -> Result<GradientStopCollection, Error> {
-        unsafe {
-            let mut ptr = ptr::null_mut();
-            let hr = self.rt().CreateGradientStopCollection(
-                stops.as_ptr() as *const _,
-                stops.len() as u32,
-                0,
-                extend as u32,
-                &mut ptr,
-            );
-
-            ret_obj(hr, ptr)
-        }
-    }
-
-    fn create_linear_gradient_brush(
-        &self,
-        start: Point2F,
-        end: Point2F,
-        props: &BrushProperties,
-        stops: &GradientStopCollection,
-    ) -> Result<LinearGradientBrush, Error> {
-        unsafe {
-            let lin_props = D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES {
-                startPoint: start.0,
-                endPoint: end.0,
-            };
-
-            let mut ptr = ptr::null_mut();
-            let hr = self.rt().CreateLinearGradientBrush(
-                &lin_props,
-                &props.0,
-                stops.get_raw(),
-                &mut ptr,
-            );
-
-            ret_obj(hr, ptr)
-        }
     }
 
     fn begin_draw(&mut self) {

@@ -22,6 +22,7 @@ math_wrappers! {
     pub struct QuadBezierSegment(pub D2D1_QUADRATIC_BEZIER_SEGMENT);
     pub struct ArcSegment(pub D2D1_ARC_SEGMENT);
     pub struct BrushProperties(pub D2D1_BRUSH_PROPERTIES);
+    pub struct LinearGradientBrushProperties(pub D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES);
 }
 
 pub enum SweepDirection {
@@ -416,9 +417,13 @@ impl Matrix3x2F {
             (self.matrix[2][0], self.matrix[2][1]))
     }
 
+    pub const IDENTITY: Matrix3x2F = Matrix3x2F(D2D1_MATRIX_3X2_F {
+        matrix: [[1.0, 0.0], [0.0, 1.0], [0.0, 0.0]]
+    });
+
     #[inline]
     pub fn identity() -> Matrix3x2F {
-        Matrix3x2F::new([[1.0, 0.0], [0.0, 1.0], [0.0, 0.0]])
+        Matrix3x2F::IDENTITY
     }
 
     #[inline]

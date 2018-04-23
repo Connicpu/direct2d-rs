@@ -7,6 +7,8 @@ extern crate directwrite;
 #[cfg(windows)]
 extern crate dxgi;
 #[cfg(windows)]
+extern crate either;
+#[cfg(windows)]
 extern crate winapi;
 #[cfg(windows)]
 extern crate wio;
@@ -30,6 +32,8 @@ pub mod brush;
 pub mod device;
 #[cfg(windows)]
 pub mod device_context;
+#[cfg(windows)]
+pub mod enums;
 #[cfg(windows)]
 pub mod error;
 #[cfg(windows)]
