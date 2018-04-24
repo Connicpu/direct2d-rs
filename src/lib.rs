@@ -14,14 +14,19 @@ extern crate winapi;
 extern crate wio;
 
 #[cfg(windows)]
+#[doc(inline)]
 pub use device::Device;
 #[cfg(windows)]
+#[doc(inline)]
 pub use device_context::DeviceContext;
 #[cfg(windows)]
+#[doc(inline)]
 pub use error::Error;
 #[cfg(windows)]
+#[doc(inline)]
 pub use factory::Factory;
 #[cfg(windows)]
+#[doc(inline)]
 pub use render_target::RenderTarget;
 
 #[cfg(windows)]

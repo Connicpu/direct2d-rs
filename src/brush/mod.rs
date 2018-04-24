@@ -7,8 +7,11 @@ use winapi::um::d2d1::ID2D1Brush;
 use winapi::um::d2d1_1::ID2D1Factory1;
 use wio::com::ComPtr;
 
+#[doc(inline)]
 pub use brush::gradient::linear::LinearGradientBrush;
+#[doc(inline)]
 pub use brush::gradient::{GradientStop, GradientStopCollection};
+#[doc(inline)]
 pub use brush::solid_color::SolidColorBrush;
 
 pub mod bitmap;

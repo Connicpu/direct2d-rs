@@ -70,8 +70,11 @@ where
     }
 
     #[inline(always)]
-    pub fn with_color(mut self, color: ColorF) -> Self {
-        self.color = Some(color);
+    pub fn with_color<C>(mut self, color: C) -> Self
+    where
+        C: Into<ColorF>,
+    {
+        self.color = Some(color.into());
         self
     }
 

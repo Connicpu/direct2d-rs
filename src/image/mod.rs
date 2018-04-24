@@ -1,6 +1,8 @@
 use winapi::um::d2d1::ID2D1Image;
 
+#[doc(inline)]
 pub use self::bitmap::Bitmap;
+#[doc(inline)]
 pub use self::generic::GenericImage;
 
 pub mod bitmap;

@@ -1,3 +1,5 @@
+use std::fmt;
+
 use dxgi;
 use winapi::shared::ntdef::HRESULT;
 
@@ -24,6 +26,12 @@ impl Error {
             &Error::Dxgi(dxgierr) => dxgierr.get_message(),
             &Error::ComError(hr) => dxgi::error::Error(hr).get_message(),
         }
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fmt.write_str(&self.get_message())
     }
 }
 

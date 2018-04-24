@@ -15,8 +15,11 @@ use winapi::um::d2d1_1::ID2D1Factory1;
 use winapi::um::dcommon::DWRITE_MEASURING_MODE_NATURAL;
 use wio::wide::ToWide;
 
+#[doc(inline)]
 pub use self::dxgi::DxgiSurfaceRenderTarget;
+#[doc(inline)]
 pub use self::generic::GenericRenderTarget;
+#[doc(inline)]
 pub use self::hwnd::HwndRenderTarget;
 
 pub mod dxgi;
@@ -25,26 +28,100 @@ pub mod hwnd;
 
 #[derive(Copy, Clone, Debug)]
 pub struct RenderTag {
-    pub file_line: &'static str,
+    pub loc: &'static str,
 }
 
 #[repr(C)]
 struct RenderTagRaw(usize, usize);
 
 #[macro_export]
+#[doc(hidden)]
 macro_rules! make_render_tag {
     () => {
-        RenderTag {
-            file: concat!(file!(), ':', line!()),
+        $crate::render_target::RenderTag {
+            loc: concat!(file!(), ':', line!()),
         }
     };
 }
 
 #[macro_export]
+/// Use this to set a checkpoint that will be returned if flush() or end_draw() returns an
+/// error to help debug which part of the drawing code is causing the error.
+///
+/// ```
+/// # #[macro_use] extern crate direct2d;
+/// # extern crate direct3d11;
+/// # extern crate dxgi;
+/// # use direct2d::{DeviceContext, RenderTarget};
+/// # use direct2d::brush::SolidColorBrush;
+/// # use direct2d::image::Bitmap;
+/// fn draw(context: &mut DeviceContext, target: &Bitmap) {
+///     let brush = SolidColorBrush::create(&context)
+///         .with_color(0xFF7F7F)
+///         .build().unwrap();
+/// 
+///     context.begin_draw();
+///     context.set_target(target);
+///
+///     // Not sure which of these two lines could mess it up, so I set
+///     // the render tag to be notified of the failure in the Err value.
+///     set_render_tag!(context);
+///     context.draw_line((10.0, 10.0), (20.0, 20.0), &brush, 2.0, None);
+///
+///     set_render_tag!(context);
+///     context.draw_line((10.0, 20.0), (20.0, 10.0), &brush, 2.0, None);
+///
+///     match context.end_draw() {
+///         Ok(_) => {/* cool */},
+///         Err((err, Some(tag))) => {
+///             panic!("Uh oh, rendering failed at {}: {}", tag.loc, err);
+///         }
+///         Err((err, None)) => {
+///             panic!("Uh oh, rendering failed at an unknown location: {}", err);
+///         }
+///     }
+/// }
+/// # fn main() {
+/// #     use direct2d::{Device, Factory};
+/// #     use direct2d::enums::BitmapOptions;
+/// #     use direct3d11::flags::{BindFlags, CreateDeviceFlags};
+/// #     use dxgi::Format;
+/// #     let (_, d3d, _) = direct3d11::device::Device::create()
+/// #         .with_flags(CreateDeviceFlags::BGRA_SUPPORT)
+/// #         .build()
+/// #         .unwrap();
+/// #     let tex = direct3d11::texture2d::Texture2D::create(&d3d)
+/// #         .with_size(64, 64)
+/// #         .with_format(Format::R8G8B8A8Unorm)
+/// #         .with_bind_flags(BindFlags::RENDER_TARGET | BindFlags::SHADER_RESOURCE)
+/// #         .build()
+/// #         .unwrap();
+/// #     let factory = Factory::new().unwrap();
+/// #     let dev = Device::create(&factory, &d3d.as_dxgi()).unwrap();
+/// #     let mut ctx = DeviceContext::create(&dev, false).unwrap();
+/// #     let target = Bitmap::create(&ctx)
+/// #         .with_dxgi_surface(&tex.as_dxgi())
+/// #         .with_dpi(192.0, 192.0)
+/// #         .with_options(BitmapOptions::TARGET)
+/// #         .build()
+/// #         .unwrap();
+/// #     draw(&mut ctx, &target);
+/// # }
+/// ```
 macro_rules! set_render_tag {
     ($rt:ident) => {
-        $crate::render_target::RenderTarget::set_tag(&mut $rt, make_render_tag!());
+        $crate::render_target::RenderTarget::set_tag($rt, make_render_tag!());
     };
+}
+
+impl<'r, R> RenderTarget for &'r mut R
+where
+    R: RenderTarget + 'r,
+{
+    #[doc(hidden)]
+    unsafe fn rt<'a>(&self) -> &'a mut ID2D1RenderTarget {
+        R::rt(*self)
+    }
 }
 
 pub trait RenderTarget {
@@ -134,14 +211,44 @@ pub trait RenderTarget {
         }
     }
 
-    fn draw_line<B: Brush>(
+    fn draw_line<P0, P1, B>(
         &mut self,
-        p0: &Point2F,
-        p1: &Point2F,
+        p0: P0,
+        p1: P1,
         brush: &B,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
-    ) {
+    ) where
+        P0: Into<Point2F>,
+        P1: Into<Point2F>,
+        B: Brush,
+    {
+        unsafe {
+            let stroke_style = match stroke_style {
+                Some(s) => s.get_raw() as *mut _,
+                None => ptr::null_mut(),
+            };
+
+            self.rt().DrawLine(
+                p0.into().0,
+                p1.into().0,
+                brush.get_ptr(),
+                stroke_width,
+                stroke_style,
+            )
+        }
+    }
+
+    fn draw_rectangle<R, B>(
+        &mut self,
+        rect: R,
+        brush: &B,
+        stroke_width: f32,
+        stroke_style: Option<&StrokeStyle>,
+    ) where
+        R: Into<RectF>,
+        B: Brush,
+    {
         unsafe {
             let stroke_style = match stroke_style {
                 Some(s) => s.get_raw() as *mut _,
@@ -149,79 +256,88 @@ pub trait RenderTarget {
             };
 
             self.rt()
-                .DrawLine(p0.0, p1.0, brush.get_ptr(), stroke_width, stroke_style)
+                .DrawRectangle(&rect.into().0, brush.get_ptr(), stroke_width, stroke_style);
         }
     }
 
-    fn draw_rectangle<B: Brush>(
+    fn fill_rectangle<R, B>(&mut self, rect: R, brush: &B)
+    where
+        R: Into<RectF>,
+        B: Brush,
+    {
+        unsafe {
+            self.rt().FillRectangle(&rect.into().0, brush.get_ptr());
+        }
+    }
+
+    fn draw_rounded_rectangle<R, B>(
         &mut self,
-        rect: &RectF,
+        rect: R,
         brush: &B,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
-    ) {
+    ) where
+        R: Into<RoundedRect>,
+        B: Brush,
+    {
         unsafe {
             let stroke_style = match stroke_style {
                 Some(s) => s.get_raw() as *mut _,
                 None => ptr::null_mut(),
             };
 
-            self.rt()
-                .DrawRectangle(&rect.0, brush.get_ptr(), stroke_width, stroke_style);
+            self.rt().DrawRoundedRectangle(
+                &rect.into().0,
+                brush.get_ptr(),
+                stroke_width,
+                stroke_style,
+            );
         }
     }
 
-    fn fill_rectangle<B: Brush>(&mut self, rect: &RectF, brush: &B) {
+    fn fill_rounded_rectangle<R, B>(&mut self, rect: R, brush: &B)
+    where
+        R: Into<RoundedRect>,
+        B: Brush,
+    {
         unsafe {
-            self.rt().FillRectangle(&rect.0, brush.get_ptr());
+            self.rt()
+                .FillRoundedRectangle(&rect.into().0, brush.get_ptr());
         }
     }
 
-    fn draw_rounded_rectangle<B: Brush>(
+    fn draw_ellipse<E, B>(
         &mut self,
-        rect: &RoundedRect,
+        ellipse: E,
         brush: &B,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
-    ) {
+    ) where
+        E: Into<Ellipse>,
+        B: Brush,
+    {
         unsafe {
             let stroke_style = match stroke_style {
                 Some(s) => s.get_raw() as *mut _,
                 None => ptr::null_mut(),
             };
 
-            self.rt()
-                .DrawRoundedRectangle(&rect.0, brush.get_ptr(), stroke_width, stroke_style);
+            self.rt().DrawEllipse(
+                &ellipse.into().0,
+                brush.get_ptr(),
+                stroke_width,
+                stroke_style,
+            );
         }
     }
 
-    fn fill_rounded_rectangle<B: Brush>(&mut self, rect: &RoundedRect, brush: &B) {
+    fn fill_ellipse<E, B>(&mut self, ellipse: E, brush: &B)
+    where
+        E: Into<Ellipse>,
+        B: Brush,
+    {
         unsafe {
-            self.rt().FillRoundedRectangle(&rect.0, brush.get_ptr());
-        }
-    }
-
-    fn draw_ellipse<B: Brush>(
-        &mut self,
-        ellipse: &Ellipse,
-        brush: &B,
-        stroke_width: f32,
-        stroke_style: Option<&StrokeStyle>,
-    ) {
-        unsafe {
-            let stroke_style = match stroke_style {
-                Some(s) => s.get_raw() as *mut _,
-                None => ptr::null_mut(),
-            };
-
-            self.rt()
-                .DrawEllipse(&ellipse.0, brush.get_ptr(), stroke_width, stroke_style);
-        }
-    }
-
-    fn fill_ellipse<B: Brush>(&mut self, ellipse: &Ellipse, brush: &B) {
-        unsafe {
-            self.rt().FillEllipse(&ellipse.0, brush.get_ptr());
+            self.rt().FillEllipse(&ellipse.into().0, brush.get_ptr());
         }
     }
 
@@ -266,14 +382,17 @@ pub trait RenderTarget {
         }
     }
 
-    fn draw_text<B: Brush>(
+    fn draw_text<B, R>(
         &mut self,
         text: &str,
         format: &TextFormat,
-        layout_rect: &RectF,
+        layout_rect: R,
         foreground_brush: &B,
         options: DrawTextOptions,
-    ) {
+    ) where
+        R: Into<RectF>,
+        B: Brush,
+    {
         let text = text.to_wide_null();
 
         unsafe {
@@ -282,7 +401,7 @@ pub trait RenderTarget {
                 text.as_ptr(),
                 text.len() as u32,
                 format,
-                &layout_rect.0,
+                &layout_rect.into().0,
                 foreground_brush.get_ptr(),
                 options.0,
                 DWRITE_MEASURING_MODE_NATURAL,
@@ -290,17 +409,20 @@ pub trait RenderTarget {
         }
     }
 
-    fn draw_text_layout<B: Brush>(
+    fn draw_text_layout<P, B>(
         &mut self,
-        origin: &Point2F,
+        origin: P,
         layout: &TextLayout,
         brush: &B,
         options: DrawTextOptions,
-    ) {
+    ) where
+        P: Into<Point2F>,
+        B: Brush,
+    {
         unsafe {
             let layout = layout.get_raw();
             self.rt()
-                .DrawTextLayout(origin.0, layout, brush.get_ptr(), options.0);
+                .DrawTextLayout(origin.into().0, layout, brush.get_ptr(), options.0);
         }
     }
 

@@ -13,12 +13,19 @@ use winapi::um::d2d1_1::*;
 use winapi::um::d2dbasetypes::*;
 use wio::com::ComPtr;
 
+#[doc(inline)]
 pub use self::ellipse::Ellipse;
+#[doc(inline)]
 pub use self::generic::GenericGeometry;
+#[doc(inline)]
 pub use self::group::Group;
+#[doc(inline)]
 pub use self::path::Path;
+#[doc(inline)]
 pub use self::rectangle::Rectangle;
+#[doc(inline)]
 pub use self::rounded_rectangle::RoundedRectangle;
+#[doc(inline)]
 pub use self::transformed::Transformed;
 
 pub mod ellipse;

@@ -19,6 +19,7 @@ features = ["d2d1_1", "d3d11", "dwrite", "winbase", "libloaderapi", "errhandling
 
 [target.'cfg(windows)'.dev-dependencies]
 lazy_static = "1.0"
+direct3d11 = "0.1.3"
 
 [features]
 docs = []
