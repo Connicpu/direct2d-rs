@@ -3,7 +3,8 @@ use math::*;
 
 use std::{mem, ptr};
 
-use winapi::um::d2d1::{ID2D1Brush, ID2D1Factory};
+use winapi::um::d2d1::ID2D1Brush;
+use winapi::um::d2d1_1::ID2D1Factory1;
 use wio::com::ComPtr;
 
 pub use brush::gradient::linear::LinearGradientBrush;
@@ -18,10 +19,11 @@ pub trait Brush {
 
     fn get_factory(&self) -> Factory {
         unsafe {
-            let mut ptr: *mut ID2D1Factory = ptr::null_mut();
+            let mut ptr = ptr::null_mut();
             (*self.get_ptr()).GetFactory(&mut ptr);
 
-            Factory::from_ptr(ComPtr::from_raw(ptr).cast().unwrap())
+            let ptr: ComPtr<ID2D1Factory1> = ComPtr::from_raw(ptr).cast().unwrap();
+            Factory::from_raw(ptr.into_raw())
         }
     }
 

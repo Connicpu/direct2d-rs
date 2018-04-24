@@ -103,10 +103,11 @@ pub trait RenderTarget {
 
     fn get_factory(&mut self) -> Factory {
         unsafe {
-            let mut factory: *mut ID2D1Factory = ptr::null_mut();
-            self.rt().GetFactory(&mut factory);
+            let mut ptr: *mut ID2D1Factory = ptr::null_mut();
+            self.rt().GetFactory(&mut ptr);
 
-            Factory::from_ptr(ComPtr::from_raw(factory).cast().unwrap())
+            let ptr: ComPtr<ID2D1Factory1> = ComPtr::from_raw(ptr).cast().unwrap();
+            Factory::from_raw(ptr.into_raw())
         }
     }
 

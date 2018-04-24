@@ -1,15 +1,9 @@
 macro_rules! brush_type {
-    ($(#[ $attrs:meta ])* pub struct $ty:ident($ptrty:ty);) => {
-        $(#[ $attrs ])*
-        #[derive(Clone)]
-        pub struct $ty {
-            ptr: $crate::wio::com::ComPtr<$ptrty>,
-        }
-
+    ($ty:ident : $ptrty:ty) => {
         impl $ty {
             pub unsafe fn from_raw(raw: *mut $ptrty) -> Self {
                 Self {
-                    ptr: unsafe { $crate::wio::com::ComPtr::from_raw(raw) },
+                    ptr: ::wio::com::ComPtr::from_raw(raw),
                 }
             }
 
@@ -18,13 +12,13 @@ macro_rules! brush_type {
             }
         }
 
-        impl $crate::brush::Brush for $ty {
+        impl ::brush::Brush for $ty {
             unsafe fn get_ptr(&self) -> *mut ::winapi::um::d2d1::ID2D1Brush {
                 self.ptr.as_raw() as *mut _
             }
         }
 
-        unsafe impl $crate::directwrite::drawing_effect::DrawingEffect for $ty {
+        unsafe impl ::directwrite::drawing_effect::DrawingEffect for $ty {
             unsafe fn get_effect_ptr(&self) -> *mut ::winapi::um::unknwnbase::IUnknown {
                 self.ptr.as_raw() as *mut ::winapi::um::unknwnbase::IUnknown
             }
@@ -33,71 +27,31 @@ macro_rules! brush_type {
         unsafe impl Send for $ty {}
         unsafe impl Sync for $ty {}
     };
+}
 
+macro_rules! geometry_type {
     ($ty:ident : $ptrty:ty) => {
+        impl $crate::geometry::Geometry for $ty {
+            unsafe fn get_ptr(&self) -> *mut ::winapi::um::d2d1::ID2D1Geometry {
+                self.ptr.as_raw() as *mut _
+            }
+        }
+
         impl $ty {
-            pub fn from_raw(raw: *mut $ptrty) -> Self {
+            pub unsafe fn from_raw(raw: *mut $ptrty) -> Self {
                 Self {
-                    ptr: unsafe { $crate::wio::com::ComPtr::from_raw(raw) },
+                    ptr: ::wio::com::ComPtr::from_raw(raw),
                 }
             }
 
-            pub fn get_raw(&self) -> *mut $ptrty {
+            pub unsafe fn get_raw(&self) -> *mut $ptrty {
                 self.ptr.as_raw()
             }
         }
 
-        impl $crate::brush::Brush for $ty {
-            unsafe fn get_ptr(&self) -> *mut ::winapi::um::d2d1::ID2D1Brush {
-                self.ptr.as_raw() as *mut _
-            }
-        }
-
-        unsafe impl $crate::directwrite::drawing_effect::DrawingEffect for $ty {
-            unsafe fn get_effect_ptr(&self) -> *mut ::winapi::um::unknwnbase::IUnknown {
-                self.ptr.as_raw() as *mut ::winapi::um::unknwnbase::IUnknown
-            }
-        }
-
         unsafe impl Send for $ty {}
         unsafe impl Sync for $ty {}
-    }
-}
-
-macro_rules! geometry_type {
-    ($(#[ $attrs:meta ])* pub struct $ty:ident($ptrty:ty);) => {
-        $(#[ $attrs ])*
-        #[derive(Clone)]
-        pub struct $ty {
-            ptr: $crate::wio::com::ComPtr<$ptrty>,
-        }
-
-        impl $crate::geometry::Geometry for $ty {
-            unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-                self.ptr.as_raw() as *mut _
-            }
-        }
-
-        impl $crate::helpers::FromRaw for $ty {
-            type Raw = $ptrty;
-            unsafe fn from_raw(raw: *mut $ptrty) -> Self {
-                $ty {
-                    ptr: $crate::wio::com::ComPtr::from_raw(raw),
-                }
-            }
-        }
-
-        unsafe impl Send for $ty {}
-        unsafe impl Sync for $ty {}
-    }
-}
-
-macro_rules! geometry_types {
-    ($($(#[ $attrs:meta ])* pub struct $ty:ident($ptrty:ty);)*) => {
-        $(
-            geometry_type! { $(#[ $attrs ])* pub struct $ty($ptrty); }
-        )*
-    }
+    };
 }
 
 macro_rules! math_wrapper {

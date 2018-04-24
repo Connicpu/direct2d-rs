@@ -1,9 +1,10 @@
-use device_context::DeviceContext;
-use error::Error;
-use helpers::{ret_obj, FromRaw, GetRaw};
+use error::D2DResult;
+use factory::Factory;
 
 use std::ptr;
 
+use dxgi::device::Device as DxgiDevice;
+use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1_1::ID2D1Device;
 use wio::com::ComPtr;
 
@@ -12,27 +13,25 @@ pub struct Device {
 }
 
 impl Device {
-    pub fn create_device_context(&self) -> Result<DeviceContext, Error> {
+    pub fn create(factory: &Factory, dxgi: &DxgiDevice) -> D2DResult<Device> {
         unsafe {
             let mut ptr = ptr::null_mut();
-            let hr = self.ptr.CreateDeviceContext(0, &mut ptr);
-            ret_obj(hr, ptr)
+            let hr = (*factory.get_raw()).CreateDevice(dxgi.get_raw(), &mut ptr);
+            if SUCCEEDED(hr) {
+                Ok(Device::from_raw(ptr))
+            } else {
+                Err(hr.into())
+            }
         }
     }
-}
-
-impl FromRaw for Device {
-    type Raw = ID2D1Device;
-    unsafe fn from_raw(raw: *mut Self::Raw) -> Self {
+    
+    pub unsafe fn from_raw(raw: *mut ID2D1Device) -> Self {
         Device {
             ptr: ComPtr::from_raw(raw),
         }
     }
-}
-
-impl GetRaw for Device {
-    type Raw = ID2D1Device;
-    unsafe fn get_raw(&self) -> *mut Self::Raw {
+    
+    pub unsafe fn get_raw(&self) -> *mut ID2D1Device {
         self.ptr.as_raw()
     }
 }

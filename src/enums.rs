@@ -69,3 +69,13 @@ where
         T::from_u32(self.value)
     }
 }
+
+pub enum GeometryType {
+    Unknown,
+    Ellipse,
+    Group,
+    Path,
+    Rectangle,
+    RoundedRectangle,
+    Transformed,
+}
