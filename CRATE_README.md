@@ -1,16 +1,8 @@
-# direct2d-rs [![Crates.io](https://img.shields.io/crates/v/direct2d.svg)](https://crates.io/crates/direct2d)
-
 Safe abstractions for drawing on Windows using Direct2D
-
-To use it, add this to your Cargo.toml:
-```toml
-[dependencies]
-direct2d = "0.1.0"
-```
 
 ## Example
 
-```rs
+```
 extern crate direct2d;
 
 use direct2d::{DeviceContext, RenderTarget};

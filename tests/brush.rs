@@ -1,161 +1,44 @@
-extern crate winapi;
 extern crate direct2d;
+extern crate direct3d11;
+extern crate winapi;
 
-use std::{ptr, mem};
-use std::ffi::OsStr;
-use std::os::windows::ffi::OsStrExt;
-
-use direct2d::{Factory, RenderTarget};
-use direct2d::render_target::ConcreteRenderTarget;
-use direct2d::render_target::RenderTargetBacking;
+use direct2d::brush::SolidColorBrush;
 use direct2d::math::*;
+use direct2d::{Device, DeviceContext, Factory};
+use direct3d11::flags::{CreateDeviceFlags};
 
-use winapi::shared::minwindef::*;
-use winapi::shared::windef::HWND;
-use winapi::shared::winerror::*;
-use winapi::shared::dxgiformat::*;
-use winapi::um::dcommon::*;
-use winapi::um::d2d1::*;
-use winapi::um::d2d1_1::*;
-use winapi::um::winuser::*;
-use winapi::um::libloaderapi::*;
+use winapi::um::d2d1::D2D1_COLOR_F;
 
 #[test]
 fn solid_color() {
-    let rt = make_rt();
-    
-    for i in 0u32..(16*16*16) {
+    let (_factory, context) = make_context();
+
+    for i in 0u32..(16 * 16 * 16) {
         let color = ColorF(D2D1_COLOR_F {
             r: ((i >> 8) & 0xF) as f32 / 15.0,
             g: ((i >> 4) & 0xF) as f32 / 15.0,
             b: ((i >> 0) & 0xF) as f32 / 15.0,
             a: 1.0,
         });
-        
-        let brush = rt.target.create_solid_color_brush(
-            &color, &BrushProperties::default()
-        ).unwrap();
-        
+
+        let brush = SolidColorBrush::create(&context)
+            .with_color(color)
+            .build()
+            .unwrap();
+
         let brush_color = brush.get_color();
-        
+
         assert_eq!(color, brush_color);
     }
 }
 
-#[allow(dead_code)]
-struct RT {
-    target: ConcreteRenderTarget,
-    factory: Factory,
-    hwnd: HWND,
+fn make_context() -> (Factory, DeviceContext) {
+    let (_, d3d, _) = direct3d11::device::Device::create()
+        .with_flags(CreateDeviceFlags::BGRA_SUPPORT)
+        .build()
+        .unwrap();
+    let factory = Factory::new().unwrap();
+    let dev = Device::create(&factory, &d3d.as_dxgi()).unwrap();
+    let ctx = DeviceContext::create(&dev, false).unwrap();
+    (factory, ctx)
 }
-
-impl Drop for RT {
-    fn drop(&mut self) {
-        unsafe { DestroyWindow(self.hwnd) };
-    }
-}
-
-fn make_rt() -> RT {
-    unsafe {
-        let factory = Factory::new().unwrap();
-        
-        let hinst: HINSTANCE = GetModuleHandleW(ptr::null());
-        let class_name = "Test D2D1 Window Class".to_wide_null();
-        let window_name = "Test D2D1 Window".to_wide_null();
-        
-        RegisterClassW(&WNDCLASSW {
-            lpfnWndProc: Some(DefWindowProcW),
-            hInstance: hinst,
-            lpszClassName: class_name.as_ptr(),
-            
-            .. mem::zeroed()
-        });
-        
-        let hwnd = CreateWindowExW(
-            0, // dwExStyle
-            class_name.as_ptr(),
-            window_name.as_ptr(),
-            WS_OVERLAPPED,
-            CW_USEDEFAULT, // x
-            CW_USEDEFAULT, // y
-            800, // width
-            480, // height
-            ptr::null_mut(),
-            ptr::null_mut(),
-            hinst,
-            ptr::null_mut(),
-        );
-        
-        assert!(!hwnd.is_null());
-        
-        let params = WindowCreate {
-            props: D2D1_RENDER_TARGET_PROPERTIES {
-                _type: D2D1_RENDER_TARGET_TYPE_DEFAULT,
-                pixelFormat: D2D1_PIXEL_FORMAT {
-                    format: DXGI_FORMAT_UNKNOWN,
-                    alphaMode: D2D1_ALPHA_MODE_UNKNOWN,
-                },
-                dpiX: 0.0,
-                dpiY: 0.0,
-                usage: D2D1_RENDER_TARGET_USAGE_NONE,
-                minLevel: D2D1_FEATURE_LEVEL_DEFAULT,
-            },
-            hprops: D2D1_HWND_RENDER_TARGET_PROPERTIES {
-                hwnd: hwnd,
-                pixelSize: D2D1_SIZE_U {
-                    width: 800,
-                    height: 480,
-                },
-                presentOptions: D2D1_PRESENT_OPTIONS_NONE,
-            },
-        };
-        
-        let target = factory.create_render_target(params).unwrap();
-        
-        RT {
-            target: target,
-            factory: factory,
-            hwnd: hwnd,
-        }
-    }
-}
-
-struct WindowCreate {
-    props: D2D1_RENDER_TARGET_PROPERTIES,
-    hprops: D2D1_HWND_RENDER_TARGET_PROPERTIES,
-}
-
-unsafe impl RenderTargetBacking for WindowCreate {
-    fn create_target(self, factory: &mut ID2D1Factory1) -> Result<*mut ID2D1RenderTarget, HRESULT> {
-        unsafe {
-            let mut ptr: *mut ID2D1HwndRenderTarget = ptr::null_mut();
-            let hr = factory.CreateHwndRenderTarget(
-                &self.props,
-                &self.hprops,
-                &mut ptr as *mut _,
-            );
-            
-            if SUCCEEDED(hr) {
-                Ok(ptr as *mut _)
-            } else {
-                Err(From::from(hr))
-            }
-        }
-    }
-}
-
-pub trait ToWide { 
-    fn to_wide(&self) -> Vec<u16>; 
-    fn to_wide_null(&self) -> Vec<u16>; 
-} 
-
-impl<T> ToWide for T where T: AsRef<OsStr> { 
-    fn to_wide(&self) -> Vec<u16> { 
-        self.as_ref().encode_wide().collect()
-    } 
-    fn to_wide_null(&self) -> Vec<u16> { 
-        self.as_ref().encode_wide().chain(Some(0)).collect() 
-    } 
-} 
-
-

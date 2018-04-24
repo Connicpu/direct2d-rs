@@ -57,11 +57,12 @@ macro_rules! make_render_tag {
 /// # use direct2d::image::Bitmap;
 /// fn draw(context: &mut DeviceContext, target: &Bitmap) {
 ///     let brush = SolidColorBrush::create(&context)
-///         .with_color(0xFF7F7F)
+///         .with_color(0xFF_7F_7F)
 ///         .build().unwrap();
-/// 
+///
 ///     context.begin_draw();
 ///     context.set_target(target);
+///     context.clear(0xFF_FF_FF);
 ///
 ///     // Not sure which of these two lines could mess it up, so I set
 ///     // the render tag to be notified of the failure in the Err value.
@@ -205,9 +206,12 @@ pub trait RenderTarget {
         }
     }
 
-    fn clear(&mut self, color: &ColorF) {
+    fn clear<C>(&mut self, color: C)
+    where
+        C: Into<ColorF>,
+    {
         unsafe {
-            self.rt().Clear(&color.0);
+            self.rt().Clear(&color.into().0);
         }
     }
 
