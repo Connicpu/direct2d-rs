@@ -441,4 +441,16 @@ pub trait RenderTarget {
             mat
         }
     }
+
+    fn set_dpi(&mut self, dpi_x: f32, dpi_y: f32) {
+        unsafe { self.rt().SetDpi(dpi_x, dpi_y) }
+    }
+
+    fn get_dpi(&mut self) -> (f32, f32) {
+        unsafe {
+            let (mut x, mut y) = (0.0, 0.0);
+            self.rt().GetDpi(&mut x, &mut y);
+            (x, y)
+        }
+    }
 }

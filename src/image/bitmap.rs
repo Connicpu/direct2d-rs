@@ -174,6 +174,7 @@ impl<'a> BitmapBuilder<'a> {
     }
 
     pub fn with_dpi(mut self, dpi_x: f32, dpi_y: f32) -> Self {
+        println!("setting DPI to: {:?}", (dpi_x, dpi_y));
         self.properties.dpiX = dpi_x;
         self.properties.dpiY = dpi_y;
         self
