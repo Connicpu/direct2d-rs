@@ -2,11 +2,11 @@ use enums::{AlphaMode, FeatureLevel, PresentOptions, RenderTargetType, RenderTar
 use error::D2DResult;
 use factory::Factory;
 use math;
-use render_target::RenderTarget;
+use render_target::{GenericRenderTarget, RenderTarget};
 
 use std::ptr;
 
-use direct3d11::flags::Format;
+use dxgi::Format;
 use winapi::shared::windef::HWND;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{D2D1_HWND_RENDER_TARGET_PROPERTIES, D2D1_RENDER_TARGET_PROPERTIES,
@@ -22,6 +22,14 @@ pub struct HwndRenderTarget {
 impl HwndRenderTarget {
     pub fn create<'a>(factory: &'a Factory) -> HwndRenderTargetBuilder<'a> {
         HwndRenderTargetBuilder::new(factory)
+    }
+
+    pub fn as_generic(&self) -> GenericRenderTarget {
+        unsafe {
+            let ptr = self.get_raw();
+            (*ptr).AddRef();
+            GenericRenderTarget::from_raw(ptr as *mut _)
+        }
     }
 
     pub fn resize(&self, pixel_size: math::SizeU) -> D2DResult<()> {

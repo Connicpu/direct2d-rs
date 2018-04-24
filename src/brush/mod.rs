@@ -11,6 +11,7 @@ pub use brush::gradient::linear::LinearGradientBrush;
 pub use brush::gradient::{GradientStop, GradientStopCollection};
 pub use brush::solid_color::SolidColorBrush;
 
+pub mod bitmap;
 pub mod gradient;
 pub mod solid_color;
 

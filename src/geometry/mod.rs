@@ -88,7 +88,7 @@ pub trait Geometry {
                 None => ptr::null(),
             };
             let stroke_style = match stroke_style {
-                Some(stroke) => stroke.get_ptr() as *mut _,
+                Some(stroke) => stroke.get_raw() as *mut _,
                 None => ptr::null_mut(),
             };
 
@@ -125,7 +125,7 @@ pub trait Geometry {
                 None => ptr::null(),
             };
             let stroke_style = match stroke_style {
-                Some(stroke) => stroke.get_ptr() as *mut _,
+                Some(stroke) => stroke.get_raw() as *mut _,
                 None => ptr::null_mut(),
             };
 

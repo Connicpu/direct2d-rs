@@ -1,15 +1,17 @@
 use device_context::DeviceContext;
+use enums::{AlphaMode, BitmapOptions};
 use error::D2DResult;
 use image::{GenericImage, Image};
 use math::{SizeF, SizeU};
 
 use std::ptr;
 
+use dxgi::Format;
 use dxgi::surface::Surface as DxgiSurface;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{ID2D1Bitmap, ID2D1Image};
-use winapi::um::d2d1_1::{D2D1_BITMAP_OPTIONS_TARGET, D2D1_BITMAP_PROPERTIES1};
-use winapi::um::dcommon::{D2D1_ALPHA_MODE_PREMULTIPLIED, D2D1_PIXEL_FORMAT};
+use winapi::um::d2d1_1::D2D1_BITMAP_PROPERTIES1;
+use winapi::um::dcommon::D2D1_PIXEL_FORMAT;
 use wio::com::ComPtr;
 
 #[derive(Clone)]
@@ -18,42 +20,8 @@ pub struct Bitmap {
 }
 
 impl Bitmap {
-    pub fn create_from_dxgi(
-        context: &DeviceContext,
-        surface: &DxgiSurface,
-        dpi: (f32, f32),
-        is_target: bool,
-    ) -> D2DResult<Bitmap> {
-        let surf_desc = surface.get_desc();
-        unsafe {
-            let props = D2D1_BITMAP_PROPERTIES1 {
-                pixelFormat: D2D1_PIXEL_FORMAT {
-                    format: surf_desc.format(),
-                    alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED,
-                },
-                dpiX: dpi.0,
-                dpiY: dpi.1,
-                bitmapOptions: if is_target {
-                    D2D1_BITMAP_OPTIONS_TARGET
-                } else {
-                    0
-                },
-                colorContext: ptr::null_mut(),
-            };
-
-            let mut ptr = ptr::null_mut();
-            let hr = (*context.get_raw()).CreateBitmapFromDxgiSurface(
-                surface.get_raw(),
-                &props,
-                &mut ptr,
-            );
-
-            if SUCCEEDED(hr) {
-                Ok(Bitmap::from_raw(ptr as *mut _))
-            } else {
-                Err(hr.into())
-            }
-        }
+    pub fn create<'a>(context: &'a DeviceContext) -> BitmapBuilder<'a> {
+        BitmapBuilder::new(context)
     }
 
     pub fn as_generic(&self) -> GenericImage {
@@ -100,3 +68,128 @@ impl Image for Bitmap {
 
 unsafe impl Send for Bitmap {}
 unsafe impl Sync for Bitmap {}
+
+pub struct BitmapBuilder<'a> {
+    context: &'a DeviceContext,
+    source: Option<BitmapSource<'a>>,
+    properties: D2D1_BITMAP_PROPERTIES1,
+}
+
+const DEFAULT_BITMAP_PROPS: D2D1_BITMAP_PROPERTIES1 = D2D1_BITMAP_PROPERTIES1 {
+    pixelFormat: D2D1_PIXEL_FORMAT {
+        format: Format::Unknown as u32,
+        alphaMode: AlphaMode::Premultiplied as u32,
+    },
+    dpiX: 96.0,
+    dpiY: 96.0,
+    bitmapOptions: BitmapOptions::NONE.0,
+    colorContext: ptr::null(),
+};
+
+impl<'a> BitmapBuilder<'a> {
+    pub fn new(context: &'a DeviceContext) -> Self {
+        BitmapBuilder {
+            context,
+            source: None,
+            properties: DEFAULT_BITMAP_PROPS,
+        }
+    }
+
+    pub fn build(self) -> D2DResult<Bitmap> {
+        let source = self.source.expect("An image source must be specified");
+        unsafe {
+            match source {
+                BitmapSource::Raw {
+                    size,
+                    source,
+                    pitch,
+                } => {
+                    let source = source.map(<[_]>::as_ptr).unwrap_or(ptr::null());
+
+                    let mut ptr = ptr::null_mut();
+                    let hr = (*self.context.get_raw()).CreateBitmap(
+                        size.0,
+                        source as *const _,
+                        pitch,
+                        &self.properties,
+                        &mut ptr,
+                    );
+
+                    if SUCCEEDED(hr) {
+                        Ok(Bitmap::from_raw(ptr as _))
+                    } else {
+                        Err(hr.into())
+                    }
+                }
+                BitmapSource::Dxgi(surface) => {
+                    let mut ptr = ptr::null_mut();
+                    let hr = (*self.context.get_raw()).CreateBitmapFromDxgiSurface(
+                        surface.get_raw(),
+                        &self.properties,
+                        &mut ptr,
+                    );
+
+                    if SUCCEEDED(hr) {
+                        Ok(Bitmap::from_raw(ptr as _))
+                    } else {
+                        Err(hr.into())
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn with_blank_image(mut self, size: SizeU) -> Self {
+        self.source = Some(BitmapSource::Raw {
+            size,
+            source: None,
+            pitch: 0,
+        });
+        self
+    }
+
+    pub fn with_raw_data(mut self, size: SizeU, data: &'a [u8], pitch: u32) -> Self {
+        assert!(size.height as usize * pitch as usize <= data.len());
+        self.source = Some(BitmapSource::Raw {
+            size,
+            source: Some(data),
+            pitch,
+        });
+        self
+    }
+
+    pub fn with_dxgi_surface(mut self, surface: &'a DxgiSurface) -> Self {
+        self.source = Some(BitmapSource::Dxgi(surface));
+        self
+    }
+
+    pub fn with_format(mut self, format: Format) -> Self {
+        self.properties.pixelFormat.format = format as u32;
+        self
+    }
+
+    pub fn with_alpha_mode(mut self, alpha_mode: AlphaMode) -> Self {
+        self.properties.pixelFormat.alphaMode = alpha_mode as u32;
+        self
+    }
+
+    pub fn with_dpi(mut self, dpi_x: f32, dpi_y: f32) -> Self {
+        self.properties.dpiX = dpi_x;
+        self.properties.dpiY = dpi_y;
+        self
+    }
+
+    pub fn with_options(mut self, options: BitmapOptions) -> Self {
+        self.properties.bitmapOptions = options.0;
+        self
+    }
+}
+
+enum BitmapSource<'a> {
+    Raw {
+        size: SizeU,
+        source: Option<&'a [u8]>,
+        pitch: u32,
+    },
+    Dxgi(&'a DxgiSurface),
+}

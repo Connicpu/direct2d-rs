@@ -74,6 +74,40 @@ d2d_enums! {
         Small = 0,
         Large = 1,
     }
+
+    pub enum CapStyle {
+        Flat = 0,
+        Square = 1,
+        Round = 2,
+        Triangle = 3,
+    }
+
+    pub enum LineJoin {
+        Miter = 0,
+        Bevel = 1,
+        Round = 2,
+        MiterOrBevel = 3,
+    }
+
+    pub enum DashStyle {
+        Solid = 0,
+        Dash = 1,
+        Dot = 2,
+        DashDot = 3,
+        DashDotDot = 4,
+        Custom = 5,
+    }
+
+    pub enum StrokeTransformType {
+        Normal = 0,
+        Fixed = 1,
+        Hairline = 2,
+    }
+
+    pub enum BitmapInterpolationMode {
+        NearestNeighbor = 0,
+        Linear = 1,
+    }
 }
 
 d2d_flags! {
@@ -94,6 +128,14 @@ d2d_flags! {
         NO_SNAP = 0x1,
         CLIP = 0x2,
         ENABLE_COLOR_FONT = 0x4,
+    }
+
+    #[repr(u32)]
+    pub enum BitmapOptions {
+        TARGET = 0x1,
+        CANNOT_DRAW = 0x2,
+        CPU_READ = 0x4,
+        GDI_COMPATIBLE = 0x8,
     }
 }
 

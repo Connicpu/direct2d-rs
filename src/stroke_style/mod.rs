@@ -1,31 +1,93 @@
-use wio::com::ComPtr;
-use error::Error;
-use helpers::{FromRaw, GetRaw};
+use enums::{CapStyle, DashStyle, LineJoin, StrokeTransformType};
+use error::D2DResult;
+use factory::Factory;
 
-use winapi::um::d2d1::*;
-use winapi::um::d2d1_1::*;
+use std::ptr;
+
+use winapi::shared::winerror::SUCCEEDED;
+use winapi::um::d2d1_1::{D2D1_STROKE_STYLE_PROPERTIES1, ID2D1StrokeStyle1};
+use wio::com::ComPtr;
 
 #[derive(Clone)]
 pub struct StrokeStyle {
-    stroke: ComPtr<ID2D1StrokeStyle1>,
+    ptr: ComPtr<ID2D1StrokeStyle1>,
 }
 
-#[derive(Copy, Clone, Debug)]
-pub struct StrokeStyleProperties<'a> {
-    pub start_cap: CapStyle,
-    pub end_cap: CapStyle,
-    pub dash_cap: CapStyle,
-    pub line_join: LineJoin,
-    pub miter_limit: f32,
-    pub dash_style: DashStyle,
-    pub dash_offset: f32,
-    pub dashes: Option<&'a [f32]>,
+impl StrokeStyle {
+    pub fn create<'a>(factory: &'a Factory) -> StrokeStyleBuilder<'a> {
+        StrokeStyleBuilder::new(factory)
+    }
+
+    pub fn get_start_cap(&self) -> CapStyle {
+        unsafe { CapStyle::from_u32(self.ptr.GetStartCap()).unwrap() }
+    }
+
+    pub fn get_end_cap(&self) -> CapStyle {
+        unsafe { CapStyle::from_u32(self.ptr.GetEndCap()).unwrap() }
+    }
+
+    pub fn get_dash_cap(&self) -> CapStyle {
+        unsafe { CapStyle::from_u32(self.ptr.GetDashCap()).unwrap() }
+    }
+
+    pub fn get_miter_limit(&self) -> f32 {
+        unsafe { self.ptr.GetMiterLimit() }
+    }
+
+    pub fn get_line_join(&self) -> LineJoin {
+        unsafe { LineJoin::from_u32(self.ptr.GetLineJoin()).unwrap() }
+    }
+
+    pub fn get_dash_offset(&self) -> f32 {
+        unsafe { self.ptr.GetDashOffset() }
+    }
+
+    pub fn get_dash_style(&self) -> DashStyle {
+        unsafe { DashStyle::from_u32(self.ptr.GetDashStyle()).unwrap() }
+    }
+
+    pub fn get_dashes_count(&self) -> u32 {
+        unsafe { self.ptr.GetDashesCount() }
+    }
+
+    pub fn get_dashes(&self) -> Vec<f32> {
+        let count = self.get_dashes_count();
+        let mut data = vec![0.0; count as usize];
+        unsafe {
+            self.ptr.GetDashes(data.as_mut_ptr(), count);
+        }
+        data
+    }
+
+    pub unsafe fn get_raw(&self) -> *mut ID2D1StrokeStyle1 {
+        self.ptr.as_raw()
+    }
+
+    pub unsafe fn from_raw(raw: *mut ID2D1StrokeStyle1) -> Self {
+        StrokeStyle {
+            ptr: ComPtr::from_raw(raw),
+        }
+    }
 }
 
-impl<'a> StrokeStyleProperties<'a> {
-    pub fn new() -> StrokeStyleProperties<'static> {
+pub struct StrokeStyleBuilder<'a> {
+    factory: &'a Factory,
+    start_cap: CapStyle,
+    end_cap: CapStyle,
+    dash_cap: CapStyle,
+    line_join: LineJoin,
+    miter_limit: f32,
+    dash_style: DashStyle,
+    dash_offset: f32,
+    transform_type: StrokeTransformType,
+    dashes: Option<&'a [f32]>,
+}
+
+impl<'a> StrokeStyleBuilder<'a> {
+    pub fn new(factory: &'a Factory) -> Self {
         // default values taken from D2D1::StrokeStyleProperties in d2d1helper.h
-        StrokeStyleProperties {
+        StrokeStyleBuilder {
+            factory,
             start_cap: CapStyle::Flat,
             end_cap: CapStyle::Flat,
             dash_cap: CapStyle::Flat,
@@ -33,11 +95,81 @@ impl<'a> StrokeStyleProperties<'a> {
             miter_limit: 10.0,
             dash_style: DashStyle::Solid,
             dash_offset: 0.0,
+            transform_type: StrokeTransformType::Normal,
             dashes: None,
         }
     }
 
-    pub unsafe fn get_d2d1_data(&self) -> D2D1_STROKE_STYLE_PROPERTIES1 {
+    pub fn build(self) -> D2DResult<StrokeStyle> {
+        unsafe {
+            let properties = self.to_d2d1();
+            let (dashes, dash_count) = self.dashes
+                .map(|d| (d.as_ptr(), d.len() as u32))
+                .unwrap_or((ptr::null(), 0));
+
+            let mut ptr = ptr::null_mut();
+            let hr = (*self.factory.get_raw()).CreateStrokeStyle(
+                &properties,
+                dashes,
+                dash_count,
+                &mut ptr,
+            );
+
+            if SUCCEEDED(hr) {
+                Ok(StrokeStyle::from_raw(ptr))
+            } else {
+                Err(hr.into())
+            }
+        }
+    }
+
+    pub fn with_start_cap(mut self, start_cap: CapStyle) -> Self {
+        self.start_cap = start_cap;
+        self
+    }
+
+    pub fn with_end_cap(mut self, end_cap: CapStyle) -> Self {
+        self.end_cap = end_cap;
+        self
+    }
+
+    pub fn with_dash_cap(mut self, dash_cap: CapStyle) -> Self {
+        self.dash_cap = dash_cap;
+        self
+    }
+
+    pub fn with_line_join(mut self, line_join: LineJoin) -> Self {
+        self.line_join = line_join;
+        self
+    }
+
+    pub fn with_miter_limit(mut self, miter_limit: f32) -> Self {
+        self.miter_limit = miter_limit;
+        self
+    }
+
+    pub fn with_dash_style(mut self, dash_style: DashStyle) -> Self {
+        self.dash_style = dash_style;
+        self
+    }
+
+    pub fn with_dash_offset(mut self, dash_offset: f32) -> Self {
+        self.dash_offset = dash_offset;
+        self
+    }
+
+    pub fn with_transform_type(mut self, transform_type: StrokeTransformType) -> Self {
+        self.transform_type = transform_type;
+        self
+    }
+
+    pub fn with_dashes(mut self, dashes: &'a [f32]) -> Self {
+        self.dash_style = DashStyle::Custom;
+        self.dashes = Some(dashes);
+        self
+    }
+
+    fn to_d2d1(&self) -> D2D1_STROKE_STYLE_PROPERTIES1 {
         D2D1_STROKE_STYLE_PROPERTIES1 {
             startCap: self.start_cap as u32,
             endCap: self.end_cap as u32,
@@ -46,145 +178,7 @@ impl<'a> StrokeStyleProperties<'a> {
             miterLimit: self.miter_limit,
             dashStyle: self.dash_style as u32,
             dashOffset: self.dash_offset,
-            transformType: D2D1_STROKE_TRANSFORM_TYPE_NORMAL,
-        }
-    }
-}
-
-impl<'a> Default for StrokeStyleProperties<'a> {
-    fn default() -> StrokeStyleProperties<'static> {
-        StrokeStyleProperties::new()
-    }
-}
-
-impl StrokeStyle {
-    pub unsafe fn get_ptr(&self) -> *mut ID2D1StrokeStyle1 {
-        let ptr = self.stroke.as_raw();
-        assert!(!ptr.is_null());
-        ptr
-    }
-
-    pub fn get_start_cap(&self) -> Result<CapStyle, Error> {
-        unsafe { CapStyle::from_raw((*self.get_ptr()).GetStartCap()) }
-    }
-
-    pub fn get_end_cap(&self) -> Result<CapStyle, Error> {
-        unsafe { CapStyle::from_raw((*self.get_ptr()).GetEndCap()) }
-    }
-
-    pub fn get_dash_cap(&self) -> Result<CapStyle, Error> {
-        unsafe { CapStyle::from_raw((*self.get_ptr()).GetDashCap()) }
-    }
-
-    pub fn get_miter_limit(&self) -> f32 {
-        unsafe { (*self.get_ptr()).GetMiterLimit() }
-    }
-
-    pub fn get_line_join(&self) -> Result<LineJoin, Error> {
-        unsafe { LineJoin::from_raw((*self.get_ptr()).GetLineJoin()) }
-    }
-
-    pub fn get_dash_offset(&self) -> f32 {
-        unsafe { (*self.get_ptr()).GetDashOffset() }
-    }
-
-    pub fn get_dash_style(&self) -> Result<DashStyle, Error> {
-        unsafe { DashStyle::from_raw((*self.get_ptr()).GetDashStyle()) }
-    }
-
-    pub fn get_dashes_count(&self) -> u32 {
-        unsafe { (*self.get_ptr()).GetDashesCount() }
-    }
-
-    pub fn get_dashes(&self) -> Vec<f32> {
-        let count = self.get_dashes_count();
-        let mut data = vec![0.0; count as usize];
-        unsafe {
-            (*self.get_ptr()).GetDashes(data.as_mut_ptr(), count);
-        }
-        data
-    }
-}
-
-impl GetRaw for StrokeStyle {
-    type Raw = ID2D1StrokeStyle1;
-    unsafe fn get_raw(&self) -> *mut ID2D1StrokeStyle1 {
-        self.stroke.as_raw()
-    }
-}
-
-impl FromRaw for StrokeStyle {
-    type Raw = ID2D1StrokeStyle1;
-    unsafe fn from_raw(raw: *mut ID2D1StrokeStyle1) -> Self {
-        StrokeStyle {
-            stroke: ComPtr::from_raw(raw),
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub enum CapStyle {
-    Flat = 0,
-    Square = 1,
-    Round = 2,
-    Triangle = 3,
-}
-
-impl CapStyle {
-    fn from_raw(value: D2D1_CAP_STYLE) -> Result<CapStyle, Error> {
-        use self::CapStyle::*;
-        match value {
-            D2D1_CAP_STYLE_FLAT => Ok(Flat),
-            D2D1_CAP_STYLE_SQUARE => Ok(Square),
-            D2D1_CAP_STYLE_ROUND => Ok(Round),
-            D2D1_CAP_STYLE_TRIANGLE => Ok(Triangle),
-            _ => Err(Error::UnknownEnumValue),
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub enum LineJoin {
-    Miter = 0,
-    Bevel = 1,
-    Round = 2,
-    MiterOrBevel = 3,
-}
-
-impl LineJoin {
-    fn from_raw(value: D2D1_LINE_JOIN) -> Result<LineJoin, Error> {
-        use self::LineJoin::*;
-        match value {
-            D2D1_LINE_JOIN_MITER => Ok(Miter),
-            D2D1_LINE_JOIN_BEVEL => Ok(Bevel),
-            D2D1_LINE_JOIN_ROUND => Ok(Round),
-            D2D1_LINE_JOIN_MITER_OR_BEVEL => Ok(MiterOrBevel),
-            _ => Err(Error::UnknownEnumValue),
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub enum DashStyle {
-    Solid = 0,
-    Dash = 1,
-    Dot = 2,
-    DashDot = 3,
-    DashDotDot = 4,
-    Custom = 5,
-}
-
-impl DashStyle {
-    fn from_raw(value: D2D1_DASH_STYLE) -> Result<DashStyle, Error> {
-        use self::DashStyle::*;
-        match value {
-            D2D1_DASH_STYLE_SOLID => Ok(Solid),
-            D2D1_DASH_STYLE_DASH => Ok(Dash),
-            D2D1_DASH_STYLE_DOT => Ok(Dot),
-            D2D1_DASH_STYLE_DASH_DOT => Ok(DashDot),
-            D2D1_DASH_STYLE_DASH_DOT_DOT => Ok(DashDotDot),
-            D2D1_DASH_STYLE_CUSTOM => Ok(Custom),
-            _ => Err(Error::UnknownEnumValue),
+            transformType: self.transform_type as u32,
         }
     }
 }

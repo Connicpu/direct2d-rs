@@ -7,8 +7,6 @@ extern crate directwrite;
 #[cfg(windows)]
 extern crate dxgi;
 #[cfg(windows)]
-extern crate direct3d11;
-#[cfg(windows)]
 extern crate either;
 #[cfg(windows)]
 extern crate winapi;
@@ -52,6 +50,3 @@ pub mod math;
 pub mod render_target;
 #[cfg(windows)]
 pub mod stroke_style;
-
-#[cfg(windows)]
-mod helpers;

@@ -15,6 +15,12 @@ use winapi::um::d2d1_1::ID2D1Factory1;
 use winapi::um::dcommon::DWRITE_MEASURING_MODE_NATURAL;
 use wio::wide::ToWide;
 
+pub use self::dxgi::DxgiSurfaceRenderTarget;
+pub use self::generic::GenericRenderTarget;
+pub use self::hwnd::HwndRenderTarget;
+
+pub mod dxgi;
+pub mod generic;
 pub mod hwnd;
 
 #[derive(Copy, Clone, Debug)]
@@ -138,7 +144,7 @@ pub trait RenderTarget {
     ) {
         unsafe {
             let stroke_style = match stroke_style {
-                Some(s) => s.get_ptr() as *mut _,
+                Some(s) => s.get_raw() as *mut _,
                 None => ptr::null_mut(),
             };
 
@@ -156,7 +162,7 @@ pub trait RenderTarget {
     ) {
         unsafe {
             let stroke_style = match stroke_style {
-                Some(s) => s.get_ptr() as *mut _,
+                Some(s) => s.get_raw() as *mut _,
                 None => ptr::null_mut(),
             };
 
@@ -180,7 +186,7 @@ pub trait RenderTarget {
     ) {
         unsafe {
             let stroke_style = match stroke_style {
-                Some(s) => s.get_ptr() as *mut _,
+                Some(s) => s.get_raw() as *mut _,
                 None => ptr::null_mut(),
             };
 
@@ -204,7 +210,7 @@ pub trait RenderTarget {
     ) {
         unsafe {
             let stroke_style = match stroke_style {
-                Some(s) => s.get_ptr() as *mut _,
+                Some(s) => s.get_raw() as *mut _,
                 None => ptr::null_mut(),
             };
 
@@ -228,7 +234,7 @@ pub trait RenderTarget {
     ) {
         unsafe {
             let stroke_style = match stroke_style {
-                Some(s) => s.get_ptr() as *mut _,
+                Some(s) => s.get_raw() as *mut _,
                 None => ptr::null_mut(),
             };
 

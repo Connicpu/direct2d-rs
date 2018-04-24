@@ -10,9 +10,8 @@ license = "MIT/Apache-2.0"
 [target.'cfg(windows)'.dependencies]
 directwrite = "0.1.2"
 wio = "0.2"
-dxgi = "0.1.4"
+dxgi = "0.1.5"
 either = "1.5.0"
-direct3d11 = "0.1.1"
 
 [target.'cfg(windows)'.dependencies.winapi]
 version = "0.3"
