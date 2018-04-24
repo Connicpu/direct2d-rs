@@ -1,5 +1,5 @@
-use std::fmt::{Debug, Formatter, Result};
 use super::*;
+use std::fmt::{Debug, Formatter, Result};
 
 impl Debug for Point2F {
     fn fmt(&self, fmt: &mut Formatter) -> Result {
@@ -21,33 +21,55 @@ impl Debug for SizeF {
 
 impl Debug for RectF {
     fn fmt(&self, fmt: &mut Formatter) -> Result {
-        write!(fmt, "Rect[{}, {}, {}, {}]", self.0.left, self.0.top, self.0.right, self.0.bottom)
+        write!(
+            fmt,
+            "Rect[{}, {}, {}, {}]",
+            self.0.left, self.0.top, self.0.right, self.0.bottom
+        )
     }
 }
 
 impl Debug for ThicknessF {
     fn fmt(&self, fmt: &mut Formatter) -> Result {
-        write!(fmt, "Thickness[{}, {}, {}, {}]", self.0.left, self.0.top, self.0.right, self.0.bottom)
+        write!(
+            fmt,
+            "Thickness[{}, {}, {}, {}]",
+            self.0.left, self.0.top, self.0.right, self.0.bottom
+        )
     }
 }
 
 impl Debug for RoundedRect {
     fn fmt(&self, fmt: &mut Formatter) -> Result {
-        write!(fmt, "RoundedRect({:?}, {}, {})", RectF(self.0.rect), self.0.radiusX, self.0.radiusY)
-
+        write!(
+            fmt,
+            "RoundedRect({:?}, {}, {})",
+            RectF(self.0.rect),
+            self.0.radiusX,
+            self.0.radiusY
+        )
     }
 }
 
 impl Debug for Ellipse {
     fn fmt(&self, fmt: &mut Formatter) -> Result {
-        write!(fmt, "Ellipse({:?}, {}, {})", Point2F(self.0.point), self.0.radiusX, self.0.radiusY)
+        write!(
+            fmt,
+            "Ellipse({:?}, {}, {})",
+            Point2F(self.0.point),
+            self.0.radiusX,
+            self.0.radiusY
+        )
     }
 }
 
 impl Debug for ColorF {
     fn fmt(&self, fmt: &mut Formatter) -> Result {
-        write!(fmt, "ColorRGBA({}, {}, {}, {})", self.0.r, self.0.g, self.0.b, self.0.a)
-
+        write!(
+            fmt,
+            "ColorRGBA({}, {}, {}, {})",
+            self.0.r, self.0.g, self.0.b, self.0.a
+        )
     }
 }
 

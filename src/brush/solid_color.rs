@@ -57,7 +57,10 @@ where
         let color = self.color.expect("`color` must be specified");
         unsafe {
             let mut ptr = ptr::null_mut();
-            let hr = self.context.rt().CreateSolidColorBrush(&color.0, &self.properties.0, &mut ptr);
+            let hr =
+                self.context
+                    .rt()
+                    .CreateSolidColorBrush(&color.0, &self.properties.0, &mut ptr);
             if SUCCEEDED(hr) {
                 Ok(SolidColorBrush::from_raw(ptr))
             } else {

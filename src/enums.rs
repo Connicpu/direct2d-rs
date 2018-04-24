@@ -45,6 +45,56 @@ d2d_enums! {
         _2_2 = 0,
         _1_0 = 1,
     }
+
+    pub enum RenderTargetType {
+        Default = 0,
+        Software = 1,
+        Hardware = 2,
+    }
+
+    pub enum AlphaMode {
+        Unknown = 0,
+        Premultiplied = 1,
+        Straight = 2,
+        Ignore = 3,
+    }
+    
+    pub enum FeatureLevel {
+        Default = 0,
+        Level9 = 37120,
+        Level10 = 40960,
+    }
+
+    pub enum SweepDirection {
+        CounterClockwise = 0,
+        Clockwise = 1,
+    }
+
+    pub enum ArcSize {
+        Small = 0,
+        Large = 1,
+    }
+}
+
+d2d_flags! {
+    #[repr(u32)]
+    pub enum RenderTargetUsage {
+        FORCE_BITMAP_REMOTING = 0x1,
+        GDI_COMPATIBLE = 0x2,
+    }
+
+    #[repr(u32)]
+    pub enum PresentOptions {
+        RETAIN_CONTENTS = 0x1,
+        IMMEDIATELY = 0x2,
+    }
+
+    #[repr(u32)]
+    pub enum DrawTextOptions {
+        NO_SNAP = 0x1,
+        CLIP = 0x2,
+        ENABLE_COLOR_FONT = 0x4,
+    }
 }
 
 #[repr(C)]

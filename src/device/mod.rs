@@ -24,13 +24,13 @@ impl Device {
             }
         }
     }
-    
+
     pub unsafe fn from_raw(raw: *mut ID2D1Device) -> Self {
         Device {
             ptr: ComPtr::from_raw(raw),
         }
     }
-    
+
     pub unsafe fn get_raw(&self) -> *mut ID2D1Device {
         self.ptr.as_raw()
     }

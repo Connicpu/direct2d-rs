@@ -12,10 +12,11 @@ directwrite = "0.1.2"
 wio = "0.2"
 dxgi = "0.1.4"
 either = "1.5.0"
+direct3d11 = "0.1.1"
 
 [target.'cfg(windows)'.dependencies.winapi]
 version = "0.3"
-features = ["d2d1_1", "d3d11", "dwrite", "winbase", "libloaderapi", "errhandlingapi", "winuser"]
+features = ["d2d1_1", "d3d11", "dwrite", "winbase", "libloaderapi", "errhandlingapi", "windef", "winuser"]
 
 [target.'cfg(windows)'.dev-dependencies]
 lazy_static = "1.0"

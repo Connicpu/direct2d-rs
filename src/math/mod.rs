@@ -1,9 +1,11 @@
-use std::cmp::PartialEq;
-use std::ops::{Add, Div, Mul, Neg, Sub};
-use std::f32::EPSILON;
+use enums::{ArcSize, SweepDirection};
 
-use winapi::um::d2dbasetypes::*;
+use std::cmp::PartialEq;
+use std::f32::EPSILON;
+use std::ops::{Add, Div, Mul, Neg, Sub};
+
 use winapi::um::d2d1::*;
+use winapi::um::d2dbasetypes::*;
 
 pub mod debug;
 
@@ -23,16 +25,6 @@ math_wrappers! {
     pub struct ArcSegment(pub D2D1_ARC_SEGMENT);
     pub struct BrushProperties(pub D2D1_BRUSH_PROPERTIES);
     pub struct LinearGradientBrushProperties(pub D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES);
-}
-
-pub enum SweepDirection {
-    CounterClockwise = 0,
-    Clockwise = 1,
-}
-
-pub enum ArcSize {
-    Small = 0,
-    Large = 1,
 }
 
 impl Point2F {
@@ -256,8 +248,8 @@ impl RectF {
 
     #[inline]
     pub fn contains(&self, point: Point2F) -> bool {
-        return self.left < point.0.x && self.top < point.0.y && self.right > point.0.x &&
-            self.bottom > point.0.y;
+        return self.left < point.0.x && self.top < point.0.y && self.right > point.0.x
+            && self.bottom > point.0.y;
     }
 
     #[inline]
@@ -286,8 +278,8 @@ impl From<(f32, f32, f32, f32)> for RectF {
 impl PartialEq for RectF {
     #[inline]
     fn eq(&self, rhs: &RectF) -> bool {
-        self.left == rhs.left && self.top == rhs.top && self.right == rhs.right &&
-            self.bottom == rhs.bottom
+        self.left == rhs.left && self.top == rhs.top && self.right == rhs.right
+            && self.bottom == rhs.bottom
     }
 }
 
@@ -412,13 +404,15 @@ impl Matrix3x2F {
     // Used for destructuring; if and when slice pattern syntax lands, this
     // could be removed.
     fn as_tuple(&self) -> ((f32, f32), (f32, f32), (f32, f32)) {
-        ((self.matrix[0][0], self.matrix[0][1]),
+        (
+            (self.matrix[0][0], self.matrix[0][1]),
             (self.matrix[1][0], self.matrix[1][1]),
-            (self.matrix[2][0], self.matrix[2][1]))
+            (self.matrix[2][0], self.matrix[2][1]),
+        )
     }
 
     pub const IDENTITY: Matrix3x2F = Matrix3x2F(D2D1_MATRIX_3X2_F {
-        matrix: [[1.0, 0.0], [0.0, 1.0], [0.0, 0.0]]
+        matrix: [[1.0, 0.0], [0.0, 1.0], [0.0, 0.0]],
     });
 
     #[inline]
@@ -443,11 +437,7 @@ impl Matrix3x2F {
             center.y - scale.height * center.y,
         );
 
-        Matrix3x2F::new([
-            [scale.width, 0.0],
-            [0.0, scale.height],
-            [trans.x, trans.y],
-        ])
+        Matrix3x2F::new([[scale.width, 0.0], [0.0, scale.height], [trans.x, trans.y]])
     }
 
     #[inline]
@@ -616,7 +606,6 @@ impl ArcSegment {
         )
     }
 
-
     /// Create a clockwise small arc
     #[inline]
     pub fn new_cw_sm(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
@@ -628,7 +617,6 @@ impl ArcSegment {
             ArcSize::Small,
         )
     }
-
 
     /// Create a counter-clockwise small arc
     #[inline]

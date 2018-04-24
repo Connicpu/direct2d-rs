@@ -7,12 +7,16 @@ extern crate directwrite;
 #[cfg(windows)]
 extern crate dxgi;
 #[cfg(windows)]
+extern crate direct3d11;
+#[cfg(windows)]
 extern crate either;
 #[cfg(windows)]
 extern crate winapi;
 #[cfg(windows)]
 extern crate wio;
 
+#[cfg(windows)]
+pub use device::Device;
 #[cfg(windows)]
 pub use device_context::DeviceContext;
 #[cfg(windows)]

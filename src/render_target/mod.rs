@@ -1,45 +1,28 @@
 use brush::Brush;
 use directwrite::{TextFormat, TextLayout};
+use enums::DrawTextOptions;
 use error::Error;
 use factory::Factory;
 use geometry::Geometry;
-use helpers::{FromRaw, GetRaw};
 use math::*;
 use std::{mem, ptr};
 use stroke_style::StrokeStyle;
 use wio::com::ComPtr;
 
-use winapi::shared::winerror::{HRESULT, SUCCEEDED};
-use winapi::um::d2d1::{D2D1_DRAW_TEXT_OPTIONS_NONE, D2D1_TAG, ID2D1Factory, ID2D1HwndRenderTarget,
-                       ID2D1RenderTarget};
+use winapi::shared::winerror::SUCCEEDED;
+use winapi::um::d2d1::{D2D1_TAG, ID2D1Factory, ID2D1RenderTarget};
 use winapi::um::d2d1_1::ID2D1Factory1;
 use winapi::um::dcommon::DWRITE_MEASURING_MODE_NATURAL;
 use wio::wide::ToWide;
 
-/// This trait is intended to be implemented by external APIs who would
-/// like to allow a Direct2D interface for drawing onto them. Since the
-/// Direct2D creation APIs require more information, this will likely be
-/// implemented on Builder objects which contain enough context about
-/// the actual backing structure and what needs to be done to set it up.
-pub unsafe trait RenderTargetBacking {
-    /// The ID2D1RenderTarget's ownership is passed out of the function and as such
-    /// the caller is now responsible for ensuring the pointer will receive its
-    /// Release() call.
-    fn create_target(self, factory: &mut ID2D1Factory1) -> Result<*mut ID2D1RenderTarget, HRESULT>;
-}
-
-pub struct ConcreteRenderTarget {
-    ptr: ComPtr<ID2D1RenderTarget>,
-}
-
-unsafe impl Send for ConcreteRenderTarget {}
-unsafe impl Sync for ConcreteRenderTarget {}
+pub mod hwnd;
 
 #[derive(Copy, Clone, Debug)]
 pub struct RenderTag {
     pub file_line: &'static str,
 }
 
+#[repr(C)]
 struct RenderTagRaw(usize, usize);
 
 #[macro_export]
@@ -56,34 +39,6 @@ macro_rules! set_render_tag {
     ($rt:ident) => {
         $crate::render_target::RenderTarget::set_tag(&mut $rt, make_render_tag!());
     };
-}
-
-impl ConcreteRenderTarget {
-    pub unsafe fn as_hwnd_rt(&self) -> Option<ComPtr<ID2D1HwndRenderTarget>> {
-        self.ptr.cast().ok()
-    }
-}
-
-impl RenderTarget for ConcreteRenderTarget {
-    unsafe fn rt<'a>(&self) -> &'a mut ID2D1RenderTarget {
-        &mut *self.ptr.as_raw()
-    }
-}
-
-impl GetRaw for ConcreteRenderTarget {
-    type Raw = ID2D1RenderTarget;
-    unsafe fn get_raw(&self) -> *mut ID2D1RenderTarget {
-        self.ptr.as_raw()
-    }
-}
-
-impl FromRaw for ConcreteRenderTarget {
-    type Raw = ID2D1RenderTarget;
-    unsafe fn from_raw(raw: *mut ID2D1RenderTarget) -> Self {
-        ConcreteRenderTarget {
-            ptr: ComPtr::from_raw(raw),
-        }
-    }
 }
 
 pub trait RenderTarget {
@@ -130,7 +85,7 @@ pub trait RenderTarget {
             if SUCCEEDED(result) {
                 Ok(())
             } else {
-                let tag = ConcreteRenderTarget::make_tag(tag1, tag2);
+                let tag = Self::make_tag(tag1, tag2);
                 Err((From::from(result), tag))
             }
         }
@@ -148,7 +103,7 @@ pub trait RenderTarget {
         let mut tag2 = 0;
         unsafe {
             self.rt().GetTags(&mut tag1, &mut tag2);
-            ConcreteRenderTarget::make_tag(tag1, tag2)
+            Self::make_tag(tag1, tag2)
         }
     }
 
@@ -161,7 +116,7 @@ pub trait RenderTarget {
             if SUCCEEDED(result) {
                 Ok(())
             } else {
-                let tag = ConcreteRenderTarget::make_tag(tag1, tag2);
+                let tag = Self::make_tag(tag1, tag2);
                 Err((From::from(result), tag))
             }
         }
@@ -311,13 +266,9 @@ pub trait RenderTarget {
         format: &TextFormat,
         layout_rect: &RectF,
         foreground_brush: &B,
-        options: &[DrawTextOption],
+        options: DrawTextOptions,
     ) {
         let text = text.to_wide_null();
-        let mut draw_options = D2D1_DRAW_TEXT_OPTIONS_NONE;
-        for &option in options {
-            draw_options |= option as u32;
-        }
 
         unsafe {
             let format = format.get_raw();
@@ -327,7 +278,7 @@ pub trait RenderTarget {
                 format,
                 &layout_rect.0,
                 foreground_brush.get_ptr(),
-                draw_options,
+                options.0,
                 DWRITE_MEASURING_MODE_NATURAL,
             );
         }
@@ -338,17 +289,12 @@ pub trait RenderTarget {
         origin: &Point2F,
         layout: &TextLayout,
         brush: &B,
-        options: &[DrawTextOption],
+        options: DrawTextOptions,
     ) {
-        let mut draw_options = D2D1_DRAW_TEXT_OPTIONS_NONE;
-        for &option in options {
-            draw_options |= option as u32;
-        }
-
         unsafe {
             let layout = layout.get_raw();
             self.rt()
-                .DrawTextLayout(origin.0, layout, brush.get_ptr(), draw_options);
+                .DrawTextLayout(origin.0, layout, brush.get_ptr(), options.0);
         }
     }
 
@@ -363,11 +309,4 @@ pub trait RenderTarget {
             mat
         }
     }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum DrawTextOption {
-    NoSnap = 1,
-    Clip = 2,
-    EnableColorFont = 4,
 }
