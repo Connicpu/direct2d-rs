@@ -35,6 +35,10 @@ impl HwndRenderTarget {
         }
     }
 
+    pub fn get_hwnd(&self) -> HWND {
+        unsafe { self.ptr.GetHwnd() }
+    }
+
     pub unsafe fn from_raw(raw: *mut ID2D1HwndRenderTarget) -> Self {
         HwndRenderTarget {
             ptr: ComPtr::from_raw(raw),
