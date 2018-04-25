@@ -13,11 +13,13 @@ use winapi::um::d2d1::ID2D1LinearGradientBrush;
 use wio::com::ComPtr;
 
 #[derive(Clone)]
+/// Paints an area with a linear gradient.
 pub struct LinearGradientBrush {
     ptr: ComPtr<ID2D1LinearGradientBrush>,
 }
 
 impl LinearGradientBrush {
+    #[inline]
     pub fn create<'a, R>(context: &'a R) -> LinearGradientBrushBuilder<'a, R>
     where
         R: RenderTarget + 'a,
@@ -25,14 +27,20 @@ impl LinearGradientBrush {
         LinearGradientBrushBuilder::new(context)
     }
 
+    /// Retrieves the starting coordinates of the linear gradient. 
+    #[inline]
     pub fn get_start_point(&self) -> Point2F {
         unsafe { Point2F(self.ptr.GetStartPoint()) }
     }
 
+    /// Retrieves the ending coordinates of the linear gradient.
+    #[inline]
     pub fn get_end_point(&self) -> Point2F {
         unsafe { Point2F(self.ptr.GetEndPoint()) }
     }
 
+    /// Retrieves the `GradientStopCollection` associated with this linear gradient brush.
+    #[inline]
     pub fn get_gradient_stop_collection(&self) -> GradientStopCollection {
         unsafe {
             let mut ptr = ptr::null_mut();
@@ -43,10 +51,14 @@ impl LinearGradientBrush {
         }
     }
 
+    /// Sets the starting coordinates of the linear gradient in the brush's coordinate space.
+    #[inline]
     pub fn set_start_point(&mut self, point: Point2F) {
         unsafe { self.ptr.SetStartPoint(point.0) }
     }
 
+    /// Sets the ending coordinates of the linear gradient in the brush's coordinate space.
+    #[inline]
     pub fn set_end_point(&mut self, point: Point2F) {
         unsafe { self.ptr.SetEndPoint(point.0) }
     }
@@ -68,6 +80,7 @@ impl<'a, R> LinearGradientBrushBuilder<'a, R>
 where
     R: RenderTarget + 'a,
 {
+    #[inline]
     pub fn new(context: &'a R) -> Self {
         LinearGradientBrushBuilder {
             context,
@@ -77,6 +90,7 @@ where
         }
     }
 
+    #[inline]
     pub fn build(self) -> D2DResult<LinearGradientBrush> {
         let stops = self.stops.map_left(|b| b.build());
         let stops = stops.as_ref().either(|b| b.as_ref(), |&c| Ok(c))?;
@@ -97,37 +111,37 @@ where
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_properties(mut self, properties: BrushProperties) -> Self {
         self.properties = properties;
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_opacity(mut self, opacity: f32) -> Self {
         self.properties.0.opacity = opacity;
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_transform(mut self, transform: Matrix3x2F) -> Self {
         self.properties.0.transform = transform.0;
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_start(mut self, start: Point2F) -> Self {
         self.linear_properties.startPoint = start.0;
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_end(mut self, end: Point2F) -> Self {
         self.linear_properties.endPoint = end.0;
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_extend_mode(mut self, mode: ExtendMode) -> Self {
         self.stops = Either::Left(
             self.stops
@@ -138,7 +152,7 @@ where
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_gamma(mut self, gamma: Gamma) -> Self {
         self.stops = Either::Left(
             self.stops
@@ -149,7 +163,7 @@ where
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_stop<G>(mut self, stop: G) -> Self
     where
         G: Into<GradientStop>,
@@ -163,7 +177,7 @@ where
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_stops(mut self, stops: &'a [GradientStop]) -> Self {
         self.stops = Either::Left(
             self.stops
@@ -174,7 +188,7 @@ where
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_stop_collection(mut self, stops: &'a GradientStopCollection) -> Self {
         self.stops = Either::Right(stops);
         self

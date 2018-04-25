@@ -10,29 +10,26 @@ use winapi::um::d2d1::ID2D1GradientStopCollection;
 use wio::com::ComPtr;
 
 pub use self::linear::LinearGradientBrush;
+pub use self::radial::RadialGradientBrush;
 
 pub mod linear;
 pub mod radial;
 
+#[derive(Clone)]
+/// Represents an collection of GradientStop objects for linear and radial gradient brushes.
 pub struct GradientStopCollection {
     ptr: ComPtr<ID2D1GradientStopCollection>,
 }
 
 impl GradientStopCollection {
-    pub unsafe fn from_raw(raw: *mut ID2D1GradientStopCollection) -> Self {
-        GradientStopCollection {
-            ptr: ComPtr::from_raw(raw),
-        }
-    }
-
-    pub unsafe fn get_raw(&self) -> *mut ID2D1GradientStopCollection {
-        self.ptr.as_raw()
-    }
-
+    /// Get the number of stops in the collection
+    #[inline]
     pub fn len(&self) -> u32 {
         unsafe { self.ptr.GetGradientStopCount() }
     }
 
+    /// Get all of the stop points
+    #[inline]
     pub fn get_stops(&self) -> Vec<GradientStop> {
         unsafe {
             let len = self.len();
@@ -40,6 +37,18 @@ impl GradientStopCollection {
             self.ptr.GetGradientStops(stops.as_mut_ptr() as *mut _, len);
             stops
         }
+    }
+
+    #[inline]
+    pub unsafe fn from_raw(raw: *mut ID2D1GradientStopCollection) -> Self {
+        GradientStopCollection {
+            ptr: ComPtr::from_raw(raw),
+        }
+    }
+
+    #[inline]
+    pub unsafe fn get_raw(&self) -> *mut ID2D1GradientStopCollection {
+        self.ptr.as_raw()
     }
 }
 

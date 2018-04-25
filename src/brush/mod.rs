@@ -10,6 +10,8 @@ use wio::com::ComPtr;
 #[doc(inline)]
 pub use brush::gradient::linear::LinearGradientBrush;
 #[doc(inline)]
+pub use brush::gradient::radial::RadialGradientBrush;
+#[doc(inline)]
 pub use brush::gradient::{GradientStop, GradientStopCollection};
 #[doc(inline)]
 pub use brush::solid_color::SolidColorBrush;
@@ -21,6 +23,7 @@ pub mod solid_color;
 pub trait Brush {
     unsafe fn get_ptr(&self) -> *mut ID2D1Brush;
 
+    #[inline]
     fn get_factory(&self) -> Factory {
         unsafe {
             let mut ptr = ptr::null_mut();
@@ -31,28 +34,33 @@ pub trait Brush {
         }
     }
 
+    #[inline]
     fn to_generic(&self) -> GenericBrush {
         let ptr = unsafe { ComPtr::from_raw(self.get_ptr()) };
         mem::forget(ptr.clone());
         GenericBrush { ptr }
     }
 
+    #[inline]
     fn set_opacity(&mut self, opacity: f32) {
         unsafe {
             (*self.get_ptr()).SetOpacity(opacity);
         }
     }
 
+    #[inline]
     fn set_transform(&mut self, transform: &Matrix3x2F) {
         unsafe {
             (*self.get_ptr()).SetTransform(&transform.0);
         }
     }
 
+    #[inline]
     fn get_opacity(&self) -> f32 {
         unsafe { (*self.get_ptr()).GetOpacity() }
     }
 
+    #[inline]
     fn get_transform(&self) -> Matrix3x2F {
         unsafe {
             let mut mat: Matrix3x2F = mem::uninitialized();

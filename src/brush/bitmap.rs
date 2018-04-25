@@ -16,6 +16,7 @@ pub struct BitmapBrush {
 }
 
 impl BitmapBrush {
+    #[inline]
     pub fn create<'a, R>(context: &'a R) -> BitmapBrushBuilder<'a, R>
     where
         R: RenderTarget + 'a,
@@ -40,6 +41,7 @@ impl<'a, R> BitmapBrushBuilder<'a, R>
 where
     R: RenderTarget + 'a,
 {
+    #[inline]
     pub fn new(context: &'a R) -> Self {
         BitmapBrushBuilder {
             context,
@@ -53,6 +55,7 @@ where
         }
     }
 
+    #[inline]
     pub fn build(self) -> D2DResult<BitmapBrush> {
         let bitmap = self.bitmap.expect("`bitmap` must be specified");
         unsafe {
@@ -72,37 +75,37 @@ where
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_bitmap(mut self, bitmap: &'a Bitmap) -> Self {
         self.bitmap = Some(bitmap);
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_extend_mode_x(mut self, mode: ExtendMode) -> Self {
         self.b_properties.extendModeX = mode as u32;
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_extend_mode_y(mut self, mode: ExtendMode) -> Self {
         self.b_properties.extendModeY = mode as u32;
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_properties(mut self, properties: BrushProperties) -> Self {
         self.properties = properties;
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_opacity(mut self, opacity: f32) -> Self {
         self.properties.0.opacity = opacity;
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_transform(mut self, transform: Matrix3x2F) -> Self {
         self.properties.0.transform = transform.0;
         self

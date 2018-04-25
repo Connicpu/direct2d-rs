@@ -14,6 +14,7 @@ pub struct SolidColorBrush {
 }
 
 impl SolidColorBrush {
+    #[inline]
     pub fn create<'a, R>(context: &'a R) -> SolidColorBrushBuilder<'a, R>
     where
         R: RenderTarget + 'a,
@@ -21,10 +22,12 @@ impl SolidColorBrush {
         SolidColorBrushBuilder::new(context)
     }
 
+    #[inline]
     pub fn set_color(&mut self, color: &ColorF) {
         unsafe { self.ptr.SetColor(&color.0) };
     }
 
+    #[inline]
     pub fn get_color(&self) -> ColorF {
         unsafe { ColorF(self.ptr.GetColor()) }
     }
@@ -45,6 +48,7 @@ impl<'a, R> SolidColorBrushBuilder<'a, R>
 where
     R: RenderTarget + 'a,
 {
+    #[inline]
     pub fn new(context: &'a R) -> Self {
         SolidColorBrushBuilder {
             context,
@@ -53,6 +57,7 @@ where
         }
     }
 
+    #[inline]
     pub fn build(self) -> D2DResult<SolidColorBrush> {
         let color = self.color.expect("`color` must be specified");
         unsafe {
@@ -69,7 +74,7 @@ where
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_color<C>(mut self, color: C) -> Self
     where
         C: Into<ColorF>,
@@ -78,19 +83,19 @@ where
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_properties(mut self, properties: BrushProperties) -> Self {
         self.properties = properties;
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_opacity(mut self, opacity: f32) -> Self {
         self.properties.0.opacity = opacity;
         self
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_transform(mut self, transform: Matrix3x2F) -> Self {
         self.properties.0.transform = transform.0;
         self

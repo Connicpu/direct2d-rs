@@ -25,6 +25,7 @@ math_wrappers! {
     pub struct ArcSegment(pub D2D1_ARC_SEGMENT);
     pub struct BrushProperties(pub D2D1_BRUSH_PROPERTIES);
     pub struct LinearGradientBrushProperties(pub D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES);
+    pub struct RadialGradientBrushProperties(pub D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES);
 }
 
 impl Point2F {
