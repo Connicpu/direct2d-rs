@@ -22,14 +22,14 @@ pub struct GradientStopCollection {
 }
 
 impl GradientStopCollection {
-    /// Get the number of stops in the collection
     #[inline]
+    /// Get the number of stops in the collection
     pub fn len(&self) -> u32 {
         unsafe { self.ptr.GetGradientStopCount() }
     }
 
-    /// Get all of the stop points
     #[inline]
+    /// Get all of the stop points
     pub fn get_stops(&self) -> Vec<GradientStop> {
         unsafe {
             let len = self.len();
@@ -60,6 +60,7 @@ pub struct GradientStop {
 }
 
 impl From<(f32, ColorF)> for GradientStop {
+    #[inline]
     fn from((position, color): (f32, ColorF)) -> Self {
         GradientStop { position, color }
     }
@@ -79,6 +80,8 @@ impl<'a, R> GradientStopBuilder<'a, R>
 where
     R: RenderTarget + 'a,
 {
+    #[inline]
+    /// Defaults: Gamma::_2_2, ExtendMode::Clamp
     pub fn new(context: &'a R) -> Self {
         GradientStopBuilder {
             context,

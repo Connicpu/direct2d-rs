@@ -17,6 +17,7 @@ pub struct Group {
 }
 
 impl Group {
+    #[inline]
     pub fn create<G>(factory: &Factory, fill_mode: FillMode, geometry: G) -> D2DResult<Group>
     where
         G: GroupableGeometry,
@@ -41,14 +42,17 @@ impl Group {
         }
     }
 
+    #[inline]
     pub fn get_fill_mode(&self) -> D2DResult<FillMode> {
         unsafe { FillMode::from_u32(self.ptr.GetFillMode()).ok_or(E_FAIL.into()) }
     }
 
+    #[inline]
     pub fn get_source_geometry_count(&self) -> u32 {
         unsafe { self.ptr.GetSourceGeometryCount() }
     }
 
+    #[inline]
     pub fn get_source_geometries(&self) -> Vec<GenericGeometry> {
         unsafe {
             let count = self.get_source_geometry_count();
@@ -73,6 +77,7 @@ where
     G: Geometry,
 {
     type List = &'a [*mut ID2D1Geometry];
+    #[inline]
     fn raw_geometry_list(self) -> Self::List {
         assert_eq!(mem::size_of::<G>(), mem::size_of::<*mut ID2D1Geometry>());
         unsafe { slice::from_raw_parts(self.as_ptr() as *const _, self.len()) }
@@ -84,6 +89,7 @@ where
     G: Geometry,
 {
     type List = &'a [*mut ID2D1Geometry];
+    #[inline]
     fn raw_geometry_list(self) -> Self::List {
         self[..].raw_geometry_list()
     }
@@ -97,6 +103,7 @@ macro_rules! groupable_tuples {
         {
             type List = [*mut ID2D1Geometry; groupable_tuples!(@count_tuple_size $($gtup)*)];
             #[allow(non_snake_case)]
+            #[inline]
             fn raw_geometry_list(self) -> Self::List {
                 let ($($gtup,)*) = self;
                 [$(unsafe{Geometry::get_ptr(&$gtup)},)*]

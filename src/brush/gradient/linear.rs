@@ -27,7 +27,7 @@ impl LinearGradientBrush {
         LinearGradientBrushBuilder::new(context)
     }
 
-    /// Retrieves the starting coordinates of the linear gradient. 
+    /// Retrieves the starting coordinates of the linear gradient.
     #[inline]
     pub fn get_start_point(&self) -> Point2F {
         unsafe { Point2F(self.ptr.GetStartPoint()) }
@@ -81,6 +81,8 @@ where
     R: RenderTarget + 'a,
 {
     #[inline]
+    /// Creates a builder. It starts with the opacity as 1.0 and the transform as the identity
+    /// matrix, and all other values zeroed out. You should add at least two gradient stops.
     pub fn new(context: &'a R) -> Self {
         LinearGradientBrushBuilder {
             context,
@@ -91,6 +93,8 @@ where
     }
 
     #[inline]
+    /// Build the brush described in this builder. Will likely fail if you haven't added any
+    /// stops to the collection (or specified an existing collection).
     pub fn build(self) -> D2DResult<LinearGradientBrush> {
         let stops = self.stops.map_left(|b| b.build());
         let stops = stops.as_ref().either(|b| b.as_ref(), |&c| Ok(c))?;
@@ -112,36 +116,45 @@ where
     }
 
     #[inline]
+    /// Sets the opacity and transform
     pub fn with_properties(mut self, properties: BrushProperties) -> Self {
         self.properties = properties;
         self
     }
 
     #[inline]
+    /// This changes the overall opacity of the brush, which is essentially
+    /// multiplied with the colors in the gradient stops
     pub fn with_opacity(mut self, opacity: f32) -> Self {
         self.properties.0.opacity = opacity;
         self
     }
 
     #[inline]
+    /// Sets a full affine transform on how the gradient is applied when rendered
     pub fn with_transform(mut self, transform: Matrix3x2F) -> Self {
         self.properties.0.transform = transform.0;
         self
     }
 
     #[inline]
+    /// Sets the coordinate where the gradient stop at position 0.0 applies in full
     pub fn with_start(mut self, start: Point2F) -> Self {
         self.linear_properties.startPoint = start.0;
         self
     }
 
     #[inline]
+    /// Sets the coordinate where the gradient stop at position 1.0 applies in full
     pub fn with_end(mut self, end: Point2F) -> Self {
         self.linear_properties.endPoint = end.0;
         self
     }
 
     #[inline]
+    /// Sets how colors are determined for pixels below position 0.0 and above 1.0
+    /// in the gradient.
+    /// It's not valid to call this method if you are using `with_stop_collection`.
     pub fn with_extend_mode(mut self, mode: ExtendMode) -> Self {
         self.stops = Either::Left(
             self.stops
@@ -153,6 +166,8 @@ where
     }
 
     #[inline]
+    /// Sets the gamma mode for the colors when creating a new gradient stop collection.
+    /// It's not valid to call this method if you are using `with_stop_collection`.
     pub fn with_gamma(mut self, gamma: Gamma) -> Self {
         self.stops = Either::Left(
             self.stops
@@ -164,6 +179,9 @@ where
     }
 
     #[inline]
+    /// Appends an individual GradientStop onto the list of stops which will be used
+    /// to create the collection.
+    /// It's not valid to call this method if you are using `with_stop_collection`.
     pub fn with_stop<G>(mut self, stop: G) -> Self
     where
         G: Into<GradientStop>,
@@ -178,6 +196,10 @@ where
     }
 
     #[inline]
+    /// Appends a slice onto the list of stops which will be used to create the collection.
+    /// It is most efficient to call this method exactly once without using `with_stop` when
+    /// that is possible.
+    /// It's not valid to call this method if you are using `with_stop_collection`.
     pub fn with_stops(mut self, stops: &'a [GradientStop]) -> Self {
         self.stops = Either::Left(
             self.stops
@@ -189,6 +211,7 @@ where
     }
 
     #[inline]
+    /// Specifies that a pre-existing gradient stop collection should be used
     pub fn with_stop_collection(mut self, stops: &'a GradientStopCollection) -> Self {
         self.stops = Either::Right(stops);
         self

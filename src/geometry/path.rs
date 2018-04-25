@@ -19,6 +19,7 @@ pub struct Path {
 }
 
 impl Path {
+    #[inline]
     pub fn create(factory: &Factory) -> D2DResult<Path> {
         unsafe {
             let mut ptr = ptr::null_mut();
@@ -31,6 +32,7 @@ impl Path {
         }
     }
 
+    #[inline]
     pub fn open<'a>(&'a mut self) -> D2DResult<GeometryBuilder<'a>> {
         let mut ptr: *mut ID2D1GeometrySink = ptr::null_mut();
         unsafe {
@@ -46,6 +48,7 @@ impl Path {
         }
     }
 
+    #[inline]
     pub fn get_segment_count(&self) -> D2DResult<u32> {
         unsafe {
             let mut count = 0;
@@ -58,6 +61,7 @@ impl Path {
         }
     }
 
+    #[inline]
     pub fn get_figure_count(&self) -> D2DResult<u32> {
         unsafe {
             let mut count = 0;
@@ -80,22 +84,23 @@ pub struct GeometryBuilder<'a> {
 }
 
 impl<'a> GeometryBuilder<'a> {
+    #[inline]
     pub fn fill_mode(self, fill_mode: FillMode) -> Self {
         unsafe { self.sink.SetFillMode(fill_mode as u32) };
         self
     }
 
+    #[inline]
     pub fn set_segment_flags(self, flags: PathSegment) -> Self {
         unsafe { self.sink.SetSegmentFlags(flags as u32) };
         self
     }
 
-    pub fn begin_figure<P: Into<math::Point2F>>(
-        self,
-        start: P,
-        begin: FigureBegin,
-        end: FigureEnd,
-    ) -> FigureBuilder<'a> {
+    #[inline]
+    pub fn begin_figure<P>(self, start: P, begin: FigureBegin, end: FigureEnd) -> FigureBuilder<'a>
+    where
+        P: Into<math::Point2F>,
+    {
         unsafe {
             self.sink.BeginFigure(start.into().0, begin as u32);
         }
@@ -105,6 +110,16 @@ impl<'a> GeometryBuilder<'a> {
         }
     }
 
+    #[inline]
+    pub fn with_figure<P, F>(self, start: P, begin: FigureBegin, end: FigureEnd, f: F) -> Self
+    where
+        P: Into<math::Point2F>,
+        F: FnOnce(FigureBuilder<'a>) -> FigureBuilder<'a>,
+    {
+        f(self.begin_figure(start, begin, end)).end()
+    }
+
+    #[inline]
     pub fn copy_from(self, path: &Path) -> D2DResult<Self> {
         unsafe {
             let hr = path.ptr.Stream(self.sink.as_raw());
@@ -116,6 +131,7 @@ impl<'a> GeometryBuilder<'a> {
         }
     }
 
+    #[inline]
     pub fn close(self) -> D2DResult<()> {
         unsafe {
             let hr = self.sink.Close();
@@ -130,6 +146,7 @@ impl<'a> GeometryBuilder<'a> {
 }
 
 impl<'a> Drop for GeometryBuilder<'a> {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
             let result = self.sink.Close();
@@ -148,6 +165,7 @@ pub struct FigureBuilder<'a> {
 }
 
 impl<'a> FigureBuilder<'a> {
+    #[inline]
     pub fn end(self) -> GeometryBuilder<'a> {
         unsafe {
             self.builder.sink.EndFigure(self.end);
@@ -159,11 +177,13 @@ impl<'a> FigureBuilder<'a> {
         }
     }
 
+    #[inline]
     pub fn add_line<P: Into<math::Point2F>>(self, point: P) -> Self {
         unsafe { self.builder.sink.AddLine(point.into().0) };
         self
     }
 
+    #[inline]
     pub fn add_lines(self, points: &[math::Point2F]) -> Self {
         unsafe {
             self.builder
@@ -173,11 +193,13 @@ impl<'a> FigureBuilder<'a> {
         self
     }
 
+    #[inline]
     pub fn add_bezier(self, bezier: &math::BezierSegment) -> Self {
         unsafe { self.builder.sink.AddBezier(&bezier.0) };
         self
     }
 
+    #[inline]
     pub fn add_beziers(self, beziers: &[math::BezierSegment]) -> Self {
         unsafe {
             self.builder
@@ -187,11 +209,13 @@ impl<'a> FigureBuilder<'a> {
         self
     }
 
+    #[inline]
     pub fn add_quadratic_bezier(self, bezier: &math::QuadBezierSegment) -> Self {
         unsafe { self.builder.sink.AddQuadraticBezier(&bezier.0) };
         self
     }
 
+    #[inline]
     pub fn add_quadratic_beziers(self, beziers: &[math::QuadBezierSegment]) -> Self {
         unsafe {
             self.builder
@@ -201,6 +225,7 @@ impl<'a> FigureBuilder<'a> {
         self
     }
 
+    #[inline]
     pub fn add_arc(self, arc: &math::ArcSegment) -> Self {
         unsafe { self.builder.sink.AddArc(&arc.0) };
         self
@@ -208,6 +233,7 @@ impl<'a> FigureBuilder<'a> {
 }
 
 impl<'a> Drop for FigureBuilder<'a> {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
             self.builder.sink.EndFigure(self.end);

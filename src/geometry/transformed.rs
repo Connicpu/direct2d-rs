@@ -14,6 +14,7 @@ pub struct Transformed {
 }
 
 impl Transformed {
+    #[inline]
     pub fn get_source_geometry(&self) -> GenericGeometry {
         unsafe {
             let mut ptr = ptr::null_mut();
@@ -22,6 +23,7 @@ impl Transformed {
         }
     }
 
+    #[inline]
     pub fn get_transform(&self) -> math::Matrix3x2F {
         unsafe {
             let mut matrix: D2D1_MATRIX_3X2_F = mem::uninitialized();

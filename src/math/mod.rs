@@ -315,6 +315,7 @@ impl From<(f32, f32, f32, f32)> for ThicknessF {
 
 impl Neg for ThicknessF {
     type Output = ThicknessF;
+    #[inline]
     fn neg(self) -> ThicknessF {
         ThicknessF::new(-self.left, -self.top, -self.right, -self.bottom)
     }
@@ -322,6 +323,7 @@ impl Neg for ThicknessF {
 
 impl Mul<f32> for ThicknessF {
     type Output = ThicknessF;
+    #[inline]
     fn mul(self, rhs: f32) -> ThicknessF {
         ThicknessF::new(
             self.left * rhs,
@@ -334,6 +336,7 @@ impl Mul<f32> for ThicknessF {
 
 impl Div<f32> for ThicknessF {
     type Output = ThicknessF;
+    #[inline]
     fn div(self, rhs: f32) -> ThicknessF {
         ThicknessF::new(
             self.left / rhs,
@@ -402,6 +405,7 @@ impl Matrix3x2F {
         Matrix3x2F(D2D1_MATRIX_3X2_F { matrix: data })
     }
 
+    #[inline]
     // Used for destructuring; if and when slice pattern syntax lands, this
     // could be removed.
     fn as_tuple(&self) -> ((f32, f32), (f32, f32), (f32, f32)) {

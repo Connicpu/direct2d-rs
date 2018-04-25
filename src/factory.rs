@@ -16,6 +16,7 @@ pub struct Factory {
 }
 
 impl Factory {
+    #[inline]
     pub fn new() -> D2DResult<Factory> {
         unsafe {
             let mut ptr: *mut ID2D1Factory1 = ptr::null_mut();
@@ -36,10 +37,12 @@ impl Factory {
         }
     }
 
+    #[inline]
     pub unsafe fn get_raw(&self) -> *mut ID2D1Factory1 {
         self.ptr.as_raw()
     }
 
+    #[inline]
     pub unsafe fn from_raw(raw: *mut ID2D1Factory1) -> Self {
         Factory {
             ptr: ComPtr::from_raw(raw),

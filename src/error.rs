@@ -36,12 +36,14 @@ impl fmt::Display for Error {
 }
 
 impl From<HRESULT> for Error {
+    #[inline]
     fn from(hr: HRESULT) -> Error {
         Error::ComError(hr)
     }
 }
 
 impl<'a> From<&'a Error> for Error {
+    #[inline]
     fn from(e: &'a Error) -> Error {
         e.clone()
     }

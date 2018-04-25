@@ -14,42 +14,52 @@ pub struct StrokeStyle {
 }
 
 impl StrokeStyle {
+    #[inline]
     pub fn create<'a>(factory: &'a Factory) -> StrokeStyleBuilder<'a> {
         StrokeStyleBuilder::new(factory)
     }
 
+    #[inline]
     pub fn get_start_cap(&self) -> CapStyle {
         unsafe { CapStyle::from_u32(self.ptr.GetStartCap()).unwrap() }
     }
 
+    #[inline]
     pub fn get_end_cap(&self) -> CapStyle {
         unsafe { CapStyle::from_u32(self.ptr.GetEndCap()).unwrap() }
     }
 
+    #[inline]
     pub fn get_dash_cap(&self) -> CapStyle {
         unsafe { CapStyle::from_u32(self.ptr.GetDashCap()).unwrap() }
     }
 
+    #[inline]
     pub fn get_miter_limit(&self) -> f32 {
         unsafe { self.ptr.GetMiterLimit() }
     }
 
+    #[inline]
     pub fn get_line_join(&self) -> LineJoin {
         unsafe { LineJoin::from_u32(self.ptr.GetLineJoin()).unwrap() }
     }
 
+    #[inline]
     pub fn get_dash_offset(&self) -> f32 {
         unsafe { self.ptr.GetDashOffset() }
     }
 
+    #[inline]
     pub fn get_dash_style(&self) -> DashStyle {
         unsafe { DashStyle::from_u32(self.ptr.GetDashStyle()).unwrap() }
     }
 
+    #[inline]
     pub fn get_dashes_count(&self) -> u32 {
         unsafe { self.ptr.GetDashesCount() }
     }
 
+    #[inline]
     pub fn get_dashes(&self) -> Vec<f32> {
         let count = self.get_dashes_count();
         let mut data = vec![0.0; count as usize];
@@ -59,10 +69,12 @@ impl StrokeStyle {
         data
     }
 
+    #[inline]
     pub unsafe fn get_raw(&self) -> *mut ID2D1StrokeStyle1 {
         self.ptr.as_raw()
     }
 
+    #[inline]
     pub unsafe fn from_raw(raw: *mut ID2D1StrokeStyle1) -> Self {
         StrokeStyle {
             ptr: ComPtr::from_raw(raw),

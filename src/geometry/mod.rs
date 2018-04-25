@@ -39,6 +39,7 @@ pub mod transformed;
 pub trait Geometry {
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry;
 
+    #[inline]
     fn get_factory(&self) -> Factory {
         unsafe {
             let geom = self.get_ptr();
@@ -50,6 +51,7 @@ pub trait Geometry {
         }
     }
 
+    #[inline]
     fn to_generic(&self) -> GenericGeometry {
         unsafe {
             let ptr = self.get_ptr();
@@ -58,6 +60,7 @@ pub trait Geometry {
         }
     }
 
+    #[inline]
     /// Retrieve the bounds of the geometry, with an optional applied transform.
     ///
     /// **NOTE:** I'm not sure if this will ever return None, but the API has an
@@ -80,6 +83,7 @@ pub trait Geometry {
         }
     }
 
+    #[inline]
     /// Get the bounds of the corresponding geometry after it has been widened or have
     /// an optional pen style applied.
     fn get_widened_bounds(
@@ -116,6 +120,7 @@ pub trait Geometry {
         }
     }
 
+    #[inline]
     /// Checks to see whether the corresponding penned and widened geometry contains the
     /// given point.
     fn stroke_contains_point(
@@ -154,6 +159,7 @@ pub trait Geometry {
         }
     }
 
+    #[inline]
     /// Test whether the given fill of this geometry would contain this point.
     fn fill_contains_point(
         &self,
@@ -183,6 +189,7 @@ pub trait Geometry {
         }
     }
 
+    #[inline]
     /// Compare how one geometry intersects or contains another geometry.
     fn compare_with_geometry<T: Geometry>(
         &self,
@@ -222,6 +229,7 @@ pub trait Geometry {
         }
     }
 
+    #[inline]
     /// Computes the area of the geometry.
     fn compute_area(&self, world_transform: Option<&math::Matrix3x2F>) -> Result<f32, Error> {
         unsafe {
@@ -243,6 +251,7 @@ pub trait Geometry {
         }
     }
 
+    #[inline]
     /// Computes the length of the geometry.
     fn compute_length(&self, world_transform: Option<&math::Matrix3x2F>) -> Result<f32, Error> {
         unsafe {
@@ -264,6 +273,7 @@ pub trait Geometry {
         }
     }
 
+    #[inline]
     /// Computes the point and tangent at a given distance along the path.
     fn compute_point_at_length(
         &self,
@@ -301,6 +311,7 @@ pub trait Geometry {
         }
     }
 
+    #[inline]
     fn transformed(&self, transform: &math::Matrix3x2F) -> Result<Transformed, Error> {
         let factory = self.get_factory();
         unsafe {
@@ -322,6 +333,7 @@ pub trait Geometry {
 }
 
 impl<'a, T: Geometry> Geometry for &'a T {
+    #[inline]
     unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
         T::get_ptr(*self)
     }

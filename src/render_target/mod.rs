@@ -120,6 +120,7 @@ where
     R: RenderTarget + 'r,
 {
     #[doc(hidden)]
+    #[inline]
     unsafe fn rt<'a>(&self) -> &'a mut ID2D1RenderTarget {
         R::rt(*self)
     }
@@ -127,9 +128,11 @@ where
 
 pub trait RenderTarget {
     #[doc(hidden)]
+    #[inline]
     unsafe fn rt<'a>(&self) -> &'a mut ID2D1RenderTarget;
 
     #[doc(hidden)]
+    #[inline]
     unsafe fn make_tag(tag1: D2D1_TAG, tag2: D2D1_TAG) -> Option<RenderTag> {
         if tag1 == 0 {
             None
@@ -140,6 +143,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn get_factory(&mut self) -> Factory {
         unsafe {
             let mut ptr: *mut ID2D1Factory = ptr::null_mut();
@@ -150,16 +154,19 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn get_size(&self) -> SizeF {
         unsafe { SizeF(self.rt().GetSize()) }
     }
 
+    #[inline]
     fn begin_draw(&mut self) {
         unsafe {
             self.rt().BeginDraw();
         }
     }
 
+    #[inline]
     fn end_draw(&mut self) -> Result<(), (Error, Option<RenderTag>)> {
         let mut tag1 = 0;
         let mut tag2 = 0;
@@ -175,6 +182,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn set_tag(&mut self, tag: RenderTag) {
         unsafe {
             let RenderTagRaw(tag1, tag2) = mem::transmute(tag);
@@ -182,6 +190,7 @@ pub trait RenderTarget {
         };
     }
 
+    #[inline]
     fn get_tag(&mut self) -> Option<RenderTag> {
         let mut tag1 = 0;
         let mut tag2 = 0;
@@ -191,6 +200,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn flush(&mut self) -> Result<(), (Error, Option<RenderTag>)> {
         let mut tag1 = 0;
         let mut tag2 = 0;
@@ -206,6 +216,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn clear<C>(&mut self, color: C)
     where
         C: Into<ColorF>,
@@ -215,6 +226,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn draw_line<P0, P1, B>(
         &mut self,
         p0: P0,
@@ -243,6 +255,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn draw_rectangle<R, B>(
         &mut self,
         rect: R,
@@ -264,6 +277,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn fill_rectangle<R, B>(&mut self, rect: R, brush: &B)
     where
         R: Into<RectF>,
@@ -274,6 +288,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn draw_rounded_rectangle<R, B>(
         &mut self,
         rect: R,
@@ -299,6 +314,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn fill_rounded_rectangle<R, B>(&mut self, rect: R, brush: &B)
     where
         R: Into<RoundedRect>,
@@ -310,6 +326,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn draw_ellipse<E, B>(
         &mut self,
         ellipse: E,
@@ -335,6 +352,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn fill_ellipse<E, B>(&mut self, ellipse: E, brush: &B)
     where
         E: Into<Ellipse>,
@@ -345,6 +363,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn draw_geometry<G: Geometry, B: Brush>(
         &mut self,
         geometry: &G,
@@ -367,6 +386,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn fill_geometry<G: Geometry, B: Brush>(&mut self, geometry: &G, brush: &B) {
         unsafe {
             self.rt()
@@ -374,6 +394,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn fill_geometry_with_opacity<G: Geometry, B: Brush, OB: Brush>(
         &mut self,
         geometry: &G,
@@ -386,6 +407,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn draw_text<B, R>(
         &mut self,
         text: &str,
@@ -413,6 +435,7 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn draw_text_layout<P, B>(
         &mut self,
         origin: P,
@@ -430,10 +453,12 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn set_transform(&mut self, transform: &Matrix3x2F) {
         unsafe { self.rt().SetTransform(&transform.0) }
     }
 
+    #[inline]
     fn get_transform(&self) -> Matrix3x2F {
         unsafe {
             let mut mat: Matrix3x2F = mem::uninitialized();
@@ -442,10 +467,12 @@ pub trait RenderTarget {
         }
     }
 
+    #[inline]
     fn set_dpi(&mut self, dpi_x: f32, dpi_y: f32) {
         unsafe { self.rt().SetDpi(dpi_x, dpi_y) }
     }
 
+    #[inline]
     fn get_dpi(&mut self) -> (f32, f32) {
         unsafe {
             let (mut x, mut y) = (0.0, 0.0);

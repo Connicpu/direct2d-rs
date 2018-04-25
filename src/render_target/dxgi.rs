@@ -18,10 +18,12 @@ pub struct DxgiSurfaceRenderTarget {
 }
 
 impl DxgiSurfaceRenderTarget {
+    #[inline]
     pub fn create<'a>(factory: &'a Factory) -> DxgiSurfaceRenderTargetBuilder<'a> {
         DxgiSurfaceRenderTargetBuilder::new(factory)
     }
 
+    #[inline]
     pub fn as_generic(&self) -> GenericRenderTarget {
         unsafe {
             let ptr = self.get_raw();
@@ -30,18 +32,21 @@ impl DxgiSurfaceRenderTarget {
         }
     }
 
+    #[inline]
     pub unsafe fn from_raw(raw: *mut ID2D1RenderTarget) -> Self {
         DxgiSurfaceRenderTarget {
             ptr: ComPtr::from_raw(raw),
         }
     }
 
+    #[inline]
     pub unsafe fn get_raw(&self) -> *mut ID2D1RenderTarget {
         self.ptr.as_raw()
     }
 }
 
 impl RenderTarget for DxgiSurfaceRenderTarget {
+    #[inline]
     unsafe fn rt<'a>(&self) -> &'a mut ID2D1RenderTarget {
         &mut *self.ptr.as_raw()
     }
@@ -69,6 +74,7 @@ const DEFAULT_PROPS: D2D1_RENDER_TARGET_PROPERTIES = D2D1_RENDER_TARGET_PROPERTI
 };
 
 impl<'a> DxgiSurfaceRenderTargetBuilder<'a> {
+    #[inline]
     pub fn new(factory: &'a Factory) -> Self {
         DxgiSurfaceRenderTargetBuilder {
             factory,
@@ -77,6 +83,7 @@ impl<'a> DxgiSurfaceRenderTargetBuilder<'a> {
         }
     }
 
+    #[inline]
     pub fn build(self) -> D2DResult<DxgiSurfaceRenderTarget> {
         let surface = self.surface.expect("`surface` must be specified");
         unsafe {
@@ -95,37 +102,44 @@ impl<'a> DxgiSurfaceRenderTargetBuilder<'a> {
         }
     }
 
+    #[inline]
     pub fn with_surface(mut self, surface: &'a DxgiSurface) -> Self {
         self.surface = Some(surface);
         self
     }
 
+    #[inline]
     pub fn with_target_type(mut self, target_type: RenderTargetType) -> Self {
         self.rt_props._type = target_type as u32;
         self
     }
 
+    #[inline]
     pub fn with_format(mut self, format: Format) -> Self {
         self.rt_props.pixelFormat.format = format as u32;
         self
     }
 
+    #[inline]
     pub fn with_alpha_mode(mut self, alpha_mode: AlphaMode) -> Self {
         self.rt_props.pixelFormat.alphaMode = alpha_mode as u32;
         self
     }
 
+    #[inline]
     pub fn with_dpi(mut self, dpi_x: f32, dpi_y: f32) -> Self {
         self.rt_props.dpiX = dpi_x;
         self.rt_props.dpiY = dpi_y;
         self
     }
 
+    #[inline]
     pub fn with_usage(mut self, usage: RenderTargetUsage) -> Self {
         self.rt_props.usage = usage.0;
         self
     }
 
+    #[inline]
     pub fn with_feature_level(mut self, level: FeatureLevel) -> Self {
         self.rt_props.minLevel = level as u32;
         self

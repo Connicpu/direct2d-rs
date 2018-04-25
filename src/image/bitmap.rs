@@ -20,10 +20,12 @@ pub struct Bitmap {
 }
 
 impl Bitmap {
+    #[inline]
     pub fn create<'a>(context: &'a DeviceContext) -> BitmapBuilder<'a> {
         BitmapBuilder::new(context)
     }
 
+    #[inline]
     pub fn as_generic(&self) -> GenericImage {
         unsafe {
             let ptr = self.get_raw();
@@ -32,14 +34,17 @@ impl Bitmap {
         }
     }
 
+    #[inline]
     pub fn get_size(&self) -> SizeF {
         unsafe { SizeF(self.ptr.GetSize()) }
     }
 
+    #[inline]
     pub fn get_pixel_size(&self) -> SizeU {
         unsafe { SizeU(self.ptr.GetPixelSize()) }
     }
 
+    #[inline]
     pub fn get_dpi(&self) -> (f32, f32) {
         let mut x = 0.0;
         let mut y = 0.0;
@@ -49,10 +54,12 @@ impl Bitmap {
         (x, y)
     }
 
+    #[inline]
     pub unsafe fn get_raw(&self) -> *mut ID2D1Bitmap {
         self.ptr.as_raw()
     }
 
+    #[inline]
     pub unsafe fn from_raw(ptr: *mut ID2D1Bitmap) -> Self {
         Bitmap {
             ptr: ComPtr::from_raw(ptr),
@@ -61,6 +68,7 @@ impl Bitmap {
 }
 
 impl Image for Bitmap {
+    #[inline]
     unsafe fn get_ptr(&self) -> *mut ID2D1Image {
         self.ptr.as_raw() as *mut _
     }
@@ -87,6 +95,7 @@ const DEFAULT_BITMAP_PROPS: D2D1_BITMAP_PROPERTIES1 = D2D1_BITMAP_PROPERTIES1 {
 };
 
 impl<'a> BitmapBuilder<'a> {
+    #[inline]
     pub fn new(context: &'a DeviceContext) -> Self {
         BitmapBuilder {
             context,
@@ -95,6 +104,7 @@ impl<'a> BitmapBuilder<'a> {
         }
     }
 
+    #[inline]
     pub fn build(self) -> D2DResult<Bitmap> {
         let source = self.source.expect("An image source must be specified");
         unsafe {
@@ -139,6 +149,7 @@ impl<'a> BitmapBuilder<'a> {
         }
     }
 
+    #[inline]
     pub fn with_blank_image(mut self, size: SizeU) -> Self {
         self.source = Some(BitmapSource::Raw {
             size,
@@ -148,6 +159,7 @@ impl<'a> BitmapBuilder<'a> {
         self
     }
 
+    #[inline]
     pub fn with_raw_data(mut self, size: SizeU, data: &'a [u8], pitch: u32) -> Self {
         assert!(size.height as usize * pitch as usize <= data.len());
         self.source = Some(BitmapSource::Raw {
@@ -158,21 +170,25 @@ impl<'a> BitmapBuilder<'a> {
         self
     }
 
+    #[inline]
     pub fn with_dxgi_surface(mut self, surface: &'a DxgiSurface) -> Self {
         self.source = Some(BitmapSource::Dxgi(surface));
         self
     }
 
+    #[inline]
     pub fn with_format(mut self, format: Format) -> Self {
         self.properties.pixelFormat.format = format as u32;
         self
     }
 
+    #[inline]
     pub fn with_alpha_mode(mut self, alpha_mode: AlphaMode) -> Self {
         self.properties.pixelFormat.alphaMode = alpha_mode as u32;
         self
     }
 
+    #[inline]
     pub fn with_dpi(mut self, dpi_x: f32, dpi_y: f32) -> Self {
         println!("setting DPI to: {:?}", (dpi_x, dpi_y));
         self.properties.dpiX = dpi_x;
@@ -180,6 +196,7 @@ impl<'a> BitmapBuilder<'a> {
         self
     }
 
+    #[inline]
     pub fn with_options(mut self, options: BitmapOptions) -> Self {
         self.properties.bitmapOptions = options.0;
         self

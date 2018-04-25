@@ -150,6 +150,7 @@ impl<T> UncheckedEnum<T>
 where
     T: CheckedEnum,
 {
+    #[inline]
     pub fn new(value: u32) -> Self {
         UncheckedEnum {
             value,
@@ -157,6 +158,7 @@ where
         }
     }
 
+    #[inline]
     pub fn as_enum(self) -> Option<T> {
         T::from_u32(self.value)
     }

@@ -9,18 +9,21 @@ pub struct GenericRenderTarget {
 }
 
 impl GenericRenderTarget {
+    #[inline]
     pub unsafe fn from_raw(raw: *mut ID2D1RenderTarget) -> Self {
         GenericRenderTarget {
             ptr: ComPtr::from_raw(raw),
         }
     }
 
+    #[inline]
     pub unsafe fn get_raw(&self) -> *mut ID2D1RenderTarget {
         self.ptr.as_raw()
     }
 }
 
 impl RenderTarget for GenericRenderTarget {
+    #[inline]
     unsafe fn rt<'a>(&self) -> &'a mut ID2D1RenderTarget {
         &mut *self.ptr.as_raw()
     }

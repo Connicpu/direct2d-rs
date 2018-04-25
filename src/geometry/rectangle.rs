@@ -15,6 +15,7 @@ pub struct Rectangle {
 }
 
 impl Rectangle {
+    #[inline]
     pub fn create(factory: &Factory, rectangle: &math::RectF) -> D2DResult<Rectangle> {
         unsafe {
             let mut ptr = ptr::null_mut();
@@ -27,6 +28,7 @@ impl Rectangle {
         }
     }
 
+    #[inline]
     pub fn get_rect(&self) -> math::RectF {
         unsafe {
             let mut rect: D2D1_RECT_F = mem::uninitialized();

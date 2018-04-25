@@ -15,6 +15,7 @@ pub struct DeviceContext {
 }
 
 impl DeviceContext {
+    #[inline]
     pub fn create(device: &Device, multithread_context: bool) -> D2DResult<DeviceContext> {
         unsafe {
             let mut ptr = ptr::null_mut();
@@ -27,6 +28,7 @@ impl DeviceContext {
         }
     }
 
+    #[inline]
     pub fn set_target<I>(&mut self, target: &I)
     where
         I: Image,
@@ -36,18 +38,21 @@ impl DeviceContext {
         }
     }
 
+    #[inline]
     pub unsafe fn from_raw(raw: *mut ID2D1DeviceContext) -> Self {
         DeviceContext {
             ptr: ComPtr::from_raw(raw),
         }
     }
 
+    #[inline]
     pub unsafe fn get_raw(&self) -> *mut ID2D1DeviceContext {
         self.ptr.as_raw()
     }
 }
 
 impl RenderTarget for DeviceContext {
+    #[inline]
     unsafe fn rt<'a>(&self) -> &'a mut ID2D1RenderTarget {
         &mut *(self.ptr.as_raw() as *mut _)
     }

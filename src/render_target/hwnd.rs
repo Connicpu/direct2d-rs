@@ -20,10 +20,12 @@ pub struct HwndRenderTarget {
 }
 
 impl HwndRenderTarget {
+    #[inline]
     pub fn create<'a>(factory: &'a Factory) -> HwndRenderTargetBuilder<'a> {
         HwndRenderTargetBuilder::new(factory)
     }
 
+    #[inline]
     pub fn as_generic(&self) -> GenericRenderTarget {
         unsafe {
             let ptr = self.get_raw();
@@ -32,6 +34,7 @@ impl HwndRenderTarget {
         }
     }
 
+    #[inline]
     pub fn resize(&self, pixel_size: math::SizeU) -> D2DResult<()> {
         unsafe {
             let hr = self.ptr.Resize(&pixel_size.0);
@@ -43,22 +46,26 @@ impl HwndRenderTarget {
         }
     }
 
+    #[inline]
     pub fn get_hwnd(&self) -> HWND {
         unsafe { self.ptr.GetHwnd() }
     }
 
+    #[inline]
     pub unsafe fn from_raw(raw: *mut ID2D1HwndRenderTarget) -> Self {
         HwndRenderTarget {
             ptr: ComPtr::from_raw(raw),
         }
     }
 
+    #[inline]
     pub unsafe fn get_raw(&self) -> *mut ID2D1HwndRenderTarget {
         self.ptr.as_raw()
     }
 }
 
 impl RenderTarget for HwndRenderTarget {
+    #[inline]
     unsafe fn rt<'a>(&self) -> &'a mut ID2D1RenderTarget {
         &mut *(self.ptr.as_raw() as *mut _)
     }
@@ -95,6 +102,7 @@ const DEFAULT_HWND_PROPS: D2D1_HWND_RENDER_TARGET_PROPERTIES = D2D1_HWND_RENDER_
 };
 
 impl<'a> HwndRenderTargetBuilder<'a> {
+    #[inline]
     pub fn new(factory: &'a Factory) -> Self {
         HwndRenderTargetBuilder {
             factory,
@@ -103,6 +111,7 @@ impl<'a> HwndRenderTargetBuilder<'a> {
         }
     }
 
+    #[inline]
     pub fn build(self) -> D2DResult<HwndRenderTarget> {
         unsafe {
             let mut ptr = ptr::null_mut();
@@ -120,47 +129,56 @@ impl<'a> HwndRenderTargetBuilder<'a> {
         }
     }
 
+    #[inline]
     pub fn with_target_type(mut self, target_type: RenderTargetType) -> Self {
         self.rt_props._type = target_type as u32;
         self
     }
 
+    #[inline]
     pub fn with_format(mut self, format: Format) -> Self {
         self.rt_props.pixelFormat.format = format as u32;
         self
     }
 
+    #[inline]
     pub fn with_alpha_mode(mut self, alpha_mode: AlphaMode) -> Self {
         self.rt_props.pixelFormat.alphaMode = alpha_mode as u32;
         self
     }
 
+    #[inline]
     pub fn with_dpi(mut self, dpi_x: f32, dpi_y: f32) -> Self {
         self.rt_props.dpiX = dpi_x;
         self.rt_props.dpiY = dpi_y;
         self
     }
 
+    #[inline]
     pub fn with_usage(mut self, usage: RenderTargetUsage) -> Self {
         self.rt_props.usage = usage.0;
         self
     }
 
+    #[inline]
     pub fn with_feature_level(mut self, level: FeatureLevel) -> Self {
         self.rt_props.minLevel = level as u32;
         self
     }
 
+    #[inline]
     pub fn with_hwnd(mut self, hwnd: HWND) -> Self {
         self.hwnd_props.hwnd = hwnd;
         self
     }
 
+    #[inline]
     pub fn with_pixel_size(mut self, size: math::SizeU) -> Self {
         self.hwnd_props.pixelSize = size.0;
         self
     }
 
+    #[inline]
     pub fn with_present_options(mut self, options: PresentOptions) -> Self {
         self.hwnd_props.presentOptions = options.0;
         self

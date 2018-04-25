@@ -37,24 +37,29 @@ impl GenericGeometry {
         GeometryType::Unknown
     }
 
+    #[inline]
     pub fn as_ellipse(&self) -> Option<Ellipse> {
         Some(unsafe { Ellipse::from_raw(self.ptr.cast::<ID2D1EllipseGeometry>().ok()?.into_raw()) })
     }
 
+    #[inline]
     pub fn as_group(&self) -> Option<Group> {
         Some(unsafe { Group::from_raw(self.ptr.cast::<ID2D1GeometryGroup>().ok()?.into_raw()) })
     }
 
+    #[inline]
     pub fn as_path(&self) -> Option<Path> {
         Some(unsafe { Path::from_raw(self.ptr.cast::<ID2D1PathGeometry1>().ok()?.into_raw()) })
     }
 
+    #[inline]
     pub fn as_rectangle(&self) -> Option<Rectangle> {
         Some(unsafe {
             Rectangle::from_raw(self.ptr.cast::<ID2D1RectangleGeometry>().ok()?.into_raw())
         })
     }
 
+    #[inline]
     pub fn as_rounded_rectangle(&self) -> Option<RoundedRectangle> {
         Some(unsafe {
             RoundedRectangle::from_raw(
@@ -66,6 +71,7 @@ impl GenericGeometry {
         })
     }
 
+    #[inline]
     pub fn as_transformed(&self) -> Option<Transformed> {
         Some(unsafe {
             Transformed::from_raw(self.ptr.cast::<ID2D1TransformedGeometry>().ok()?.into_raw())

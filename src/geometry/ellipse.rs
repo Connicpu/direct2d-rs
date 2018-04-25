@@ -16,6 +16,7 @@ pub struct Ellipse {
 }
 
 impl Ellipse {
+    #[inline]
     pub fn create<R>(factory: &Factory, ellipse: &math::Ellipse) -> D2DResult<Ellipse> {
         unsafe {
             let mut ptr = ptr::null_mut();
@@ -29,6 +30,7 @@ impl Ellipse {
         }
     }
 
+    #[inline]
     pub fn get_ellipse(&self) -> math::Ellipse {
         unsafe {
             let mut ellipse: D2D1_ELLIPSE = mem::uninitialized();

@@ -13,6 +13,7 @@ pub struct Device {
 }
 
 impl Device {
+    #[inline]
     pub fn create(factory: &Factory, dxgi: &DxgiDevice) -> D2DResult<Device> {
         unsafe {
             let mut ptr = ptr::null_mut();
@@ -25,12 +26,14 @@ impl Device {
         }
     }
 
+    #[inline]
     pub unsafe fn from_raw(raw: *mut ID2D1Device) -> Self {
         Device {
             ptr: ComPtr::from_raw(raw),
         }
     }
 
+    #[inline]
     pub unsafe fn get_raw(&self) -> *mut ID2D1Device {
         self.ptr.as_raw()
     }

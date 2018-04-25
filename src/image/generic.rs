@@ -8,14 +8,17 @@ pub struct GenericImage {
 }
 
 impl GenericImage {
+    #[inline]
     pub fn as_bitmap(&self) -> Option<Bitmap> {
         Some(unsafe { Bitmap::from_raw(self.ptr.cast::<ID2D1Bitmap>().ok()?.into_raw()) })
     }
 
+    #[inline]
     pub unsafe fn get_raw(&self) -> *mut ID2D1Image {
         self.ptr.as_raw()
     }
 
+    #[inline]
     pub unsafe fn from_raw(ptr: *mut ID2D1Image) -> Self {
         GenericImage {
             ptr: ComPtr::from_raw(ptr),
@@ -24,6 +27,7 @@ impl GenericImage {
 }
 
 impl Image for GenericImage {
+    #[inline]
     unsafe fn get_ptr(&self) -> *mut ID2D1Image {
         self.ptr.as_raw()
     }

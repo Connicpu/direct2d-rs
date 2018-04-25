@@ -15,6 +15,7 @@ pub struct RoundedRectangle {
 }
 
 impl RoundedRectangle {
+    #[inline]
     pub fn create(factory: &Factory, rectangle: &math::RoundedRect) -> D2DResult<RoundedRectangle> {
         unsafe {
             let mut ptr = ptr::null_mut();
@@ -27,6 +28,7 @@ impl RoundedRectangle {
         }
     }
 
+    #[inline]
     pub fn get_rounded_rect(&self) -> math::RoundedRect {
         unsafe {
             let mut rect: D2D1_ROUNDED_RECT = mem::uninitialized();
