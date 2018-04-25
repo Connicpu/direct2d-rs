@@ -38,6 +38,15 @@ impl Factory {
     }
 
     #[inline]
+    pub fn get_desktop_dpi(&self) -> (f32, f32) {
+        unsafe {
+            let (mut x, mut y) = (0.0, 0.0);
+            self.ptr.GetDesktopDpi(&mut x, &mut y);
+            (x, y)
+        }
+    }
+
+    #[inline]
     pub unsafe fn get_raw(&self) -> *mut ID2D1Factory1 {
         self.ptr.as_raw()
     }

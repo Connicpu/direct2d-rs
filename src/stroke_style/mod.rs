@@ -1,4 +1,4 @@
-use enums::{CapStyle, DashStyle, LineJoin, StrokeTransformType};
+use enums::{CapStyle, DashStyle, LineJoin, StrokeTransformType, UncheckedEnum};
 use error::D2DResult;
 use factory::Factory;
 
@@ -20,18 +20,18 @@ impl StrokeStyle {
     }
 
     #[inline]
-    pub fn get_start_cap(&self) -> CapStyle {
-        unsafe { CapStyle::from_u32(self.ptr.GetStartCap()).unwrap() }
+    pub fn get_start_cap(&self) -> UncheckedEnum<CapStyle> {
+        unsafe { self.ptr.GetStartCap().into() }
     }
 
     #[inline]
-    pub fn get_end_cap(&self) -> CapStyle {
-        unsafe { CapStyle::from_u32(self.ptr.GetEndCap()).unwrap() }
+    pub fn get_end_cap(&self) -> UncheckedEnum<CapStyle> {
+        unsafe { self.ptr.GetEndCap().into() }
     }
 
     #[inline]
-    pub fn get_dash_cap(&self) -> CapStyle {
-        unsafe { CapStyle::from_u32(self.ptr.GetDashCap()).unwrap() }
+    pub fn get_dash_cap(&self) -> UncheckedEnum<CapStyle> {
+        unsafe { self.ptr.GetDashCap().into() }
     }
 
     #[inline]
@@ -40,8 +40,8 @@ impl StrokeStyle {
     }
 
     #[inline]
-    pub fn get_line_join(&self) -> LineJoin {
-        unsafe { LineJoin::from_u32(self.ptr.GetLineJoin()).unwrap() }
+    pub fn get_line_join(&self) -> UncheckedEnum<LineJoin> {
+        unsafe { self.ptr.GetLineJoin().into() }
     }
 
     #[inline]
@@ -50,8 +50,8 @@ impl StrokeStyle {
     }
 
     #[inline]
-    pub fn get_dash_style(&self) -> DashStyle {
-        unsafe { DashStyle::from_u32(self.ptr.GetDashStyle()).unwrap() }
+    pub fn get_dash_style(&self) -> UncheckedEnum<DashStyle> {
+        unsafe { self.ptr.GetDashStyle().into() }
     }
 
     #[inline]

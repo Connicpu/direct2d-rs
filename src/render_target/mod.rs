@@ -1,18 +1,20 @@
 use brush::Brush;
 use directwrite::{TextFormat, TextLayout};
-use enums::DrawTextOptions;
+use enums::{AntialiasMode, BitmapInterpolationMode, DrawTextOptions, UncheckedEnum};
 use error::Error;
 use factory::Factory;
 use geometry::Geometry;
+use image::Bitmap;
 use math::*;
-use std::{mem, ptr};
 use stroke_style::StrokeStyle;
-use wio::com::ComPtr;
+
+use std::{mem, ptr};
 
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{D2D1_TAG, ID2D1Factory, ID2D1RenderTarget};
 use winapi::um::d2d1_1::ID2D1Factory1;
 use winapi::um::dcommon::DWRITE_MEASURING_MODE_NATURAL;
+use wio::com::ComPtr;
 use wio::wide::ToWide;
 
 #[doc(inline)]
@@ -364,13 +366,16 @@ pub trait RenderTarget {
     }
 
     #[inline]
-    fn draw_geometry<G: Geometry, B: Brush>(
+    fn draw_geometry<G, B>(
         &mut self,
         geometry: &G,
         brush: &B,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
-    ) {
+    ) where
+        G: Geometry,
+        B: Brush,
+    {
         unsafe {
             let stroke_style = match stroke_style {
                 Some(s) => s.get_raw() as *mut _,
@@ -387,7 +392,11 @@ pub trait RenderTarget {
     }
 
     #[inline]
-    fn fill_geometry<G: Geometry, B: Brush>(&mut self, geometry: &G, brush: &B) {
+    fn fill_geometry<G, B>(&mut self, geometry: &G, brush: &B)
+    where
+        G: Geometry,
+        B: Brush,
+    {
         unsafe {
             self.rt()
                 .FillGeometry(geometry.get_ptr(), brush.get_ptr(), ptr::null_mut());
@@ -395,15 +404,38 @@ pub trait RenderTarget {
     }
 
     #[inline]
-    fn fill_geometry_with_opacity<G: Geometry, B: Brush, OB: Brush>(
-        &mut self,
-        geometry: &G,
-        brush: &B,
-        opacity_brush: &OB,
-    ) {
+    fn fill_geometry_with_opacity<G, B, OB>(&mut self, geometry: &G, brush: &B, opacity_brush: &OB)
+    where
+        G: Geometry,
+        B: Brush,
+        OB: Brush,
+    {
         unsafe {
             self.rt()
                 .FillGeometry(geometry.get_ptr(), brush.get_ptr(), opacity_brush.get_ptr());
+        }
+    }
+
+    #[inline]
+    fn draw_bitmap<R0, R1>(
+        &mut self,
+        bitmap: &Bitmap,
+        dest_rect: R0,
+        opacity: f32,
+        interpolation: BitmapInterpolationMode,
+        src_rect: R1,
+    ) where
+        R0: Into<RectF>,
+        R1: Into<RectF>,
+    {
+        unsafe {
+            self.rt().DrawBitmap(
+                bitmap.get_raw(),
+                &dest_rect.into().0,
+                opacity,
+                interpolation as u32,
+                &src_rect.into().0,
+            );
         }
     }
 
@@ -465,6 +497,16 @@ pub trait RenderTarget {
             self.rt().GetTransform(&mut mat.0);
             mat
         }
+    }
+
+    #[inline]
+    fn set_antialias_mode(&mut self, mode: AntialiasMode) {
+        unsafe { self.rt().SetAntialiasMode(mode as u32) };
+    }
+
+    #[inline]
+    fn get_antialias_mode(&mut self) -> UncheckedEnum<AntialiasMode> {
+        unsafe { self.rt().GetAntialiasMode().into() }
     }
 
     #[inline]

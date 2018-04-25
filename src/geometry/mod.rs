@@ -1,5 +1,5 @@
 use enums::*;
-use error::Error;
+use error::D2DResult;
 use factory::Factory;
 use math;
 use stroke_style::StrokeStyle;
@@ -65,7 +65,7 @@ pub trait Geometry {
     ///
     /// **NOTE:** I'm not sure if this will ever return None, but the API has an
     /// error code so it could. The MSDN documentation is very vague on this.
-    fn get_bounds(&self, world_transform: Option<&math::Matrix3x2F>) -> Result<math::RectF, Error> {
+    fn get_bounds(&self, world_transform: Option<&math::Matrix3x2F>) -> D2DResult<math::RectF> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -91,7 +91,7 @@ pub trait Geometry {
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
         world_transform: Option<&math::Matrix3x2F>,
-    ) -> Result<math::RectF, Error> {
+    ) -> D2DResult<math::RectF> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -129,7 +129,7 @@ pub trait Geometry {
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
         world_transform: Option<&math::Matrix3x2F>,
-    ) -> Result<bool, Error> {
+    ) -> D2DResult<bool> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -165,7 +165,7 @@ pub trait Geometry {
         &self,
         point: math::Point2F,
         world_transform: Option<&math::Matrix3x2F>,
-    ) -> Result<bool, Error> {
+    ) -> D2DResult<bool> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -195,7 +195,7 @@ pub trait Geometry {
         &self,
         input: &T,
         input_transform: Option<&math::Matrix3x2F>,
-    ) -> Result<GeometryRelation, Error> {
+    ) -> D2DResult<UncheckedEnum<GeometryRelation>> {
         unsafe {
             let self_ptr = self.get_ptr();
             let input_ptr = input.get_ptr();
@@ -214,15 +214,7 @@ pub trait Geometry {
             );
 
             if SUCCEEDED(result) {
-                use self::GeometryRelation::*;
-                match relation {
-                    D2D1_GEOMETRY_RELATION_UNKNOWN => Ok(Unknown),
-                    D2D1_GEOMETRY_RELATION_DISJOINT => Ok(Disjoint),
-                    D2D1_GEOMETRY_RELATION_IS_CONTAINED => Ok(IsContained),
-                    D2D1_GEOMETRY_RELATION_CONTAINS => Ok(Contains),
-                    D2D1_GEOMETRY_RELATION_OVERLAP => Ok(Overlap),
-                    _ => Err(Error::UnknownEnumValue),
-                }
+                Ok(relation.into())
             } else {
                 Err(From::from(result))
             }
@@ -231,7 +223,7 @@ pub trait Geometry {
 
     #[inline]
     /// Computes the area of the geometry.
-    fn compute_area(&self, world_transform: Option<&math::Matrix3x2F>) -> Result<f32, Error> {
+    fn compute_area(&self, world_transform: Option<&math::Matrix3x2F>) -> D2DResult<f32> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -253,7 +245,7 @@ pub trait Geometry {
 
     #[inline]
     /// Computes the length of the geometry.
-    fn compute_length(&self, world_transform: Option<&math::Matrix3x2F>) -> Result<f32, Error> {
+    fn compute_length(&self, world_transform: Option<&math::Matrix3x2F>) -> D2DResult<f32> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -279,7 +271,7 @@ pub trait Geometry {
         &self,
         length: f32,
         world_transform: Option<&math::Matrix3x2F>,
-    ) -> Result<(math::Point2F, math::Vector2F), Error> {
+    ) -> D2DResult<(math::Point2F, math::Vector2F)> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
@@ -312,7 +304,7 @@ pub trait Geometry {
     }
 
     #[inline]
-    fn transformed(&self, transform: &math::Matrix3x2F) -> Result<Transformed, Error> {
+    fn transformed(&self, transform: &math::Matrix3x2F) -> D2DResult<Transformed> {
         let factory = self.get_factory();
         unsafe {
             let raw_factory = factory.get_raw();

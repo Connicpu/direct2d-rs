@@ -58,7 +58,7 @@ d2d_enums! {
         Straight = 2,
         Ignore = 3,
     }
-    
+
     pub enum FeatureLevel {
         Default = 0,
         Level9 = 37120,
@@ -108,6 +108,11 @@ d2d_enums! {
         NearestNeighbor = 0,
         Linear = 1,
     }
+
+    pub enum AntialiasMode {
+        PerPrimitive = 0,
+        Aliased = 1,
+    }
 }
 
 d2d_flags! {
@@ -141,6 +146,8 @@ d2d_flags! {
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+/// An enum value which was obtained from FFI and therefore could potentially be
+/// out of range. It's up to you to decide when/if to validate it.
 pub struct UncheckedEnum<T: CheckedEnum> {
     pub value: u32,
     _marker: PhantomData<T>,
@@ -161,6 +168,21 @@ where
     #[inline]
     pub fn as_enum(self) -> Option<T> {
         T::from_u32(self.value)
+    }
+
+    #[inline]
+    pub unsafe fn as_enum_unchecked(self) -> T {
+        assert_eq!(::std::mem::size_of_val(&self), ::std::mem::size_of::<T>());
+        ::std::mem::transmute_copy(&self)
+    }
+}
+
+impl<T> From<u32> for UncheckedEnum<T>
+where
+    T: CheckedEnum,
+{
+    fn from(value: u32) -> Self {
+        UncheckedEnum::new(value)
     }
 }
 

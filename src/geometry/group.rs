@@ -1,11 +1,11 @@
-use enums::FillMode;
+use enums::{FillMode, UncheckedEnum};
 use error::D2DResult;
 use factory::Factory;
 use geometry::{GenericGeometry, Geometry};
 
 use std::{mem, ptr, slice};
 
-use winapi::shared::winerror::{E_FAIL, SUCCEEDED};
+use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{ID2D1Geometry, ID2D1GeometryGroup};
 use wio::com::ComPtr;
 
@@ -43,8 +43,8 @@ impl Group {
     }
 
     #[inline]
-    pub fn get_fill_mode(&self) -> D2DResult<FillMode> {
-        unsafe { FillMode::from_u32(self.ptr.GetFillMode()).ok_or(E_FAIL.into()) }
+    pub fn get_fill_mode(&self) -> UncheckedEnum<FillMode> {
+        unsafe { self.ptr.GetFillMode().into() }
     }
 
     #[inline]

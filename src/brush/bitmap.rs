@@ -1,4 +1,4 @@
-use enums::{BitmapInterpolationMode, ExtendMode};
+use enums::{BitmapInterpolationMode, ExtendMode, UncheckedEnum};
 use error::D2DResult;
 use image::Bitmap;
 use math::{BrushProperties, Matrix3x2F};
@@ -22,6 +22,41 @@ impl BitmapBrush {
         R: RenderTarget + 'a,
     {
         BitmapBrushBuilder::new(context)
+    }
+
+    #[inline]
+    pub fn set_extend_mode_x(&self, mode: ExtendMode) {
+        unsafe { self.ptr.SetExtendModeX(mode as u32) }
+    }
+
+    #[inline]
+    pub fn set_extend_mode_y(&self, mode: ExtendMode) {
+        unsafe { self.ptr.SetExtendModeY(mode as u32) }
+    }
+
+    #[inline]
+    pub fn set_interpolation_mode(&self, mode: BitmapInterpolationMode) {
+        unsafe { self.ptr.SetInterpolationMode(mode as u32) }
+    }
+
+    #[inline]
+    pub fn set_bitmap(&self, bitmap: &Bitmap) {
+        unsafe { self.ptr.SetBitmap(bitmap.get_raw()) }
+    }
+
+    #[inline]
+    pub fn get_extend_mode_x(&self) -> UncheckedEnum<ExtendMode> {
+        unsafe { self.ptr.GetExtendModeX().into() }
+    }
+
+    #[inline]
+    pub fn get_extend_mode_y(&self) -> UncheckedEnum<ExtendMode> {
+        unsafe { self.ptr.GetExtendModeY().into() }
+    }
+
+    #[inline]
+    pub fn get_interpolation_mode(&self) -> UncheckedEnum<BitmapInterpolationMode> {
+        unsafe { self.ptr.GetInterpolationMode().into() }
     }
 }
 
