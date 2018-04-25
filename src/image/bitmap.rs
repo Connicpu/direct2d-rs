@@ -6,8 +6,8 @@ use math::{SizeF, SizeU};
 
 use std::ptr;
 
-use dxgi::Format;
 use dxgi::surface::Surface as DxgiSurface;
+use dxgi::Format;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{ID2D1Bitmap, ID2D1Image};
 use winapi::um::d2d1_1::D2D1_BITMAP_PROPERTIES1;

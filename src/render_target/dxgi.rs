@@ -1,12 +1,12 @@
 use enums::{AlphaMode, FeatureLevel, RenderTargetType, RenderTargetUsage};
 use error::D2DResult;
 use factory::Factory;
-use render_target::{GenericRenderTarget,RenderTarget};
+use render_target::{GenericRenderTarget, RenderTarget};
 
 use std::ptr;
 
-use dxgi::Format;
 use dxgi::surface::Surface as DxgiSurface;
+use dxgi::Format;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{D2D1_RENDER_TARGET_PROPERTIES, ID2D1RenderTarget};
 use winapi::um::dcommon::D2D1_PIXEL_FORMAT;

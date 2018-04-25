@@ -1,4 +1,7 @@
-#![cfg_attr(not(windows), doc = "You are viewing this documentation for a platform that isn't windows. You might wanna switch\\^\\^")]
+#![cfg_attr(
+    not(windows),
+    doc = "You are viewing this documentation for a platform that isn't windows. You might wanna switch\\^\\^"
+)]
 #![cfg_attr(feature = "docs", feature(external_doc))]
 #![cfg_attr(all(windows, feature = "docs"), doc(include = "../CRATE_README.md"))]
 

@@ -2,12 +2,12 @@ use error::D2DResult;
 
 use std::ptr;
 
-use winapi::Interface;
 use winapi::ctypes::c_void;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{D2D1CreateFactory, D2D1_DEBUG_LEVEL_WARNING, D2D1_FACTORY_OPTIONS,
                        D2D1_FACTORY_TYPE_MULTI_THREADED};
 use winapi::um::d2d1_1::ID2D1Factory1;
+use winapi::Interface;
 use wio::com::ComPtr;
 
 #[derive(Clone, PartialEq)]

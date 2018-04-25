@@ -33,4 +33,4 @@ impl Transformed {
     }
 }
 
-brush_type!(Transformed: ID2D1TransformedGeometry);
+geometry_type!(Transformed: ID2D1TransformedGeometry);

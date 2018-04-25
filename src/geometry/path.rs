@@ -132,9 +132,11 @@ impl<'a> GeometryBuilder<'a> {
     }
 
     #[inline]
-    pub fn close(self) -> D2DResult<()> {
+    pub fn close(mut self) -> D2DResult<()> {
         unsafe {
+            eprintln!("close gb");
             let hr = self.sink.Close();
+            ptr::drop_in_place(&mut self.sink);
             mem::forget(self);
             if SUCCEEDED(hr) {
                 Ok(())
@@ -149,6 +151,7 @@ impl<'a> Drop for GeometryBuilder<'a> {
     #[inline]
     fn drop(&mut self) {
         unsafe {
+            eprintln!("drop gb");
             let result = self.sink.Close();
             assert!(
                 SUCCEEDED(result),

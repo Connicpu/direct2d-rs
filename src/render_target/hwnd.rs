@@ -173,8 +173,9 @@ impl<'a> HwndRenderTargetBuilder<'a> {
     }
 
     #[inline]
-    pub fn with_pixel_size(mut self, size: math::SizeU) -> Self {
-        self.hwnd_props.pixelSize = size.0;
+    pub fn with_pixel_size(mut self, width: u32, height: u32) -> Self {
+        self.hwnd_props.pixelSize.width = width;
+        self.hwnd_props.pixelSize.height = height;
         self
     }
 

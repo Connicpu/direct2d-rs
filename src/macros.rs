@@ -107,7 +107,7 @@ macro_rules! d2d_enums {
             pub fn to_u32(self) -> u32 {
                 self as u32
             }
-            
+
             #[inline]
             pub fn from_u32(value: u32) -> Option<Self> {
                 match value {

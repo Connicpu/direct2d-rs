@@ -5,7 +5,7 @@ extern crate winapi;
 use direct2d::brush::SolidColorBrush;
 use direct2d::math::*;
 use direct2d::{Device, DeviceContext, Factory};
-use direct3d11::flags::{CreateDeviceFlags};
+use direct3d11::flags::CreateDeviceFlags;
 
 use winapi::um::d2d1::D2D1_COLOR_F;
 
