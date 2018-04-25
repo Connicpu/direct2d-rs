@@ -5,7 +5,7 @@ Safe abstractions for drawing on Windows using Direct2D
 To use it, add this to your Cargo.toml:
 ```toml
 [dependencies]
-direct2d = "0.1.0"
+direct2d = "0.1"
 ```
 
 ## Example
