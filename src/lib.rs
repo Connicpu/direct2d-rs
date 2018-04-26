@@ -1,6 +1,7 @@
 #![cfg_attr(
     not(windows),
-    doc = "You are viewing this documentation for a platform that isn't windows. You might wanna switch\\^\\^"
+    doc = "You are viewing this documentation for a platform that isn't windows. You might wanna \
+           [switch](https://docs.rs/direct2d/*/x86_64-pc-windows-msvc/direct2d/)\\^\\^"
 )]
 #![cfg_attr(feature = "docs", feature(external_doc))]
 #![cfg_attr(all(windows, feature = "docs"), doc(include = "../CRATE_README.md"))]
