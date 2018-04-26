@@ -80,7 +80,7 @@ pub enum MaybeOwnedGeomList<'a> {
 
 impl<'a> AsRef<[*mut ID2D1Geometry]> for MaybeOwnedGeomList<'a> {
     fn as_ref(&self) -> &[*mut ID2D1Geometry] {
-        match self {
+        match *self {
             MaybeOwnedGeomList::Ref(slice) => slice,
             MaybeOwnedGeomList::Own(ref vec) => vec,
         }
