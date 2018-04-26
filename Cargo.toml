@@ -22,6 +22,7 @@ features = ["d2d1_1", "d3d11", "dwrite", "winbase", "libloaderapi", "errhandling
 lazy_static = "1.0"
 direct3d11 = "0.1.3"
 image = "0.18.0"
+rand = "0.4"
 
 [features]
 docs = []
