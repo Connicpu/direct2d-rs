@@ -10,7 +10,7 @@ direct2d = "0.1"
 
 ## Example
 
-```rs
+```rust
 extern crate direct2d;
 
 use direct2d::{DeviceContext, RenderTarget};
