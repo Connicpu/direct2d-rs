@@ -1,4 +1,5 @@
-use render_target::RenderTarget;
+use device_context::DeviceContext;
+use render_target::{HwndRenderTarget, RenderTarget};
 
 use winapi::um::d2d1::ID2D1RenderTarget;
 use wio::com::ComPtr;
@@ -9,6 +10,21 @@ pub struct GenericRenderTarget {
 }
 
 impl GenericRenderTarget {
+    #[inline]
+    pub fn as_hwnd(&self) -> Option<HwndRenderTarget> {
+        Some(unsafe { HwndRenderTarget::from_ptr(self.ptr.cast().ok()?) })
+    }
+
+    #[inline]
+    pub fn as_device_context(&self) -> Option<DeviceContext> {
+        Some(unsafe { DeviceContext::from_ptr(self.ptr.cast().ok()?) })
+    }
+
+    #[inline]
+    pub unsafe fn from_ptr(ptr: ComPtr<ID2D1RenderTarget>) -> Self {
+        Self { ptr }
+    }
+
     #[inline]
     pub unsafe fn from_raw(raw: *mut ID2D1RenderTarget) -> Self {
         GenericRenderTarget {

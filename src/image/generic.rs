@@ -1,8 +1,9 @@
 use image::{Bitmap, Image};
 
-use winapi::um::d2d1::{ID2D1Bitmap, ID2D1Image};
+use winapi::um::d2d1::ID2D1Image;
 use wio::com::ComPtr;
 
+#[derive(Clone)]
 pub struct GenericImage {
     ptr: ComPtr<ID2D1Image>,
 }
@@ -10,7 +11,12 @@ pub struct GenericImage {
 impl GenericImage {
     #[inline]
     pub fn as_bitmap(&self) -> Option<Bitmap> {
-        Some(unsafe { Bitmap::from_raw(self.ptr.cast::<ID2D1Bitmap>().ok()?.into_raw()) })
+        Some(unsafe { Bitmap::from_ptr(self.ptr.cast().ok()?) })
+    }
+
+    #[inline]
+    pub unsafe fn from_ptr(ptr: ComPtr<ID2D1Image>) -> Self {
+        Self { ptr }
     }
 
     #[inline]

@@ -55,6 +55,11 @@ impl Bitmap {
     }
 
     #[inline]
+    pub unsafe fn from_ptr(ptr: ComPtr<ID2D1Bitmap>) -> Self {
+        Self { ptr }
+    }
+
+    #[inline]
     pub unsafe fn get_raw(&self) -> *mut ID2D1Bitmap {
         self.ptr.as_raw()
     }

@@ -10,6 +10,7 @@ use winapi::um::d2d1::ID2D1RenderTarget;
 use winapi::um::d2d1_1::ID2D1DeviceContext;
 use wio::com::ComPtr;
 
+#[derive(Clone)]
 pub struct DeviceContext {
     ptr: ComPtr<ID2D1DeviceContext>,
 }
@@ -36,6 +37,11 @@ impl DeviceContext {
         unsafe {
             self.ptr.SetTarget(target.get_ptr());
         }
+    }
+
+    #[inline]
+    pub unsafe fn from_ptr(ptr: ComPtr<ID2D1DeviceContext>) -> Self {
+        Self { ptr }
     }
 
     #[inline]

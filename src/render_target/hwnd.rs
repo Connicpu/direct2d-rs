@@ -52,6 +52,11 @@ impl HwndRenderTarget {
     }
 
     #[inline]
+    pub unsafe fn from_ptr(ptr: ComPtr<ID2D1HwndRenderTarget>) -> Self {
+        Self { ptr }
+    }
+
+    #[inline]
     pub unsafe fn from_raw(raw: *mut ID2D1HwndRenderTarget) -> Self {
         HwndRenderTarget {
             ptr: ComPtr::from_raw(raw),

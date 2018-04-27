@@ -22,7 +22,7 @@ fn random_hwnds_should_fail() {
         match result {
             Err(Error::ComError(e)) if e == INVALID_WINDOW_HANDLE => continue,
             Err(e) => panic!("Unexpected failure: {} ({:?})", e.get_message(), e),
-            Ok(_) => panic!("Should fail, but didn't (0x{:x?})", hwnd),
+            Ok(_) => panic!("Should fail, but didn't (0x{:x})", hwnd),
         }
     }
 }

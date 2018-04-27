@@ -146,6 +146,15 @@ pub trait RenderTarget {
     }
 
     #[inline]
+    fn as_generic(&self) -> GenericRenderTarget {
+        unsafe {
+            let ptr = self.rt();
+            ptr.AddRef();
+            GenericRenderTarget::from_raw(ptr)
+        }
+    }
+
+    #[inline]
     fn get_factory(&mut self) -> Factory {
         unsafe {
             let mut ptr: *mut ID2D1Factory = ptr::null_mut();

@@ -2,6 +2,11 @@ macro_rules! brush_type {
     ($ty:ident : $ptrty:ty) => {
         impl $ty {
             #[inline]
+            pub unsafe fn from_ptr(ptr: ComPtr<$ptrty>) -> Self {
+                $ty { ptr }
+            }
+
+            #[inline]
             pub unsafe fn from_raw(raw: *mut $ptrty) -> Self {
                 Self {
                     ptr: ::wio::com::ComPtr::from_raw(raw),
@@ -43,6 +48,11 @@ macro_rules! geometry_type {
         }
 
         impl $ty {
+            #[inline]
+            pub unsafe fn from_ptr(ptr: ComPtr<$ptrty>) -> Self {
+                $ty { ptr }
+            }
+            
             #[inline]
             pub unsafe fn from_raw(raw: *mut $ptrty) -> Self {
                 Self {

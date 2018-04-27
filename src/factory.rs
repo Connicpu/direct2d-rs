@@ -47,6 +47,11 @@ impl Factory {
     }
 
     #[inline]
+    pub unsafe fn from_ptr(ptr: ComPtr<ID2D1Factory1>) -> Self {
+        Self { ptr }
+    }
+
+    #[inline]
     pub unsafe fn get_raw(&self) -> *mut ID2D1Factory1 {
         self.ptr.as_raw()
     }

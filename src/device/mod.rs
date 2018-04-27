@@ -8,6 +8,7 @@ use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1_1::ID2D1Device;
 use wio::com::ComPtr;
 
+#[derive(Clone)]
 pub struct Device {
     ptr: ComPtr<ID2D1Device>,
 }
@@ -24,6 +25,11 @@ impl Device {
                 Err(hr.into())
             }
         }
+    }
+
+    #[inline]
+    pub unsafe fn from_ptr(ptr: ComPtr<ID2D1Device>) -> Self {
+        Self { ptr }
     }
 
     #[inline]

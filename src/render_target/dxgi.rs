@@ -33,6 +33,11 @@ impl DxgiSurfaceRenderTarget {
     }
 
     #[inline]
+    pub unsafe fn from_ptr(ptr: ComPtr<ID2D1RenderTarget>) -> Self {
+        Self { ptr }
+    }
+
+    #[inline]
     pub unsafe fn from_raw(raw: *mut ID2D1RenderTarget) -> Self {
         DxgiSurfaceRenderTarget {
             ptr: ComPtr::from_raw(raw),
