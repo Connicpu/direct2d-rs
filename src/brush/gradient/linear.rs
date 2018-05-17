@@ -19,6 +19,8 @@ pub struct LinearGradientBrush {
 }
 
 impl LinearGradientBrush {
+    /// Initializes a builder for the brush. You need a context, such as a RenderTarget or
+    /// DeviceContext.
     #[inline]
     pub fn create<'a, R>(context: &'a R) -> LinearGradientBrushBuilder<'a, R>
     where
@@ -116,22 +118,24 @@ where
     }
 
     #[inline]
-    /// Sets the opacity and transform
+    /// Provides standard bitmap properties (opacity and transform) if you've already created
+    /// them into a BrushProperties struct.
     pub fn with_properties(mut self, properties: BrushProperties) -> Self {
         self.properties = properties;
         self
     }
 
     #[inline]
-    /// This changes the overall opacity of the brush, which is essentially
-    /// multiplied with the colors in the gradient stops
+    /// Sets the opacity of the brush (default 1.0).
     pub fn with_opacity(mut self, opacity: f32) -> Self {
         self.properties.0.opacity = opacity;
         self
     }
 
     #[inline]
-    /// Sets a full affine transform on how the gradient is applied when rendered
+    /// Sets the transform of the brush (defaults to [Identity][1] matrix).
+    /// 
+    /// [1]: ../../math/struct.Matrix3x2F.html#associatedconstant.IDENTITY
     pub fn with_transform(mut self, transform: Matrix3x2F) -> Self {
         self.properties.0.transform = transform.0;
         self

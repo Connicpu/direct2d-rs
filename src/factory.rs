@@ -4,9 +4,11 @@ use std::ptr;
 
 use winapi::ctypes::c_void;
 use winapi::shared::winerror::SUCCEEDED;
-use winapi::um::d2d1::{D2D1CreateFactory, D2D1_DEBUG_LEVEL_WARNING, D2D1_FACTORY_OPTIONS,
-                       D2D1_FACTORY_TYPE_MULTI_THREADED};
-use winapi::um::d2d1_1::ID2D1Factory1;
+use winapi::um::d2d1::{
+    D2D1CreateFactory, D2D1_DEBUG_LEVEL_WARNING, D2D1_FACTORY_OPTIONS,
+    D2D1_FACTORY_TYPE_MULTI_THREADED,
+};
+use winapi::um::d2d1_1::{ID2D1Factory1, ID2D1Multithread};
 use winapi::Interface;
 use wio::com::ComPtr;
 
@@ -47,22 +49,41 @@ impl Factory {
     }
 
     #[inline]
-    pub unsafe fn from_ptr(ptr: ComPtr<ID2D1Factory1>) -> Self {
-        Self { ptr }
-    }
-
-    #[inline]
-    pub unsafe fn get_raw(&self) -> *mut ID2D1Factory1 {
-        self.ptr.as_raw()
-    }
-
-    #[inline]
-    pub unsafe fn from_raw(raw: *mut ID2D1Factory1) -> Self {
-        Factory {
-            ptr: ComPtr::from_raw(raw),
-        }
+    pub fn get_lock(&self) -> Option<Lock> {
+        unsafe { Some(Lock::from_ptr(self.ptr.cast().ok()?)) }
     }
 }
 
-unsafe impl Send for Factory {}
-unsafe impl Sync for Factory {}
+com_wrapper!(Factory: ID2D1Factory1);
+
+/// Used for locking out Direct2D whenever you're doing non-d2d work on a shared Direct3D/DXGI
+/// object to ensure you don't create a race condition.
+#[derive(Clone)]
+pub struct Lock {
+    ptr: ComPtr<ID2D1Multithread>,
+}
+
+impl Lock {
+    #[inline]
+    pub fn lock(&self) -> LockGuard {
+        unsafe { self.ptr.Enter() };
+        LockGuard { lock: self }
+    }
+
+    #[inline]
+    pub fn is_protected(&self) -> bool {
+        unsafe { self.ptr.GetMultithreadProtected() != 0 }
+    }
+}
+
+com_wrapper!(Lock: ID2D1Multithread);
+
+pub struct LockGuard<'a> {
+    lock: &'a Lock,
+}
+
+impl<'a> Drop for LockGuard<'a> {
+    fn drop(&mut self) {
+        unsafe { self.lock.ptr.Leave() };
+    }
+}

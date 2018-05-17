@@ -75,6 +75,7 @@ where
     }
 
     #[inline]
+    /// Sets the color this brush will render
     pub fn with_color<C>(mut self, color: C) -> Self
     where
         C: Into<ColorF>,
@@ -84,18 +85,24 @@ where
     }
 
     #[inline]
+    /// Provides standard bitmap properties (opacity and transform) if you've already created
+    /// them into a BrushProperties struct.
     pub fn with_properties(mut self, properties: BrushProperties) -> Self {
         self.properties = properties;
         self
     }
 
     #[inline]
+    /// Sets the opacity of the brush (default 1.0).
     pub fn with_opacity(mut self, opacity: f32) -> Self {
         self.properties.0.opacity = opacity;
         self
     }
 
     #[inline]
+    /// Sets the transform of the brush (defaults to [Identity][1] matrix).
+    /// 
+    /// [1]: ../../math/struct.Matrix3x2F.html#associatedconstant.IDENTITY
     pub fn with_transform(mut self, transform: Matrix3x2F) -> Self {
         self.properties.0.transform = transform.0;
         self

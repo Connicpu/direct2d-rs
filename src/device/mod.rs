@@ -26,24 +26,6 @@ impl Device {
             }
         }
     }
-
-    #[inline]
-    pub unsafe fn from_ptr(ptr: ComPtr<ID2D1Device>) -> Self {
-        Self { ptr }
-    }
-
-    #[inline]
-    pub unsafe fn from_raw(raw: *mut ID2D1Device) -> Self {
-        Device {
-            ptr: ComPtr::from_raw(raw),
-        }
-    }
-
-    #[inline]
-    pub unsafe fn get_raw(&self) -> *mut ID2D1Device {
-        self.ptr.as_raw()
-    }
 }
 
-unsafe impl Send for Device {}
-unsafe impl Sync for Device {}
+com_wrapper!(Device: ID2D1Device);

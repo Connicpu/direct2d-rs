@@ -13,12 +13,13 @@ use winapi::um::d2d1::ID2D1RadialGradientBrush;
 use wio::com::ComPtr;
 
 #[derive(Clone)]
-/// Paints an area with a linear gradient.
+/// Paints an area with a radial gradient.
 pub struct RadialGradientBrush {
     ptr: ComPtr<ID2D1RadialGradientBrush>,
 }
 
 impl RadialGradientBrush {
+    /// Begins a builder for RadialGradientBrush
     #[inline]
     pub fn create<'a, R>(context: &'a R) -> RadialGradientBrushBuilder<'a, R>
     where
@@ -27,11 +28,13 @@ impl RadialGradientBrush {
         RadialGradientBrushBuilder::new(context)
     }
 
+    /// Gets the center of the gradient ellipse
     #[inline]
     pub fn get_center(&self) -> Point2F {
         Point2F(unsafe { self.ptr.GetCenter() })
     }
 
+    /// Gets the offset of the gradient relative to the center
     #[inline]
     pub fn get_gradient_origin_offset(&self) -> Point2F {
         Point2F(unsafe { self.ptr.GetGradientOriginOffset() })
@@ -49,31 +52,37 @@ impl RadialGradientBrush {
         }
     }
 
+    /// Gets the X-radius of the gradient ellipse
     #[inline]
     pub fn get_radius_x(&self) -> f32 {
         unsafe { self.ptr.GetRadiusX() }
     }
 
+    /// Gets the Y-radius of the gradient ellipse
     #[inline]
     pub fn get_radius_y(&self) -> f32 {
         unsafe { self.ptr.GetRadiusY() }
     }
 
+    /// Sets the center of the gradient ellipse
     #[inline]
     pub fn set_center(&self, center: Point2F) {
         unsafe { self.ptr.SetCenter(center.0) }
     }
 
+    /// Sets the offset of the gradient relative to the center
     #[inline]
     pub fn set_gradient_origin_offset(&self, offset: Point2F) {
         unsafe { self.ptr.SetGradientOriginOffset(offset.0) }
     }
 
+    /// Sets the X-radius of the gradient ellipse
     #[inline]
     pub fn set_radius_x(&self, radius: f32) {
         unsafe { self.ptr.SetRadiusX(radius) }
     }
 
+    /// Sets the Y-radius of the gradient ellipse
     #[inline]
     pub fn set_radius_y(&self, radius: f32) {
         unsafe { self.ptr.SetRadiusY(radius) }
@@ -128,35 +137,44 @@ where
     }
 
     #[inline]
+    /// Provides standard bitmap properties (opacity and transform) if you've already created
+    /// them into a BrushProperties struct.
     pub fn with_properties(mut self, properties: BrushProperties) -> Self {
         self.properties = properties;
         self
     }
 
     #[inline]
+    /// Sets the opacity of the brush (default 1.0).
     pub fn with_opacity(mut self, opacity: f32) -> Self {
         self.properties.0.opacity = opacity;
         self
     }
 
     #[inline]
+    /// Sets the transform of the brush (defaults to [Identity][1] matrix).
+    /// 
+    /// [1]: ../../math/struct.Matrix3x2F.html#associatedconstant.IDENTITY
     pub fn with_transform(mut self, transform: Matrix3x2F) -> Self {
         self.properties.0.transform = transform.0;
         self
     }
 
+    /// Sets the center of the gradient ellipse
     #[inline]
     pub fn with_center(mut self, center: Point2F) -> Self {
         self.radial_properties.center = center.0;
         self
     }
 
+    /// Sets the offset of the gradient relative to the center
     #[inline]
     pub fn with_origin_offset(mut self, origin_offset: Point2F) -> Self {
         self.radial_properties.gradientOriginOffset = origin_offset.0;
         self
     }
 
+    /// Sets the radius of the gradient ellipse
     #[inline]
     pub fn with_radius(mut self, radius_x: f32, radius_y: f32) -> Self {
         self.radial_properties.radiusX = radius_x;

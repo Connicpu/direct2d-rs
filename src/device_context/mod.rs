@@ -38,24 +38,9 @@ impl DeviceContext {
             self.ptr.SetTarget(target.get_ptr());
         }
     }
-
-    #[inline]
-    pub unsafe fn from_ptr(ptr: ComPtr<ID2D1DeviceContext>) -> Self {
-        Self { ptr }
-    }
-
-    #[inline]
-    pub unsafe fn from_raw(raw: *mut ID2D1DeviceContext) -> Self {
-        DeviceContext {
-            ptr: ComPtr::from_raw(raw),
-        }
-    }
-
-    #[inline]
-    pub unsafe fn get_raw(&self) -> *mut ID2D1DeviceContext {
-        self.ptr.as_raw()
-    }
 }
+
+com_wrapper!(DeviceContext: ID2D1DeviceContext);
 
 impl RenderTarget for DeviceContext {
     #[inline]
@@ -64,5 +49,3 @@ impl RenderTarget for DeviceContext {
     }
 }
 
-unsafe impl Send for DeviceContext {}
-unsafe impl Sync for DeviceContext {}

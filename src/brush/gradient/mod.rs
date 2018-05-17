@@ -38,34 +38,34 @@ impl GradientStopCollection {
             stops
         }
     }
-
-    #[inline]
-    pub unsafe fn from_raw(raw: *mut ID2D1GradientStopCollection) -> Self {
-        GradientStopCollection {
-            ptr: ComPtr::from_raw(raw),
-        }
-    }
-
-    #[inline]
-    pub unsafe fn get_raw(&self) -> *mut ID2D1GradientStopCollection {
-        self.ptr.as_raw()
-    }
 }
 
+com_wrapper!(GradientStopCollection: ID2D1GradientStopCollection);
+
+/// The color for a specific point in the gradient
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct GradientStop {
+    /// The position this color appears along the gradient in [0.0, 1.0]
     pub position: f32,
+    /// The color of the gradient at this position
     pub color: ColorF,
 }
 
-impl From<(f32, ColorF)> for GradientStop {
+impl<C> From<(f32, C)> for GradientStop
+where
+    C: Into<ColorF>,
+{
     #[inline]
-    fn from((position, color): (f32, ColorF)) -> Self {
-        GradientStop { position, color }
+    fn from((position, color): (f32, C)) -> Self {
+        GradientStop {
+            position,
+            color: color.into(),
+        }
     }
 }
 
+/// Builder for creating a gradient stop collection
 pub struct GradientStopBuilder<'a, R>
 where
     R: RenderTarget + 'a,
@@ -91,6 +91,7 @@ where
         }
     }
 
+    /// Builds the collection
     fn build(self) -> D2DResult<GradientStopCollection> {
         let slice: &[GradientStop] = match self.state {
             GradientStopState::Empty => &[],
@@ -115,16 +116,22 @@ where
         }
     }
 
+    /// Sets how colors are determined for positions that would be outside [0.0, 1.0] in the
+    /// gradient scale. Defaults to [Clamp][1]
+    ///
+    /// [1]: ../../enums/enum.ExtendMode.html#variant.Clamp
     pub fn with_extend_mode(mut self, mode: ExtendMode) -> Self {
         self.extend_mode = mode;
         self
     }
 
+    /// Sets the gamma mode for the colors in this collection.
     pub fn with_gamma(mut self, gamma: Gamma) -> Self {
         self.gamma = gamma;
         self
     }
 
+    /// Adds a gradient stop
     pub fn with_stop<G>(mut self, stop: G) -> Self
     where
         G: Into<GradientStop>,
@@ -143,6 +150,8 @@ where
         self
     }
 
+    /// Adds a slice of gradient stops. Creating the collection doesn't require any extra 
+    /// allocations if you call this function exactly once and don't call `with_stop` at all
     pub fn with_stops(mut self, stops: &'a [GradientStop]) -> Self {
         self.state = match self.state {
             GradientStopState::Empty => GradientStopState::StopSlice(stops),

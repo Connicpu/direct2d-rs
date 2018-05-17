@@ -7,22 +7,22 @@ use winapi::um::d2d1::ID2D1Brush;
 use winapi::um::d2d1_1::ID2D1Factory1;
 use wio::com::ComPtr;
 
-#[doc(inline)]
+pub use brush::bitmap::BitmapBrush;
 pub use brush::gradient::linear::LinearGradientBrush;
-#[doc(inline)]
 pub use brush::gradient::radial::RadialGradientBrush;
-#[doc(inline)]
 pub use brush::gradient::{GradientStop, GradientStopCollection};
-#[doc(inline)]
 pub use brush::solid_color::SolidColorBrush;
 
 pub mod bitmap;
 pub mod gradient;
 pub mod solid_color;
 
+/// Defines an object that paints an area. Interfaces that implement Brush describe how the area
+/// is painted.
 pub trait Brush {
-    unsafe fn get_ptr(&self) -> *mut ID2D1Brush;
-
+    /// Gets the [Factory][1] instance with which this Brush is associated
+    ///
+    /// [1]: ../factory/struct.Factory.html
     #[inline]
     fn get_factory(&self) -> Factory {
         unsafe {
@@ -34,6 +34,7 @@ pub trait Brush {
         }
     }
 
+    /// Converts the brush to a concrete reference to a brush of unknown type
     #[inline]
     fn to_generic(&self) -> GenericBrush {
         let ptr = unsafe { ComPtr::from_raw(self.get_ptr()) };
@@ -41,6 +42,7 @@ pub trait Brush {
         GenericBrush { ptr }
     }
 
+    /// Sets the opacity of the brush, with 1.0 being fully opaque
     #[inline]
     fn set_opacity(&mut self, opacity: f32) {
         unsafe {
@@ -48,6 +50,8 @@ pub trait Brush {
         }
     }
 
+    /// Applies a transformation to the brush. This does nothing for a solid color brush, but
+    /// can scale, skew, offset, or rotate other brush types such as gradients or images.
     #[inline]
     fn set_transform(&mut self, transform: &Matrix3x2F) {
         unsafe {
@@ -55,11 +59,13 @@ pub trait Brush {
         }
     }
 
+    /// Gets the opacity value you set
     #[inline]
     fn get_opacity(&self) -> f32 {
         unsafe { (*self.get_ptr()).GetOpacity() }
     }
 
+    /// Gets the transform you set
     #[inline]
     fn get_transform(&self) -> Matrix3x2F {
         unsafe {
@@ -68,11 +74,33 @@ pub trait Brush {
             mat
         }
     }
+
+    /// Gets the raw pointer to the brush
+    unsafe fn get_ptr(&self) -> *mut ID2D1Brush;
 }
 
+/// A reference to a brush that could be any derived type
 #[derive(Clone)]
 pub struct GenericBrush {
     ptr: ComPtr<ID2D1Brush>,
 }
 
 brush_type!(GenericBrush: ID2D1Brush);
+
+impl GenericBrush {
+    pub fn as_solid_color(&self) -> Option<SolidColorBrush> {
+        unsafe { Some(SolidColorBrush::from_ptr(self.ptr.cast().ok()?)) }
+    }
+
+    pub fn as_bitmap(&self) -> Option<BitmapBrush> {
+        unsafe { Some(BitmapBrush::from_ptr(self.ptr.cast().ok()?)) }
+    }
+
+    pub fn as_linear_gadient(&self) -> Option<LinearGradientBrush> {
+        unsafe { Some(LinearGradientBrush::from_ptr(self.ptr.cast().ok()?)) }
+    }
+
+    pub fn as_radial_gadient(&self) -> Option<RadialGradientBrush> {
+        unsafe { Some(RadialGradientBrush::from_ptr(self.ptr.cast().ok()?)) }
+    }
+}

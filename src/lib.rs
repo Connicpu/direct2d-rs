@@ -18,20 +18,21 @@ extern crate winapi;
 extern crate wio;
 
 #[cfg(windows)]
-#[doc(inline)]
+pub use brush::Brush;
+#[cfg(windows)]
 pub use device::Device;
 #[cfg(windows)]
-#[doc(inline)]
 pub use device_context::DeviceContext;
 #[cfg(windows)]
-#[doc(inline)]
-pub use error::Error;
+pub use error::{D2DResult, Error};
 #[cfg(windows)]
-#[doc(inline)]
 pub use factory::Factory;
 #[cfg(windows)]
-#[doc(inline)]
+pub use geometry::Geometry;
+#[cfg(windows)]
 pub use render_target::RenderTarget;
+#[cfg(windows)]
+pub use stroke_style::StrokeStyle;
 
 #[cfg(windows)]
 #[macro_use]
