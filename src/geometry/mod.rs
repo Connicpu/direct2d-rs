@@ -10,7 +10,7 @@ use winapi::shared::minwindef::*;
 use winapi::shared::winerror::*;
 use winapi::um::d2d1::*;
 use winapi::um::d2d1_1::*;
-use winapi::um::d2dbasetypes::*;
+use winapi::um::d2dbasetypes::{D2D1_POINT_2F, D2D1_RECT_F, D2D_VECTOR_2F};
 use wio::com::ComPtr;
 
 #[doc(inline)]
