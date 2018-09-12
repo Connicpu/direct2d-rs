@@ -6,22 +6,22 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use winapi::um::d2d1::*;
 use winapi::um::d2dbasetypes::{
-    D2D1_MATRIX_3X2_F, D2D1_POINT_2F, D2D1_RECT_F, D2D1_SIZE_F, D2D1_SIZE_U, D2D_VECTOR_2F,
+    D2D_MATRIX_3X2_F, D2D_POINT_2F, D2D_RECT_F, D2D_SIZE_F, D2D_SIZE_U, D2D_VECTOR_2F,
 };
 
 pub mod debug;
 
 math_wrappers! {
-    pub struct Point2F(pub D2D1_POINT_2F);
+    pub struct Point2F(pub D2D_POINT_2F);
     pub struct Vector2F(pub D2D_VECTOR_2F);
-    pub struct SizeF(pub D2D1_SIZE_F);
-    pub struct SizeU(pub D2D1_SIZE_U);
-    pub struct RectF(pub D2D1_RECT_F);
-    pub struct ThicknessF(pub D2D1_RECT_F);
+    pub struct SizeF(pub D2D_SIZE_F);
+    pub struct SizeU(pub D2D_SIZE_U);
+    pub struct RectF(pub D2D_RECT_F);
+    pub struct ThicknessF(pub D2D_RECT_F);
     pub struct RoundedRect(pub D2D1_ROUNDED_RECT);
     pub struct Ellipse(pub D2D1_ELLIPSE);
     pub struct ColorF(pub D2D1_COLOR_F);
-    pub struct Matrix3x2F(pub D2D1_MATRIX_3X2_F);
+    pub struct Matrix3x2F(pub D2D_MATRIX_3X2_F);
     pub struct BezierSegment(pub D2D1_BEZIER_SEGMENT);
     pub struct QuadBezierSegment(pub D2D1_QUADRATIC_BEZIER_SEGMENT);
     pub struct ArcSegment(pub D2D1_ARC_SEGMENT);
