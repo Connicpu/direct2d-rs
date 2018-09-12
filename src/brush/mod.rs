@@ -88,18 +88,22 @@ pub struct GenericBrush {
 brush_type!(GenericBrush: ID2D1Brush);
 
 impl GenericBrush {
+    /// Try upcasting to a Solid Color
     pub fn as_solid_color(&self) -> Option<SolidColorBrush> {
         unsafe { Some(SolidColorBrush::from_ptr(self.ptr.cast().ok()?)) }
     }
 
+    /// Try upcasting to a Bitmap
     pub fn as_bitmap(&self) -> Option<BitmapBrush> {
         unsafe { Some(BitmapBrush::from_ptr(self.ptr.cast().ok()?)) }
     }
 
+    /// Try upcasting to a Linear Gradient
     pub fn as_linear_gadient(&self) -> Option<LinearGradientBrush> {
         unsafe { Some(LinearGradientBrush::from_ptr(self.ptr.cast().ok()?)) }
     }
 
+    /// Try upcasting to a Radial Gradient
     pub fn as_radial_gadient(&self) -> Option<RadialGradientBrush> {
         unsafe { Some(RadialGradientBrush::from_ptr(self.ptr.cast().ok()?)) }
     }

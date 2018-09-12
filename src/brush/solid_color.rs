@@ -8,12 +8,14 @@ use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::ID2D1SolidColorBrush;
 use wio::com::ComPtr;
 
+/// A brush that renders with a single solid color
 #[derive(Clone)]
 pub struct SolidColorBrush {
     ptr: ComPtr<ID2D1SolidColorBrush>,
 }
 
 impl SolidColorBrush {
+    /// 
     #[inline]
     pub fn create<'a, R>(context: &'a R) -> SolidColorBrushBuilder<'a, R>
     where
