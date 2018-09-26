@@ -1,7 +1,7 @@
 use enums::{ArcSize, SweepDirection};
 
 use std::cmp::PartialEq;
-use std::f32::EPSILON;
+use std::f32::{EPSILON, INFINITY, NEG_INFINITY};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use winapi::um::d2d1::*;
@@ -203,6 +203,13 @@ impl PartialEq for SizeF {
 }
 
 impl RectF {
+    pub const INFINITE: RectF = RectF(D2D1_RECT_F {
+        left: NEG_INFINITY,
+        top: NEG_INFINITY,
+        right: INFINITY,
+        bottom: INFINITY,
+    });
+
     #[inline]
     pub fn new(left: f32, top: f32, right: f32, bottom: f32) -> RectF {
         RectF(D2D1_RECT_F {
@@ -214,7 +221,10 @@ impl RectF {
     }
 
     #[inline]
-    pub fn bounds(p1: Point2F, p2: Point2F) -> RectF {
+    pub fn bounds(p1: impl Into<Point2F>, p2: impl Into<Point2F>) -> RectF {
+        let p1 = p1.into();
+        let p2 = p2.into();
+
         RectF::new(
             f32::min(p1.0.x, p2.0.x),
             f32::min(p1.0.y, p2.0.y),
@@ -224,7 +234,10 @@ impl RectF {
     }
 
     #[inline]
-    pub fn with_size(old_rect: RectF, size: SizeF) -> RectF {
+    pub fn with_size(old_rect: impl Into<RectF>, size: impl Into<SizeF>) -> RectF {
+        let old_rect = old_rect.into();
+        let size = size.into();
+
         RectF::new(
             old_rect.left,
             old_rect.top,
@@ -234,7 +247,10 @@ impl RectF {
     }
 
     #[inline]
-    pub fn adjusted_by(old_rect: RectF, size: SizeF) -> RectF {
+    pub fn adjusted_by(old_rect: impl Into<RectF>, size: impl Into<SizeF>) -> RectF {
+        let old_rect = old_rect.into();
+        let size = size.into();
+
         RectF::new(
             old_rect.left + size.width,
             old_rect.top + size.height,
@@ -244,14 +260,21 @@ impl RectF {
     }
 
     #[inline]
-    pub fn around(center: Point2F, size: SizeF) -> RectF {
+    pub fn around(center: impl Into<Point2F>, size: impl Into<SizeF>) -> RectF {
+        let center = center.into();
+        let size = size.into();
+
         let half_diag = (size.width / 2.0, size.height / 2.0).into();
         RectF::bounds(center - half_diag, center + half_diag)
     }
 
     #[inline]
-    pub fn contains(&self, point: Point2F) -> bool {
-        return self.left < point.0.x && self.top < point.0.y && self.right > point.0.x
+    pub fn contains(&self, point: impl Into<Point2F>) -> bool {
+        let point = point.into();
+
+        return self.left < point.0.x
+            && self.top < point.0.y
+            && self.right > point.0.x
             && self.bottom > point.0.y;
     }
 
@@ -281,7 +304,9 @@ impl From<(f32, f32, f32, f32)> for RectF {
 impl PartialEq for RectF {
     #[inline]
     fn eq(&self, rhs: &RectF) -> bool {
-        self.left == rhs.left && self.top == rhs.top && self.right == rhs.right
+        self.left == rhs.left
+            && self.top == rhs.top
+            && self.right == rhs.right
             && self.bottom == rhs.bottom
     }
 }
@@ -351,7 +376,9 @@ impl Div<f32> for ThicknessF {
 
 impl Ellipse {
     #[inline]
-    pub fn new(center: Point2F, radius_x: f32, radius_y: f32) -> Ellipse {
+    pub fn new(center: impl Into<Point2F>, radius_x: f32, radius_y: f32) -> Ellipse {
+        let center = center.into();
+
         Ellipse(D2D1_ELLIPSE {
             point: center.0,
             radiusX: radius_x,
@@ -423,22 +450,30 @@ impl Matrix3x2F {
     });
 
     #[inline]
+    #[deprecated = "Use the IDENTITY const instead"]
     pub fn identity() -> Matrix3x2F {
         Matrix3x2F::IDENTITY
     }
 
     #[inline]
-    pub fn translation(v: Vector2F) -> Matrix3x2F {
+    pub fn translation(v: impl Into<Vector2F>) -> Matrix3x2F {
+        let v = v.into();
+
         Matrix3x2F::new([[1.0, 0.0], [0.0, 1.0], [v.x, v.y]])
     }
 
     #[inline]
-    pub fn translate_to(p: Point2F) -> Matrix3x2F {
+    pub fn translate_to(p: impl Into<Point2F>) -> Matrix3x2F {
+        let p = p.into();
+
         Matrix3x2F::translation(Vector2F::new(p.x, p.y))
     }
 
     #[inline]
-    pub fn scale(scale: SizeF, center: Point2F) -> Matrix3x2F {
+    pub fn scale(scale: impl Into<SizeF>, center: impl Into<Point2F>) -> Matrix3x2F {
+        let scale = scale.into();
+        let center = center.into();
+
         let trans = Vector2F::new(
             center.x - scale.width * center.x,
             center.y - scale.height * center.y,
@@ -448,7 +483,9 @@ impl Matrix3x2F {
     }
 
     #[inline]
-    pub fn rotation(angle: f32, center: Point2F) -> Matrix3x2F {
+    pub fn rotation(angle: f32, center: impl Into<Point2F>) -> Matrix3x2F {
+        let center = center.into();
+
         let cos = angle.cos();
         let sin = angle.sin();
         let x = center.x;
@@ -460,7 +497,9 @@ impl Matrix3x2F {
     }
 
     #[inline]
-    pub fn skew(angle_x: f32, angle_y: f32, center: Point2F) -> Matrix3x2F {
+    pub fn skew(angle_x: f32, angle_y: f32, center: impl Into<Point2F>) -> Matrix3x2F {
+        let center = center.into();
+        
         let tanx = angle_x.tan();
         let tany = angle_y.tan();
         let x = center.x;
@@ -499,7 +538,7 @@ impl Matrix3x2F {
 
     #[inline]
     pub fn is_identity(&self) -> bool {
-        *self == Matrix3x2F::identity()
+        *self == Matrix3x2F::IDENTITY
     }
 }
 
@@ -552,7 +591,11 @@ impl PartialEq for Matrix3x2F {
 
 impl BezierSegment {
     #[inline]
-    pub fn new(p1: Point2F, p2: Point2F, p3: Point2F) -> BezierSegment {
+    pub fn new(p1: impl Into<Point2F>, p2: impl Into<Point2F>, p3: impl Into<Point2F>) -> BezierSegment {
+        let p1 = p1.into();
+        let p2 = p2.into();
+        let p3 = p3.into();
+
         BezierSegment(D2D1_BEZIER_SEGMENT {
             point1: p1.0,
             point2: p2.0,
@@ -563,7 +606,10 @@ impl BezierSegment {
 
 impl QuadBezierSegment {
     #[inline]
-    pub fn new(p1: Point2F, p2: Point2F) -> QuadBezierSegment {
+    pub fn new(p1: impl Into<Point2F>, p2: impl Into<Point2F>) -> QuadBezierSegment {
+        let p1 = p1.into();
+        let p2 = p2.into();
+
         QuadBezierSegment(D2D1_QUADRATIC_BEZIER_SEGMENT {
             point1: p1.0,
             point2: p2.0,
@@ -574,12 +620,15 @@ impl QuadBezierSegment {
 impl ArcSegment {
     #[inline]
     pub fn new(
-        point: Point2F,
-        size: SizeF,
+        point: impl Into<Point2F>,
+        size: impl Into<SizeF>,
         angle: f32,
         sweep_dir: SweepDirection,
         arc_size: ArcSize,
     ) -> ArcSegment {
+        let point = point.into();
+        let size = size.into();
+
         ArcSegment(D2D1_ARC_SEGMENT {
             point: point.0,
             size: size.0,
@@ -591,7 +640,10 @@ impl ArcSegment {
 
     /// Create a counter-clockwise small arc
     #[inline]
-    pub fn new_cc_sm(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
+    pub fn new_cc_sm(point: impl Into<Point2F>, size: impl Into<SizeF>, angle: f32) -> ArcSegment {
+        let point = point.into();
+        let size = size.into();
+
         ArcSegment::new(
             point,
             size,
@@ -603,7 +655,10 @@ impl ArcSegment {
 
     /// Create a counter-clockwise large arc
     #[inline]
-    pub fn new_cc_lg(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
+    pub fn new_cc_lg(point: impl Into<Point2F>, size: impl Into<SizeF>, angle: f32) -> ArcSegment {
+        let point = point.into();
+        let size = size.into();
+
         ArcSegment::new(
             point,
             size,
@@ -615,7 +670,10 @@ impl ArcSegment {
 
     /// Create a clockwise small arc
     #[inline]
-    pub fn new_cw_sm(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
+    pub fn new_cw_sm(point: impl Into<Point2F>, size: impl Into<SizeF>, angle: f32) -> ArcSegment {
+        let point = point.into();
+        let size = size.into();
+
         ArcSegment::new(
             point,
             size,
@@ -627,7 +685,10 @@ impl ArcSegment {
 
     /// Create a counter-clockwise small arc
     #[inline]
-    pub fn new_cw_lg(point: Point2F, size: SizeF, angle: f32) -> ArcSegment {
+    pub fn new_cw_lg(point: impl Into<Point2F>, size: impl Into<SizeF>, angle: f32) -> ArcSegment {
+        let point = point.into();
+        let size = size.into();
+        
         ArcSegment::new(
             point,
             size,
@@ -663,6 +724,6 @@ impl BrushProperties {
 impl Default for BrushProperties {
     #[inline]
     fn default() -> BrushProperties {
-        BrushProperties::new(1.0, &Matrix3x2F::identity())
+        BrushProperties::new(1.0, &Matrix3x2F::IDENTITY)
     }
 }

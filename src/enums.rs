@@ -113,6 +113,11 @@ d2d_enums! {
         PerPrimitive = 0,
         Aliased = 1,
     }
+
+    pub enum LayerOptions {
+        None = 0,
+        InitializeForCleartype = 1,
+    }
 }
 
 d2d_flags! {

@@ -5,13 +5,14 @@ use error::Error;
 use factory::Factory;
 use geometry::Geometry;
 use image::Bitmap;
+use layer::{Layer, LayerBuilder};
 use math::*;
 use stroke_style::StrokeStyle;
 
 use std::{mem, ptr};
 
 use winapi::shared::winerror::SUCCEEDED;
-use winapi::um::d2d1::{D2D1_TAG, ID2D1Factory, ID2D1RenderTarget};
+use winapi::um::d2d1::{ID2D1Factory, ID2D1RenderTarget, D2D1_TAG};
 use winapi::um::d2d1_1::ID2D1Factory1;
 use winapi::um::dcommon::DWRITE_MEASURING_MODE_NATURAL;
 use wio::com::ComPtr;
@@ -524,11 +525,40 @@ pub trait RenderTarget {
     }
 
     #[inline]
-    fn get_dpi(&mut self) -> (f32, f32) {
+    fn get_dpi(&self) -> (f32, f32) {
         unsafe {
             let (mut x, mut y) = (0.0, 0.0);
             self.rt().GetDpi(&mut x, &mut y);
             (x, y)
+        }
+    }
+
+    #[inline]
+    fn push_layer<'a, 'b>(&'a mut self, layer: &'b Layer) -> LayerBuilder<'a, 'b, Self>
+    where
+        Self: Sized + 'a,
+    {
+        LayerBuilder::create(self, layer)
+    }
+
+    #[inline]
+    fn pop_layer(&mut self) {
+        unsafe {
+            self.rt().PopLayer();
+        }
+    }
+
+    #[inline]
+    fn push_axis_aligned_clip(&mut self, clip: impl Into<RectF>, aa: AntialiasMode) {
+        unsafe {
+            self.rt().PushAxisAlignedClip(&clip.into().0, aa as u32);
+        }
+    }
+
+    #[inline]
+    fn pop_axis_aligned_clip(&mut self) {
+        unsafe {
+            self.rt().PopAxisAlignedClip();
         }
     }
 }

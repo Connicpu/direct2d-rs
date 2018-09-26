@@ -6,6 +6,9 @@ extern crate winapi;
 extern crate wio;
 
 use direct2d::brush::SolidColorBrush;
+use direct2d::enums::{FigureBegin, FigureEnd, FillMode};
+use direct2d::geometry::Path;
+use direct2d::layer::Layer;
 use direct2d::math::*;
 use direct2d::render_target::HwndRenderTarget;
 use direct2d::{Factory, RenderTarget};
@@ -37,12 +40,29 @@ fn paint_window(window: &mut Window) {
         .with_color(*FOREGROUND)
         .build()
         .unwrap();
+    let diamond_brush = SolidColorBrush::create(&rt)
+        .with_color(*HIGHLIGHT)
+        .build()
+        .unwrap();
 
     rt.begin_draw();
     rt.clear(*BACKGROUND);
 
     rt.fill_rectangle((50.0, 50.0, 750.0, 430.0), &accent_brush);
     rt.fill_rectangle((150.0, 150.0, 650.0, 330.0), &foreground_brush);
+
+    let path = build_path(&rt.get_factory());
+
+    let layer = Layer::create(rt, None).unwrap();
+    rt.push_layer(&layer)
+        .with_mask(&path)
+        .with_mask_transform(
+            Matrix3x2F::scale((300.0, 300.0), (0.5, 0.5)) * Matrix3x2F::translation((400.0, 240.0)),
+        ).push();
+
+    rt.fill_rectangle((0.0, 0.0, 800.0, 480.0), &diamond_brush);
+
+    rt.pop_layer();
 
     rt.end_draw().unwrap();
 }
@@ -129,7 +149,7 @@ unsafe fn real_window_test() {
     window.hwnd = hwnd;
 
     ShowWindow(hwnd, SW_SHOW);
-    SetTimer(hwnd, 0, 1000, None);
+    SetTimer(hwnd, 0, 1_000, None);
 
     let mut msg: MSG = mem::uninitialized();
     loop {
@@ -146,4 +166,52 @@ unsafe fn real_window_test() {
 #[test]
 fn window_test() {
     unsafe { real_window_test() };
+}
+
+fn build_path(factory: &Factory) -> Path {
+    let mut path = Path::create(factory).unwrap();
+    path.open()
+        .unwrap()
+        .fill_mode(FillMode::Winding)
+        // Square with a triangle base
+        .with_figure(
+            Point2F::new(0.0, 0.0),
+            FigureBegin::Filled,
+            FigureEnd::Closed,
+            |figure| {
+                figure
+                    .add_line(Point2F::new(1.0, 0.0))
+                    .add_line(Point2F::new(1.0, 1.0))
+                    .add_line(Point2F::new(0.5, 1.5))
+                    .add_line(Point2F::new(0.0, 1.0))
+                    .add_line(Point2F::new(0.0, 0.0))
+            },
+        )
+        // Add a triangle hat
+        .with_figure(
+            Point2F::new(0.0, 0.0),
+            FigureBegin::Filled,
+            FigureEnd::Closed,
+            |figure| {
+                figure
+                    .add_line(Point2F::new(0.5, -0.5))
+                    .add_line(Point2F::new(1.0, 0.0))
+            },
+        )
+        // Cut a hole in the middle
+        .fill_mode(FillMode::Alternate)
+        .with_figure(
+            Point2F::new(0.25, 0.25),
+            FigureBegin::Filled,
+            FigureEnd::Closed,
+            |figure| {
+                figure
+                    .add_line(Point2F::new(0.75, 0.25))
+                    .add_line(Point2F::new(0.75, 0.75))
+                    .add_line(Point2F::new(0.25, 0.75))
+            },
+        ).close()
+        .unwrap();
+
+    path
 }

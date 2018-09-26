@@ -54,6 +54,8 @@ pub mod geometry;
 #[cfg(windows)]
 pub mod image;
 #[cfg(windows)]
+pub mod layer;
+#[cfg(windows)]
 pub mod math;
 #[cfg(windows)]
 pub mod render_target;

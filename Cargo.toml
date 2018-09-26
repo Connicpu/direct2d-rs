@@ -1,6 +1,6 @@
 [package]
 name = "direct2d"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Connie Hilarides <conni_h@outlook.com>"]
 description = "A safe abstraction for drawing with Direct2D"
 repository = "https://github.com/Connicpu/direct2d-rs"
@@ -9,7 +9,7 @@ license = "MIT/Apache-2.0"
 readme = "CRATE_README.md"
 
 [target.'cfg(windows)'.dependencies]
-directwrite = "0.1.2"
+directwrite = "0.1.3"
 wio = "0.2"
 dxgi = "0.1.6"
 either = "1.5.0"
