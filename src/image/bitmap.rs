@@ -3,14 +3,16 @@ use enums::{AlphaMode, BitmapOptions};
 use error::D2DResult;
 use image::{GenericImage, Image};
 use math::{SizeF, SizeU};
+use render_target::RenderTarget;
 
 use std::ptr;
+use std::mem;
 
 use dxgi::surface::Surface as DxgiSurface;
 use dxgi::Format;
 use winapi::shared::winerror::SUCCEEDED;
-use winapi::um::d2d1::{ID2D1Bitmap, ID2D1Image};
-use winapi::um::d2d1_1::D2D1_BITMAP_PROPERTIES1;
+use winapi::um::d2d1::{ID2D1Bitmap, ID2D1Image, D2D1_BITMAP_PROPERTIES};
+use winapi::um::d2d1_1::{ID2D1DeviceContext, D2D1_BITMAP_PROPERTIES1};
 use winapi::um::dcommon::D2D1_PIXEL_FORMAT;
 use wio::com::ComPtr;
 
@@ -21,7 +23,10 @@ pub struct Bitmap {
 
 impl Bitmap {
     #[inline]
-    pub fn create<'a>(context: &'a DeviceContext) -> BitmapBuilder<'a> {
+    pub fn create<'a, R>(context: &'a R) -> BitmapBuilder<'a, R>
+    where
+        R: RenderTarget + 'a,
+    {
         BitmapBuilder::new(context)
     }
 
@@ -82,8 +87,11 @@ impl Image for Bitmap {
 unsafe impl Send for Bitmap {}
 unsafe impl Sync for Bitmap {}
 
-pub struct BitmapBuilder<'a> {
-    context: &'a DeviceContext,
+pub struct BitmapBuilder<'a, R>
+where
+    R: RenderTarget + 'a,
+{
+    context: &'a R,
     source: Option<BitmapSource<'a>>,
     properties: D2D1_BITMAP_PROPERTIES1,
 }
@@ -99,9 +107,12 @@ const DEFAULT_BITMAP_PROPS: D2D1_BITMAP_PROPERTIES1 = D2D1_BITMAP_PROPERTIES1 {
     colorContext: ptr::null(),
 };
 
-impl<'a> BitmapBuilder<'a> {
+impl<'a, R> BitmapBuilder<'a, R>
+where
+    R: RenderTarget + 'a,
+{
     #[inline]
-    pub fn new(context: &'a DeviceContext) -> Self {
+    pub fn new(context: &'a R) -> Self {
         BitmapBuilder {
             context,
             source: None,
@@ -122,13 +133,33 @@ impl<'a> BitmapBuilder<'a> {
                     let source = source.map(<[_]>::as_ptr).unwrap_or(ptr::null());
 
                     let mut ptr = ptr::null_mut();
-                    let hr = (*self.context.get_raw()).CreateBitmap(
-                        size.0,
-                        source as *const _,
-                        pitch,
-                        &self.properties,
-                        &mut ptr,
-                    );
+
+                    let hr;
+                    if self.properties.bitmapOptions == 0 && self.properties.colorContext.is_null() {
+                        hr = self.context.rt().CreateBitmap(
+                            size.0,
+                            source as *const _,
+                            pitch,
+                            (&self.properties) as *const _ as *const D2D1_BITMAP_PROPERTIES,
+                            &mut ptr,
+                        );
+                    } else {
+                        let ctx = self.context.rt();
+                        let tmp = ComPtr::from_raw(ctx);
+                        let res = tmp.cast::<ID2D1DeviceContext>();
+                        mem::forget(tmp);
+                        let ctx = res.unwrap();
+
+                        let mut ptr2 = ptr::null_mut();
+                        hr = ctx.CreateBitmap(
+                            size.0,
+                            source as *const _,
+                            pitch,
+                            &self.properties,
+                            &mut ptr2,
+                        );
+                        ptr = ptr2 as *mut _;
+                    }
 
                     if SUCCEEDED(hr) {
                         Ok(Bitmap::from_raw(ptr as _))
@@ -136,9 +167,9 @@ impl<'a> BitmapBuilder<'a> {
                         Err(hr.into())
                     }
                 }
-                BitmapSource::Dxgi(surface) => {
+                BitmapSource::Dxgi(surface, context) => {
                     let mut ptr = ptr::null_mut();
-                    let hr = (*self.context.get_raw()).CreateBitmapFromDxgiSurface(
+                    let hr = (*context.get_raw()).CreateBitmapFromDxgiSurface(
                         surface.get_raw(),
                         &self.properties,
                         &mut ptr,
@@ -176,12 +207,6 @@ impl<'a> BitmapBuilder<'a> {
     }
 
     #[inline]
-    pub fn with_dxgi_surface(mut self, surface: &'a DxgiSurface) -> Self {
-        self.source = Some(BitmapSource::Dxgi(surface));
-        self
-    }
-
-    #[inline]
     pub fn with_format(mut self, format: Format) -> Self {
         self.properties.pixelFormat.format = format as u32;
         self
@@ -200,6 +225,14 @@ impl<'a> BitmapBuilder<'a> {
         self.properties.dpiY = dpi_y;
         self
     }
+}
+
+impl<'a> BitmapBuilder<'a, DeviceContext> {
+    #[inline]
+    pub fn with_dxgi_surface(mut self, surface: &'a DxgiSurface) -> Self {
+        self.source = Some(BitmapSource::Dxgi(surface, self.context));
+        self
+    }
 
     #[inline]
     pub fn with_options(mut self, options: BitmapOptions) -> Self {
@@ -214,5 +247,5 @@ enum BitmapSource<'a> {
         source: Option<&'a [u8]>,
         pitch: u32,
     },
-    Dxgi(&'a DxgiSurface),
+    Dxgi(&'a DxgiSurface, &'a DeviceContext),
 }
