@@ -1,10 +1,10 @@
 use error::D2DResult;
 use factory::Factory;
-use math;
+use math::Rectf;
 use std::{mem, ptr};
 
 use winapi::shared::winerror::SUCCEEDED;
-use winapi::um::d2d1::{D2D1_RECT_F, ID2D1RectangleGeometry};
+use winapi::um::d2d1::{ID2D1RectangleGeometry, D2D1_RECT_F};
 use wio::com::ComPtr;
 
 /// Represents a rectangle which can be used anywhere Geometry is needed
@@ -16,10 +16,11 @@ pub struct Rectangle {
 
 impl Rectangle {
     #[inline]
-    pub fn create(factory: &Factory, rectangle: &math::RectF) -> D2DResult<Rectangle> {
+    pub fn create(factory: &Factory, rectangle: &Rectf) -> D2DResult<Rectangle> {
         unsafe {
             let mut ptr = ptr::null_mut();
-            let hr = (*factory.get_raw()).CreateRectangleGeometry(&rectangle.0, &mut ptr);
+            let hr = (*factory.get_raw())
+                .CreateRectangleGeometry(rectangle as *const _ as *const _, &mut ptr);
             if SUCCEEDED(hr) {
                 Ok(Rectangle::from_raw(ptr))
             } else {
@@ -29,11 +30,11 @@ impl Rectangle {
     }
 
     #[inline]
-    pub fn get_rect(&self) -> math::RectF {
+    pub fn get_rect(&self) -> Rectf {
         unsafe {
             let mut rect: D2D1_RECT_F = mem::uninitialized();
             self.ptr.GetRect(&mut rect);
-            math::RectF(rect)
+            mem::transmute(rect)
         }
     }
 }

@@ -167,8 +167,8 @@ pub trait RenderTarget {
     }
 
     #[inline]
-    fn get_size(&self) -> SizeF {
-        unsafe { SizeF(self.rt().GetSize()) }
+    fn get_size(&self) -> Sizef {
+        unsafe { self.rt().GetSize().into() }
     }
 
     #[inline]
@@ -229,28 +229,21 @@ pub trait RenderTarget {
     }
 
     #[inline]
-    fn clear<C>(&mut self, color: C)
-    where
-        C: Into<ColorF>,
-    {
+    fn clear(&mut self, color: impl Into<Color>) {
         unsafe {
-            self.rt().Clear(&color.into().0);
+            self.rt().Clear(&color.into().into());
         }
     }
 
     #[inline]
-    fn draw_line<P0, P1, B>(
+    fn draw_line(
         &mut self,
-        p0: P0,
-        p1: P1,
-        brush: &B,
+        p0: impl Into<Point2f>,
+        p1: impl Into<Point2f>,
+        brush: &impl Brush,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
-    ) where
-        P0: Into<Point2F>,
-        P1: Into<Point2F>,
-        B: Brush,
-    {
+    ) {
         unsafe {
             let stroke_style = match stroke_style {
                 Some(s) => s.get_raw() as *mut _,
@@ -258,8 +251,8 @@ pub trait RenderTarget {
             };
 
             self.rt().DrawLine(
-                p0.into().0,
-                p1.into().0,
+                p0.into().into(),
+                p1.into().into(),
                 brush.get_ptr(),
                 stroke_width,
                 stroke_style,
@@ -268,49 +261,44 @@ pub trait RenderTarget {
     }
 
     #[inline]
-    fn draw_rectangle<R, B>(
+    fn draw_rectangle(
         &mut self,
-        rect: R,
-        brush: &B,
+        rect: impl Into<Rectf>,
+        brush: &impl Brush,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
-    ) where
-        R: Into<RectF>,
-        B: Brush,
-    {
+    ) {
         unsafe {
             let stroke_style = match stroke_style {
                 Some(s) => s.get_raw() as *mut _,
                 None => ptr::null_mut(),
             };
 
-            self.rt()
-                .DrawRectangle(&rect.into().0, brush.get_ptr(), stroke_width, stroke_style);
+            self.rt().DrawRectangle(
+                &rect.into().into(),
+                brush.get_ptr(),
+                stroke_width,
+                stroke_style,
+            );
         }
     }
 
     #[inline]
-    fn fill_rectangle<R, B>(&mut self, rect: R, brush: &B)
-    where
-        R: Into<RectF>,
-        B: Brush,
-    {
+    fn fill_rectangle(&mut self, rect: impl Into<Rectf>, brush: &impl Brush) {
         unsafe {
-            self.rt().FillRectangle(&rect.into().0, brush.get_ptr());
+            self.rt()
+                .FillRectangle(&rect.into().into(), brush.get_ptr());
         }
     }
 
     #[inline]
-    fn draw_rounded_rectangle<R, B>(
+    fn draw_rounded_rectangle(
         &mut self,
-        rect: R,
-        brush: &B,
+        rect: impl Into<RoundedRect>,
+        brush: &impl Brush,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
-    ) where
-        R: Into<RoundedRect>,
-        B: Brush,
-    {
+    ) {
         unsafe {
             let stroke_style = match stroke_style {
                 Some(s) => s.get_raw() as *mut _,
@@ -318,7 +306,7 @@ pub trait RenderTarget {
             };
 
             self.rt().DrawRoundedRectangle(
-                &rect.into().0,
+                &rect.into().into(),
                 brush.get_ptr(),
                 stroke_width,
                 stroke_style,
@@ -327,28 +315,21 @@ pub trait RenderTarget {
     }
 
     #[inline]
-    fn fill_rounded_rectangle<R, B>(&mut self, rect: R, brush: &B)
-    where
-        R: Into<RoundedRect>,
-        B: Brush,
-    {
+    fn fill_rounded_rectangle(&mut self, rect: impl Into<RoundedRect>, brush: &impl Brush) {
         unsafe {
             self.rt()
-                .FillRoundedRectangle(&rect.into().0, brush.get_ptr());
+                .FillRoundedRectangle(&rect.into().into(), brush.get_ptr());
         }
     }
 
     #[inline]
-    fn draw_ellipse<E, B>(
+    fn draw_ellipse(
         &mut self,
-        ellipse: E,
-        brush: &B,
+        ellipse: impl Into<Ellipse>,
+        brush: &impl Brush,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
-    ) where
-        E: Into<Ellipse>,
-        B: Brush,
-    {
+    ) {
         unsafe {
             let stroke_style = match stroke_style {
                 Some(s) => s.get_raw() as *mut _,
@@ -356,7 +337,7 @@ pub trait RenderTarget {
             };
 
             self.rt().DrawEllipse(
-                &ellipse.into().0,
+                &ellipse.into().into(),
                 brush.get_ptr(),
                 stroke_width,
                 stroke_style,
@@ -365,27 +346,21 @@ pub trait RenderTarget {
     }
 
     #[inline]
-    fn fill_ellipse<E, B>(&mut self, ellipse: E, brush: &B)
-    where
-        E: Into<Ellipse>,
-        B: Brush,
-    {
+    fn fill_ellipse(&mut self, ellipse: impl Into<Ellipse>, brush: &impl Brush) {
         unsafe {
-            self.rt().FillEllipse(&ellipse.into().0, brush.get_ptr());
+            self.rt()
+                .FillEllipse(&ellipse.into().into(), brush.get_ptr());
         }
     }
 
     #[inline]
-    fn draw_geometry<G, B>(
+    fn draw_geometry(
         &mut self,
-        geometry: &G,
-        brush: &B,
+        geometry: &impl Geometry,
+        brush: &impl Brush,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
-    ) where
-        G: Geometry,
-        B: Brush,
-    {
+    ) {
         unsafe {
             let stroke_style = match stroke_style {
                 Some(s) => s.get_raw() as *mut _,
@@ -402,11 +377,7 @@ pub trait RenderTarget {
     }
 
     #[inline]
-    fn fill_geometry<G, B>(&mut self, geometry: &G, brush: &B)
-    where
-        G: Geometry,
-        B: Brush,
-    {
+    fn fill_geometry(&mut self, geometry: &impl Geometry, brush: &impl Brush) {
         unsafe {
             self.rt()
                 .FillGeometry(geometry.get_ptr(), brush.get_ptr(), ptr::null_mut());
@@ -414,12 +385,12 @@ pub trait RenderTarget {
     }
 
     #[inline]
-    fn fill_geometry_with_opacity<G, B, OB>(&mut self, geometry: &G, brush: &B, opacity_brush: &OB)
-    where
-        G: Geometry,
-        B: Brush,
-        OB: Brush,
-    {
+    fn fill_geometry_with_opacity(
+        &mut self,
+        geometry: &impl Geometry,
+        brush: &impl Brush,
+        opacity_brush: &impl Brush,
+    ) {
         unsafe {
             self.rt()
                 .FillGeometry(geometry.get_ptr(), brush.get_ptr(), opacity_brush.get_ptr());
@@ -427,40 +398,34 @@ pub trait RenderTarget {
     }
 
     #[inline]
-    fn draw_bitmap<R0, R1>(
+    fn draw_bitmap(
         &mut self,
         bitmap: &Bitmap,
-        dest_rect: R0,
+        dest_rect: impl Into<Rectf>,
         opacity: f32,
         interpolation: BitmapInterpolationMode,
-        src_rect: R1,
-    ) where
-        R0: Into<RectF>,
-        R1: Into<RectF>,
-    {
+        src_rect: impl Into<Rectf>,
+    ) {
         unsafe {
             self.rt().DrawBitmap(
                 bitmap.get_raw(),
-                &dest_rect.into().0,
+                &dest_rect.into().into(),
                 opacity,
                 interpolation as u32,
-                &src_rect.into().0,
+                &src_rect.into().into(),
             );
         }
     }
 
     #[inline]
-    fn draw_text<B, R>(
+    fn draw_text(
         &mut self,
         text: &str,
         format: &TextFormat,
-        layout_rect: R,
-        foreground_brush: &B,
+        layout_rect: impl Into<Rectf>,
+        foreground_brush: &impl Brush,
         options: DrawTextOptions,
-    ) where
-        R: Into<RectF>,
-        B: Brush,
-    {
+    ) {
         let text = text.to_wide_null();
 
         unsafe {
@@ -469,7 +434,7 @@ pub trait RenderTarget {
                 text.as_ptr(),
                 text.len() as u32,
                 format,
-                &layout_rect.into().0,
+                &layout_rect.into().into(),
                 foreground_brush.get_ptr(),
                 options.0,
                 DWRITE_MEASURING_MODE_NATURAL,
@@ -478,33 +443,30 @@ pub trait RenderTarget {
     }
 
     #[inline]
-    fn draw_text_layout<P, B>(
+    fn draw_text_layout(
         &mut self,
-        origin: P,
+        origin: impl Into<Point2f>,
         layout: &TextLayout,
-        brush: &B,
+        brush: &impl Brush,
         options: DrawTextOptions,
-    ) where
-        P: Into<Point2F>,
-        B: Brush,
-    {
+    ) {
         unsafe {
             let layout = layout.get_raw();
             self.rt()
-                .DrawTextLayout(origin.into().0, layout, brush.get_ptr(), options.0);
+                .DrawTextLayout(origin.into().into(), layout, brush.get_ptr(), options.0);
         }
     }
 
     #[inline]
-    fn set_transform(&mut self, transform: &Matrix3x2F) {
-        unsafe { self.rt().SetTransform(&transform.0) }
+    fn set_transform(&mut self, transform: &Matrix3x2f) {
+        unsafe { self.rt().SetTransform(transform as *const _ as *const _) }
     }
 
     #[inline]
-    fn get_transform(&self) -> Matrix3x2F {
+    fn get_transform(&self) -> Matrix3x2f {
         unsafe {
-            let mut mat: Matrix3x2F = mem::uninitialized();
-            self.rt().GetTransform(&mut mat.0);
+            let mut mat: Matrix3x2f = mem::uninitialized();
+            self.rt().GetTransform(&mut mat as *mut _ as *mut _);
             mat
         }
     }
@@ -549,9 +511,10 @@ pub trait RenderTarget {
     }
 
     #[inline]
-    fn push_axis_aligned_clip(&mut self, clip: impl Into<RectF>, aa: AntialiasMode) {
+    fn push_axis_aligned_clip(&mut self, clip: impl Into<Rectf>, aa: AntialiasMode) {
         unsafe {
-            self.rt().PushAxisAlignedClip(&clip.into().0, aa as u32);
+            self.rt()
+                .PushAxisAlignedClip(&clip.into().into(), aa as u32);
         }
     }
 

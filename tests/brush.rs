@@ -14,12 +14,12 @@ fn solid_color() {
     let (_factory, context) = make_context();
 
     for i in 0u32..(16 * 16 * 16) {
-        let color = ColorF(D2D1_COLOR_F {
+        let color = Color {
             r: ((i >> 8) & 0xF) as f32 / 15.0,
             g: ((i >> 4) & 0xF) as f32 / 15.0,
             b: ((i >> 0) & 0xF) as f32 / 15.0,
             a: 1.0,
-        });
+        };
 
         let brush = SolidColorBrush::create(&context)
             .with_color(color)

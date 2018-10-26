@@ -91,7 +91,7 @@ fn main() {
     // Make the background white
     context.clear(0xFF_FF_FF);
 
-    let rect = (10.0, 10.0, 190.0, 90.0);
+    let rect = [10.0, 10.0, 190.0, 90.0];
     context.fill_rectangle(rect, &bg_brush);
     context.draw_rectangle(rect, &fg_brush, 1.0, None);
 

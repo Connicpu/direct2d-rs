@@ -2,7 +2,7 @@ use device_context::DeviceContext;
 use enums::{AlphaMode, BitmapOptions};
 use error::D2DResult;
 use image::{GenericImage, Image};
-use math::{SizeF, SizeU};
+use math::{Sizef, Sizeu};
 use render_target::RenderTarget;
 
 use std::ptr;
@@ -40,13 +40,13 @@ impl Bitmap {
     }
 
     #[inline]
-    pub fn get_size(&self) -> SizeF {
-        unsafe { SizeF(self.ptr.GetSize()) }
+    pub fn get_size(&self) -> Sizef {
+        unsafe { self.ptr.GetSize().into() }
     }
 
     #[inline]
-    pub fn get_pixel_size(&self) -> SizeU {
-        unsafe { SizeU(self.ptr.GetPixelSize()) }
+    pub fn get_pixel_size(&self) -> Sizeu {
+        unsafe { self.ptr.GetPixelSize().into() }
     }
 
     #[inline]
@@ -130,6 +130,10 @@ where
                     source,
                     pitch,
                 } => {
+                    if self.properties.pixelFormat.format == Format::Unknown as u32 {
+                        panic!("Format must be specified for use with raw data");
+                    }
+
                     let source = source.map(<[_]>::as_ptr).unwrap_or(ptr::null());
 
                     let mut ptr = ptr::null_mut();
@@ -137,7 +141,7 @@ where
                     let hr;
                     if self.properties.bitmapOptions == 0 && self.properties.colorContext.is_null() {
                         hr = self.context.rt().CreateBitmap(
-                            size.0,
+                            size.into(),
                             source as *const _,
                             pitch,
                             (&self.properties) as *const _ as *const D2D1_BITMAP_PROPERTIES,
@@ -152,7 +156,7 @@ where
 
                         let mut ptr2 = ptr::null_mut();
                         hr = ctx.CreateBitmap(
-                            size.0,
+                            size.into(),
                             source as *const _,
                             pitch,
                             &self.properties,
@@ -186,7 +190,8 @@ where
     }
 
     #[inline]
-    pub fn with_blank_image(mut self, size: SizeU) -> Self {
+    pub fn with_blank_image(mut self, size: impl Into<Sizeu>) -> Self {
+        let size = size.into();
         self.source = Some(BitmapSource::Raw {
             size,
             source: None,
@@ -196,7 +201,8 @@ where
     }
 
     #[inline]
-    pub fn with_raw_data(mut self, size: SizeU, data: &'a [u8], pitch: u32) -> Self {
+    pub fn with_raw_data(mut self, size: impl Into<Sizeu>, data: &'a [u8], pitch: u32) -> Self {
+        let size = size.into();
         assert!(size.height as usize * pitch as usize <= data.len());
         self.source = Some(BitmapSource::Raw {
             size,
@@ -243,7 +249,7 @@ impl<'a> BitmapBuilder<'a, DeviceContext> {
 
 enum BitmapSource<'a> {
     Raw {
-        size: SizeU,
+        size: Sizeu,
         source: Option<&'a [u8]>,
         pitch: u32,
     },

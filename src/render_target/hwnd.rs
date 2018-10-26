@@ -35,9 +35,9 @@ impl HwndRenderTarget {
     }
 
     #[inline]
-    pub fn resize(&self, pixel_size: math::SizeU) -> D2DResult<()> {
+    pub fn resize(&self, pixel_size: math::Sizeu) -> D2DResult<()> {
         unsafe {
-            let hr = self.ptr.Resize(&pixel_size.0);
+            let hr = self.ptr.Resize(&pixel_size.into());
             if SUCCEEDED(hr) {
                 Ok(())
             } else {

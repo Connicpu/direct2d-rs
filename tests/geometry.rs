@@ -11,7 +11,7 @@ const EPSILON: f32 = 0.0001;
 fn rectangle_area() {
     let factory = Factory::new().unwrap();
 
-    let rect = RectF::new(0.0, 0.0, 1.0, 1.0);
+    let rect = Rectf::new(0.0, 0.0, 1.0, 1.0);
     let rectangle = Rectangle::create(&factory, &rect).unwrap();
 
     let area = rectangle.compute_area(None).unwrap();
@@ -22,7 +22,7 @@ fn rectangle_area() {
 fn rectangle_length() {
     let factory = Factory::new().unwrap();
 
-    let rect = RectF::new(0.0, 0.0, 1.0, 1.0);
+    let rect = Rectf::new(0.0, 0.0, 1.0, 1.0);
     let rectangle = Rectangle::create(&factory, &rect).unwrap();
 
     let area = rectangle.compute_length(None).unwrap();
@@ -33,10 +33,10 @@ fn rectangle_length() {
 fn combined_area() {
     let factory = Factory::new().unwrap();
 
-    let rect1 = RectF::new(0.0, 0.0, 1.0, 1.0);
+    let rect1 = Rectf::new(0.0, 0.0, 1.0, 1.0);
     let rectangle1 = Rectangle::create(&factory, &rect1).unwrap();
 
-    let rect2 = RectF::new(0.0, 1.0, 1.0, 2.0);
+    let rect2 = Rectf::new(0.0, 1.0, 1.0, 2.0);
     let rectangle2 = Rectangle::create(&factory, &rect2).unwrap();
 
     let combined = Group::create(&factory, FillMode::Winding, [&rectangle1, &rectangle2]).unwrap();
@@ -49,7 +49,7 @@ fn combined_area() {
 fn transformed_area() {
     let factory = Factory::new().unwrap();
 
-    let rect = RectF::new(0.0, 0.0, 1.0, 1.0);
+    let rect = Rectf::new(0.0, 0.0, 1.0, 1.0);
     let rectangle = Rectangle::create(&factory, &rect).unwrap();
 
     for x in 1..5 {
@@ -60,7 +60,7 @@ fn transformed_area() {
                 let t = t as f32;
                 let real_area = x * y;
 
-                let transform = Matrix3x2F::new([
+                let transform = Matrix3x2f::new([
                     [x, 0.0], // Scale along the X axis by `x`
                     [0.0, y], // Scale along the Y axis by `y`
                     [t, -t],  // this value shouldn't affect area (translation component)
@@ -103,27 +103,27 @@ fn path_geometry() {
         .unwrap()
         .fill_mode(FillMode::Winding)
         // Square with a triangle base
-        .with_figure(Point2F::new(0.0, 0.0), FigureBegin::Filled, FigureEnd::Closed, |figure| {
+        .with_figure(Point2f::new(0.0, 0.0), FigureBegin::Filled, FigureEnd::Closed, |figure| {
             figure
-                .add_line(Point2F::new(1.0, 0.0))
-                .add_line(Point2F::new(1.0, 1.0))
-                .add_line(Point2F::new(0.5, 1.5))
-                .add_line(Point2F::new(0.0, 1.0))
-                .add_line(Point2F::new(0.0, 0.0))
+                .add_line(Point2f::new(1.0, 0.0))
+                .add_line(Point2f::new(1.0, 1.0))
+                .add_line(Point2f::new(0.5, 1.5))
+                .add_line(Point2f::new(0.0, 1.0))
+                .add_line(Point2f::new(0.0, 0.0))
         })
         // Add a triangle hat
-        .with_figure(Point2F::new(0.0, 0.0), FigureBegin::Filled, FigureEnd::Closed, |figure| {
+        .with_figure(Point2f::new(0.0, 0.0), FigureBegin::Filled, FigureEnd::Closed, |figure| {
             figure
-                .add_line(Point2F::new(0.5, -0.5))
-                .add_line(Point2F::new(1.0, 0.0))
+                .add_line(Point2f::new(0.5, -0.5))
+                .add_line(Point2f::new(1.0, 0.0))
         })
         // Cut a hole in the middle
         .fill_mode(FillMode::Alternate)
-        .with_figure(Point2F::new(0.25, 0.25), FigureBegin::Filled, FigureEnd::Closed, |figure| {
+        .with_figure(Point2f::new(0.25, 0.25), FigureBegin::Filled, FigureEnd::Closed, |figure| {
             figure
-                .add_line(Point2F::new(0.75, 0.25))
-                .add_line(Point2F::new(0.75, 0.75))
-                .add_line(Point2F::new(0.25, 0.75))
+                .add_line(Point2f::new(0.75, 0.25))
+                .add_line(Point2f::new(0.75, 0.75))
+                .add_line(Point2f::new(0.25, 0.75))
         })
         .close()
         .unwrap();
@@ -139,7 +139,7 @@ fn path_geometry() {
 fn to_generic_and_back() {
     let factory = Factory::new().unwrap();
 
-    let rect = RectF::new(0.0, 0.0, 1.0, 1.0);
+    let rect = Rectf::new(0.0, 0.0, 1.0, 1.0);
     let rectangle = Rectangle::create(&factory, &rect).unwrap();
     let generic = rectangle.to_generic();
     let rectangle = generic.as_rectangle().unwrap();

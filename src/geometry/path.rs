@@ -1,13 +1,13 @@
 use enums::{FigureBegin, FigureEnd, FillMode, PathSegment};
 use error::D2DResult;
 use factory::Factory;
-use math;
+use math::{ArcSegment, BezierSegment, Point2f, QuadBezierSegment};
 
 use std::marker::PhantomData;
 use std::{mem, ptr};
 
 use winapi::shared::winerror::SUCCEEDED;
-use winapi::um::d2d1::{D2D1_FIGURE_END, ID2D1GeometrySink};
+use winapi::um::d2d1::{ID2D1GeometrySink, D2D1_FIGURE_END};
 use winapi::um::d2d1_1::ID2D1PathGeometry1;
 use wio::com::ComPtr;
 
@@ -97,12 +97,14 @@ impl<'a> GeometryBuilder<'a> {
     }
 
     #[inline]
-    pub fn begin_figure<P>(self, start: P, begin: FigureBegin, end: FigureEnd) -> FigureBuilder<'a>
-    where
-        P: Into<math::Point2F>,
-    {
+    pub fn begin_figure(
+        self,
+        start: impl Into<Point2f>,
+        begin: FigureBegin,
+        end: FigureEnd,
+    ) -> FigureBuilder<'a> {
         unsafe {
-            self.sink.BeginFigure(start.into().0, begin as u32);
+            self.sink.BeginFigure(start.into().into(), begin as u32);
         }
         FigureBuilder {
             builder: self,
@@ -111,11 +113,13 @@ impl<'a> GeometryBuilder<'a> {
     }
 
     #[inline]
-    pub fn with_figure<P, F>(self, start: P, begin: FigureBegin, end: FigureEnd, f: F) -> Self
-    where
-        P: Into<math::Point2F>,
-        F: FnOnce(FigureBuilder<'a>) -> FigureBuilder<'a>,
-    {
+    pub fn with_figure(
+        self,
+        start: impl Into<Point2f>,
+        begin: FigureBegin,
+        end: FigureEnd,
+        f: impl FnOnce(FigureBuilder<'a>) -> FigureBuilder<'a>,
+    ) -> Self {
         f(self.begin_figure(start, begin, end)).end()
     }
 
@@ -181,13 +185,13 @@ impl<'a> FigureBuilder<'a> {
     }
 
     #[inline]
-    pub fn add_line<P: Into<math::Point2F>>(self, point: P) -> Self {
-        unsafe { self.builder.sink.AddLine(point.into().0) };
+    pub fn add_line<P: Into<Point2f>>(self, point: P) -> Self {
+        unsafe { self.builder.sink.AddLine(point.into().into()) };
         self
     }
 
     #[inline]
-    pub fn add_lines(self, points: &[math::Point2F]) -> Self {
+    pub fn add_lines(self, points: &[Point2f]) -> Self {
         unsafe {
             self.builder
                 .sink
@@ -197,13 +201,17 @@ impl<'a> FigureBuilder<'a> {
     }
 
     #[inline]
-    pub fn add_bezier(self, bezier: &math::BezierSegment) -> Self {
-        unsafe { self.builder.sink.AddBezier(&bezier.0) };
+    pub fn add_bezier(self, bezier: &BezierSegment) -> Self {
+        unsafe {
+            self.builder
+                .sink
+                .AddBezier(bezier as *const _ as *const _)
+        };
         self
     }
 
     #[inline]
-    pub fn add_beziers(self, beziers: &[math::BezierSegment]) -> Self {
+    pub fn add_beziers(self, beziers: &[BezierSegment]) -> Self {
         unsafe {
             self.builder
                 .sink
@@ -213,13 +221,17 @@ impl<'a> FigureBuilder<'a> {
     }
 
     #[inline]
-    pub fn add_quadratic_bezier(self, bezier: &math::QuadBezierSegment) -> Self {
-        unsafe { self.builder.sink.AddQuadraticBezier(&bezier.0) };
+    pub fn add_quadratic_bezier(self, bezier: &QuadBezierSegment) -> Self {
+        unsafe {
+            self.builder
+                .sink
+                .AddQuadraticBezier(bezier as *const _ as *const _)
+        };
         self
     }
 
     #[inline]
-    pub fn add_quadratic_beziers(self, beziers: &[math::QuadBezierSegment]) -> Self {
+    pub fn add_quadratic_beziers(self, beziers: &[QuadBezierSegment]) -> Self {
         unsafe {
             self.builder
                 .sink
@@ -229,8 +241,8 @@ impl<'a> FigureBuilder<'a> {
     }
 
     #[inline]
-    pub fn add_arc(self, arc: &math::ArcSegment) -> Self {
-        unsafe { self.builder.sink.AddArc(&arc.0) };
+    pub fn add_arc(self, arc: &ArcSegment) -> Self {
+        unsafe { self.builder.sink.AddArc(arc as *const _ as *const _) };
         self
     }
 }

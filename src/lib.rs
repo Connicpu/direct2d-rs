@@ -13,6 +13,8 @@ extern crate dxgi;
 #[cfg(windows)]
 extern crate either;
 #[cfg(windows)]
+pub extern crate math2d as math;
+#[cfg(windows)]
 extern crate winapi;
 #[cfg(windows)]
 extern crate wio;
@@ -56,7 +58,7 @@ pub mod image;
 #[cfg(windows)]
 pub mod layer;
 #[cfg(windows)]
-pub mod math;
+pub mod properties;
 #[cfg(windows)]
 pub mod render_target;
 #[cfg(windows)]

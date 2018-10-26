@@ -20,7 +20,7 @@ impl Ellipse {
     pub fn create<R>(factory: &Factory, ellipse: &math::Ellipse) -> D2DResult<Ellipse> {
         unsafe {
             let mut ptr = ptr::null_mut();
-            let hr = (*factory.get_raw()).CreateEllipseGeometry(&ellipse.0, &mut ptr);
+            let hr = (*factory.get_raw()).CreateEllipseGeometry((&ellipse) as *const _ as *const _, &mut ptr);
 
             if SUCCEEDED(hr) {
                 Ok(Ellipse::from_raw(ptr))
@@ -35,7 +35,7 @@ impl Ellipse {
         unsafe {
             let mut ellipse: D2D1_ELLIPSE = mem::uninitialized();
             self.ptr.GetEllipse(&mut ellipse);
-            math::Ellipse(ellipse)
+            ellipse.into()
         }
     }
 }

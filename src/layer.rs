@@ -2,7 +2,7 @@ use brush::Brush;
 use enums::{AntialiasMode, LayerOptions};
 use error::D2DResult;
 use geometry::{GenericGeometry, Geometry};
-use math::{Matrix3x2F, RectF, SizeF};
+use math::{Matrix3x2f, Rectf, Sizef};
 use render_target::RenderTarget;
 
 use std::ptr;
@@ -17,12 +17,12 @@ pub struct Layer {
 
 impl Layer {
     #[inline]
-    pub fn create<R>(target: &mut R, size: Option<&SizeF>) -> D2DResult<Layer>
+    pub fn create<R>(target: &mut R, size: Option<&Sizef>) -> D2DResult<Layer>
     where
         R: RenderTarget,
     {
         let size = match size {
-            Some(size) => (&size.0) as *const _,
+            Some(size) => size as *const _ as *const _,
             None => ptr::null(),
         };
 
@@ -38,10 +38,8 @@ impl Layer {
     }
 
     #[inline]
-    pub fn get_size(&self) -> SizeF {
-        unsafe {
-            SizeF(self.ptr.GetSize())
-        }
+    pub fn get_size(&self) -> Sizef {
+        unsafe { self.ptr.GetSize().into() }
     }
 
     #[inline]
@@ -69,10 +67,10 @@ unsafe impl Sync for Layer {}
 pub struct LayerBuilder<'a, 'b, R: RenderTarget + 'a> {
     rt: &'a mut R,
     layer: &'b Layer,
-    bounds: RectF,
+    bounds: Rectf,
     mask: Option<GenericGeometry>,
     mask_aa: AntialiasMode,
-    mask_tr: Matrix3x2F,
+    mask_tr: Matrix3x2f,
     opacity: f32,
     opacity_brush: Option<&'b Brush>,
     layer_opts: LayerOptions,
@@ -84,10 +82,10 @@ impl<'a, 'b, R: RenderTarget + 'a> LayerBuilder<'a, 'b, R> {
         LayerBuilder {
             rt,
             layer,
-            bounds: RectF::INFINITE,
+            bounds: Rectf::INFINITE,
             mask: None,
             mask_aa: AntialiasMode::PerPrimitive,
-            mask_tr: Matrix3x2F::IDENTITY,
+            mask_tr: Matrix3x2f::IDENTITY,
             opacity: 1.0,
             opacity_brush: None,
             layer_opts: LayerOptions::None,
@@ -101,7 +99,7 @@ impl<'a, 'b, R: RenderTarget + 'a> LayerBuilder<'a, 'b, R> {
     }
 
     #[inline]
-    pub fn with_mask_transform(mut self, transform: Matrix3x2F) -> Self {
+    pub fn with_mask_transform(mut self, transform: Matrix3x2f) -> Self {
         self.mask_tr = transform;
         self
     }
@@ -109,14 +107,14 @@ impl<'a, 'b, R: RenderTarget + 'a> LayerBuilder<'a, 'b, R> {
     pub fn push(self) {
         unsafe {
             let params = D2D1_LAYER_PARAMETERS {
-                contentBounds: self.bounds.0,
+                contentBounds: self.bounds.into(),
 
                 geometricMask: match self.mask {
                     Some(mask) => mask.get_ptr(),
                     None => ptr::null_mut(),
                 },
                 maskAntialiasMode: self.mask_aa as u32,
-                maskTransform: self.mask_tr.0,
+                maskTransform: self.mask_tr.into(),
 
                 opacity: self.opacity,
                 opacityBrush: match self.opacity_brush {

@@ -1,9 +1,9 @@
 use geometry::GenericGeometry;
-use math;
+use math::Matrix3x2f;
 
 use std::{mem, ptr};
 
-use winapi::um::d2d1::{D2D1_MATRIX_3X2_F, ID2D1TransformedGeometry};
+use winapi::um::d2d1::{ID2D1TransformedGeometry, D2D1_MATRIX_3X2_F};
 use wio::com::ComPtr;
 
 /// Another piece of geometry which has had a transformation applied to it
@@ -24,11 +24,11 @@ impl Transformed {
     }
 
     #[inline]
-    pub fn get_transform(&self) -> math::Matrix3x2F {
+    pub fn get_transform(&self) -> Matrix3x2f {
         unsafe {
             let mut matrix: D2D1_MATRIX_3X2_F = mem::uninitialized();
             self.ptr.GetTransform(&mut matrix);
-            math::Matrix3x2F(matrix)
+            mem::transmute(matrix)
         }
     }
 }

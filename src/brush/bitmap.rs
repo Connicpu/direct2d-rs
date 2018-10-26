@@ -1,13 +1,14 @@
 use enums::{BitmapInterpolationMode, ExtendMode, UncheckedEnum};
 use error::D2DResult;
 use image::Bitmap;
-use math::{BrushProperties, Matrix3x2F};
+use math::Matrix3x2f;
+use properties::BrushProperties;
 use render_target::RenderTarget;
 
 use std::ptr;
 
 use winapi::shared::winerror::SUCCEEDED;
-use winapi::um::d2d1::{D2D1_BITMAP_BRUSH_PROPERTIES, ID2D1BitmapBrush};
+use winapi::um::d2d1::{ID2D1BitmapBrush, D2D1_BITMAP_BRUSH_PROPERTIES};
 use wio::com::ComPtr;
 
 #[derive(Clone)]
@@ -86,7 +87,7 @@ where
                 extendModeY: ExtendMode::Clamp as u32,
                 interpolationMode: BitmapInterpolationMode::Linear as u32,
             },
-            properties: BrushProperties::new(1.0, &Matrix3x2F::IDENTITY),
+            properties: BrushProperties::new(1.0, &Matrix3x2f::IDENTITY),
         }
     }
 
@@ -98,7 +99,7 @@ where
             let hr = self.context.rt().CreateBitmapBrush(
                 bitmap.get_raw(),
                 &self.b_properties,
-                &self.properties.0,
+                (&self.properties) as *const _ as *const _,
                 &mut ptr,
             );
 
@@ -136,13 +137,13 @@ where
 
     #[inline]
     pub fn with_opacity(mut self, opacity: f32) -> Self {
-        self.properties.0.opacity = opacity;
+        self.properties.opacity = opacity;
         self
     }
 
     #[inline]
-    pub fn with_transform(mut self, transform: Matrix3x2F) -> Self {
-        self.properties.0.transform = transform.0;
+    pub fn with_transform(mut self, transform: Matrix3x2f) -> Self {
+        self.properties.transform = transform;
         self
     }
 }

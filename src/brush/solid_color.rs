@@ -1,5 +1,6 @@
 use error::D2DResult;
-use math::{BrushProperties, ColorF, Matrix3x2F};
+use math::{Color, Matrix3x2f};
+use properties::BrushProperties;
 use render_target::RenderTarget;
 
 use std::ptr;
@@ -23,13 +24,13 @@ impl SolidColorBrush {
     }
 
     #[inline]
-    pub fn set_color(&mut self, color: &ColorF) {
-        unsafe { self.ptr.SetColor(&color.0) };
+    pub fn set_color(&mut self, color: &Color) {
+        unsafe { self.ptr.SetColor((&color) as *const _ as *const _) };
     }
 
     #[inline]
-    pub fn get_color(&self) -> ColorF {
-        unsafe { ColorF(self.ptr.GetColor()) }
+    pub fn get_color(&self) -> Color {
+        unsafe { self.ptr.GetColor().into() }
     }
 }
 
@@ -41,7 +42,7 @@ where
 {
     context: &'a R,
     properties: BrushProperties,
-    color: Option<ColorF>,
+    color: Option<Color>,
 }
 
 impl<'a, R> SolidColorBrushBuilder<'a, R>
@@ -52,7 +53,7 @@ where
     pub fn new(context: &'a R) -> Self {
         SolidColorBrushBuilder {
             context,
-            properties: BrushProperties::new(1.0, &Matrix3x2F::IDENTITY),
+            properties: BrushProperties::new(1.0, &Matrix3x2f::IDENTITY),
             color: None,
         }
     }
@@ -62,10 +63,11 @@ where
         let color = self.color.expect("`color` must be specified");
         unsafe {
             let mut ptr = ptr::null_mut();
-            let hr =
-                self.context
-                    .rt()
-                    .CreateSolidColorBrush(&color.0, &self.properties.0, &mut ptr);
+            let hr = self.context.rt().CreateSolidColorBrush(
+                (&color) as *const _ as *const _,
+                (&self.properties) as *const _ as *const _,
+                &mut ptr,
+            );
             if SUCCEEDED(hr) {
                 Ok(SolidColorBrush::from_raw(ptr))
             } else {
@@ -77,7 +79,7 @@ where
     #[inline]
     pub fn with_color<C>(mut self, color: C) -> Self
     where
-        C: Into<ColorF>,
+        C: Into<Color>,
     {
         self.color = Some(color.into());
         self
@@ -91,13 +93,13 @@ where
 
     #[inline]
     pub fn with_opacity(mut self, opacity: f32) -> Self {
-        self.properties.0.opacity = opacity;
+        self.properties.opacity = opacity;
         self
     }
 
     #[inline]
-    pub fn with_transform(mut self, transform: Matrix3x2F) -> Self {
-        self.properties.0.transform = transform.0;
+    pub fn with_transform(mut self, transform: Matrix3x2f) -> Self {
+        self.properties.transform = transform;
         self
     }
 }

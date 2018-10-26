@@ -1,6 +1,6 @@
 use enums::*;
 use error::D2DResult;
-use math::ColorF;
+use math::Color;
 use render_target::RenderTarget;
 
 use std::ptr;
@@ -56,12 +56,12 @@ impl GradientStopCollection {
 #[derive(Copy, Clone)]
 pub struct GradientStop {
     pub position: f32,
-    pub color: ColorF,
+    pub color: Color,
 }
 
-impl From<(f32, ColorF)> for GradientStop {
+impl From<(f32, Color)> for GradientStop {
     #[inline]
-    fn from((position, color): (f32, ColorF)) -> Self {
+    fn from((position, color): (f32, Color)) -> Self {
         GradientStop { position, color }
     }
 }

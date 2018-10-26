@@ -22,11 +22,11 @@ use winapi::um::winuser::*;
 use wio::wide::ToWide;
 
 lazy_static! {
-    pub static ref BACKGROUND: ColorF = ColorF::uint_rgb(0x2A14CC, 1.0);
-    pub static ref HIGHLIGHT: ColorF = ColorF::uint_rgb(0x483D99, 1.0);
-    pub static ref ACCENT: ColorF = ColorF::uint_rgb(0x006AFF, 1.0);
-    pub static ref FOREGROUND: ColorF = ColorF::uint_rgb(0xFFA940, 1.0);
-    pub static ref FADED: ColorF = ColorF::uint_rgb(0xCC5E14, 1.0);
+    pub static ref BACKGROUND: Color = Color::from_u32(0x2A14CC, 1.0);
+    pub static ref HIGHLIGHT: Color = Color::from_u32(0x483D99, 1.0);
+    pub static ref ACCENT: Color = Color::from_u32(0x006AFF, 1.0);
+    pub static ref FOREGROUND: Color = Color::from_u32(0xFFA940, 1.0);
+    pub static ref FADED: Color = Color::from_u32(0xCC5E14, 1.0);
 }
 
 fn paint_window(window: &mut Window) {
@@ -48,8 +48,8 @@ fn paint_window(window: &mut Window) {
     rt.begin_draw();
     rt.clear(*BACKGROUND);
 
-    rt.fill_rectangle((50.0, 50.0, 750.0, 430.0), &accent_brush);
-    rt.fill_rectangle((150.0, 150.0, 650.0, 330.0), &foreground_brush);
+    rt.fill_rectangle([50.0, 50.0, 750.0, 430.0], &accent_brush);
+    rt.fill_rectangle([150.0, 150.0, 650.0, 330.0], &foreground_brush);
 
     let path = build_path(&rt.get_factory());
 
@@ -57,10 +57,12 @@ fn paint_window(window: &mut Window) {
     rt.push_layer(&layer)
         .with_mask(&path)
         .with_mask_transform(
-            Matrix3x2F::scale((300.0, 300.0), (0.5, 0.5)) * Matrix3x2F::translation((400.0, 240.0)),
-        ).push();
+            Matrix3x2f::scaling([300.0, 300.0], (0.5, 0.5))
+                * Matrix3x2f::translation([400.0, 240.0]),
+        )
+        .push();
 
-    rt.fill_rectangle((0.0, 0.0, 800.0, 480.0), &diamond_brush);
+    rt.fill_rectangle([0.0, 0.0, 800.0, 480.0], &diamond_brush);
 
     rt.pop_layer();
 
@@ -175,42 +177,43 @@ fn build_path(factory: &Factory) -> Path {
         .fill_mode(FillMode::Winding)
         // Square with a triangle base
         .with_figure(
-            Point2F::new(0.0, 0.0),
+            Point2f::new(0.0, 0.0),
             FigureBegin::Filled,
             FigureEnd::Closed,
             |figure| {
                 figure
-                    .add_line(Point2F::new(1.0, 0.0))
-                    .add_line(Point2F::new(1.0, 1.0))
-                    .add_line(Point2F::new(0.5, 1.5))
-                    .add_line(Point2F::new(0.0, 1.0))
-                    .add_line(Point2F::new(0.0, 0.0))
+                    .add_line(Point2f::new(1.0, 0.0))
+                    .add_line(Point2f::new(1.0, 1.0))
+                    .add_line(Point2f::new(0.5, 1.5))
+                    .add_line(Point2f::new(0.0, 1.0))
+                    .add_line(Point2f::new(0.0, 0.0))
             },
         )
         // Add a triangle hat
         .with_figure(
-            Point2F::new(0.0, 0.0),
+            Point2f::new(0.0, 0.0),
             FigureBegin::Filled,
             FigureEnd::Closed,
             |figure| {
                 figure
-                    .add_line(Point2F::new(0.5, -0.5))
-                    .add_line(Point2F::new(1.0, 0.0))
+                    .add_line(Point2f::new(0.5, -0.5))
+                    .add_line(Point2f::new(1.0, 0.0))
             },
         )
         // Cut a hole in the middle
         .fill_mode(FillMode::Alternate)
         .with_figure(
-            Point2F::new(0.25, 0.25),
+            Point2f::new(0.25, 0.25),
             FigureBegin::Filled,
             FigureEnd::Closed,
             |figure| {
                 figure
-                    .add_line(Point2F::new(0.75, 0.25))
-                    .add_line(Point2F::new(0.75, 0.75))
-                    .add_line(Point2F::new(0.25, 0.75))
+                    .add_line(Point2f::new(0.75, 0.25))
+                    .add_line(Point2f::new(0.75, 0.75))
+                    .add_line(Point2f::new(0.25, 0.75))
             },
-        ).close()
+        )
+        .close()
         .unwrap();
 
     path

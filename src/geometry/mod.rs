@@ -1,7 +1,7 @@
 use enums::*;
 use error::D2DResult;
 use factory::Factory;
-use math;
+use math::{Matrix3x2f, Point2f, Rectf, Vector2f};
 use stroke_style::StrokeStyle;
 
 use std::{mem, ptr};
@@ -10,7 +10,7 @@ use winapi::shared::minwindef::*;
 use winapi::shared::winerror::*;
 use winapi::um::d2d1::*;
 use winapi::um::d2d1_1::*;
-use winapi::um::d2dbasetypes::{D2D1_POINT_2F, D2D1_RECT_F, D2D_VECTOR_2F};
+use winapi::um::d2dbasetypes::{D2D1_POINT_2F, D2D1_RECT_F};
 use wio::com::ComPtr;
 
 #[doc(inline)]
@@ -65,18 +65,18 @@ pub trait Geometry {
     ///
     /// **NOTE:** I'm not sure if this will ever return None, but the API has an
     /// error code so it could. The MSDN documentation is very vague on this.
-    fn get_bounds(&self, world_transform: Option<&math::Matrix3x2F>) -> D2DResult<math::RectF> {
+    fn get_bounds(&self, world_transform: Option<&Matrix3x2f>) -> D2DResult<Rectf> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
-                Some(mat) => &mat.0 as *const _,
+                Some(mat) => mat as *const _ as *const _,
                 None => ptr::null(),
             };
 
             let mut rect: D2D1_RECT_F = mem::uninitialized();
             let result = (*ptr).GetBounds(matrix, &mut rect);
             if SUCCEEDED(result) {
-                Ok(math::RectF(rect))
+                Ok(rect.into())
             } else {
                 Err(From::from(result))
             }
@@ -90,12 +90,12 @@ pub trait Geometry {
         &self,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
-        world_transform: Option<&math::Matrix3x2F>,
-    ) -> D2DResult<math::RectF> {
+        world_transform: Option<&Matrix3x2f>,
+    ) -> D2DResult<Rectf> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
-                Some(mat) => &mat.0 as *const _,
+                Some(mat) => &mat as *const _ as *const _,
                 None => ptr::null(),
             };
             let stroke_style = match stroke_style {
@@ -113,7 +113,7 @@ pub trait Geometry {
             );
 
             if SUCCEEDED(result) {
-                Ok(math::RectF(rect))
+                Ok(rect.into())
             } else {
                 Err(From::from(result))
             }
@@ -125,15 +125,15 @@ pub trait Geometry {
     /// given point.
     fn stroke_contains_point(
         &self,
-        point: math::Point2F,
+        point: Point2f,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
-        world_transform: Option<&math::Matrix3x2F>,
+        world_transform: Option<&Matrix3x2f>,
     ) -> D2DResult<bool> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
-                Some(mat) => &mat.0 as *const _,
+                Some(mat) => mat as *const _ as *const _,
                 None => ptr::null(),
             };
             let stroke_style = match stroke_style {
@@ -143,7 +143,7 @@ pub trait Geometry {
 
             let mut contains: BOOL = 0;
             let result = (*ptr).StrokeContainsPoint(
-                point.0,
+                point.into(),
                 stroke_width,
                 stroke_style,
                 matrix,
@@ -163,19 +163,19 @@ pub trait Geometry {
     /// Test whether the given fill of this geometry would contain this point.
     fn fill_contains_point(
         &self,
-        point: math::Point2F,
-        world_transform: Option<&math::Matrix3x2F>,
+        point: Point2f,
+        world_transform: Option<&Matrix3x2f>,
     ) -> D2DResult<bool> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
-                Some(mat) => &mat.0 as *const _,
+                Some(mat) => mat as *const _ as *const _,
                 None => ptr::null(),
             };
 
             let mut contains: BOOL = 0;
             let result = (*ptr).FillContainsPoint(
-                point.0,
+                point.into(),
                 matrix,
                 D2D1_DEFAULT_FLATTENING_TOLERANCE,
                 &mut contains,
@@ -194,14 +194,14 @@ pub trait Geometry {
     fn compare_with_geometry<T: Geometry>(
         &self,
         input: &T,
-        input_transform: Option<&math::Matrix3x2F>,
+        input_transform: Option<&Matrix3x2f>,
     ) -> D2DResult<UncheckedEnum<GeometryRelation>> {
         unsafe {
             let self_ptr = self.get_ptr();
             let input_ptr = input.get_ptr();
 
             let matrix = match input_transform {
-                Some(mat) => &mat.0 as *const _,
+                Some(mat) => mat as *const _ as *const _,
                 None => ptr::null(),
             };
 
@@ -223,11 +223,11 @@ pub trait Geometry {
 
     #[inline]
     /// Computes the area of the geometry.
-    fn compute_area(&self, world_transform: Option<&math::Matrix3x2F>) -> D2DResult<f32> {
+    fn compute_area(&self, world_transform: Option<&Matrix3x2f>) -> D2DResult<f32> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
-                Some(mat) => &mat.0 as *const _,
+                Some(mat) => mat as *const _ as *const _,
                 None => ptr::null(),
             };
 
@@ -245,11 +245,11 @@ pub trait Geometry {
 
     #[inline]
     /// Computes the length of the geometry.
-    fn compute_length(&self, world_transform: Option<&math::Matrix3x2F>) -> D2DResult<f32> {
+    fn compute_length(&self, world_transform: Option<&Matrix3x2f>) -> D2DResult<f32> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
-                Some(mat) => &mat.0 as *const _,
+                Some(mat) => mat as *const _ as *const _,
                 None => ptr::null(),
             };
 
@@ -270,12 +270,12 @@ pub trait Geometry {
     fn compute_point_at_length(
         &self,
         length: f32,
-        world_transform: Option<&math::Matrix3x2F>,
-    ) -> D2DResult<(math::Point2F, math::Vector2F)> {
+        world_transform: Option<&Matrix3x2f>,
+    ) -> D2DResult<(Point2f, Vector2f)> {
         unsafe {
             let ptr = self.get_ptr();
             let matrix = match world_transform {
-                Some(mat) => &mat.0 as *const _,
+                Some(mat) => mat as *const _ as *const _,
                 None => ptr::null(),
             };
 
@@ -290,13 +290,7 @@ pub trait Geometry {
             );
 
             if SUCCEEDED(result) {
-                Ok((
-                    math::Point2F(point),
-                    math::Vector2F(D2D_VECTOR_2F {
-                        x: tangent.x,
-                        y: tangent.y,
-                    }),
-                ))
+                Ok((point.into(), [tangent.x, tangent.y].into()))
             } else {
                 Err(From::from(result))
             }
@@ -304,14 +298,14 @@ pub trait Geometry {
     }
 
     #[inline]
-    fn transformed(&self, transform: &math::Matrix3x2F) -> D2DResult<Transformed> {
+    fn transformed(&self, transform: &Matrix3x2f) -> D2DResult<Transformed> {
         let factory = self.get_factory();
         unsafe {
             let raw_factory = factory.get_raw();
             let mut geometry = ptr::null_mut();
             let hr = (*raw_factory).CreateTransformedGeometry(
                 self.get_ptr(),
-                &transform.0,
+                transform as *const _ as *const _,
                 &mut geometry,
             );
 

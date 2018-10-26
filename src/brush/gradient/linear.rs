@@ -1,8 +1,9 @@
 use brush::gradient::{GradientStop, GradientStopBuilder, GradientStopCollection};
 use enums::*;
 use error::D2DResult;
-use math::{BrushProperties, LinearGradientBrushProperties, Matrix3x2F, Point2F};
+use math::{Matrix3x2f, Point2f};
 use render_target::RenderTarget;
+use properties::{BrushProperties, LinearGradientBrushProperties};
 
 use std::mem;
 use std::ptr;
@@ -29,14 +30,14 @@ impl LinearGradientBrush {
 
     /// Retrieves the starting coordinates of the linear gradient.
     #[inline]
-    pub fn get_start_point(&self) -> Point2F {
-        unsafe { Point2F(self.ptr.GetStartPoint()) }
+    pub fn get_start_point(&self) -> Point2f {
+        unsafe { self.ptr.GetStartPoint().into() }
     }
 
     /// Retrieves the ending coordinates of the linear gradient.
     #[inline]
-    pub fn get_end_point(&self) -> Point2F {
-        unsafe { Point2F(self.ptr.GetEndPoint()) }
+    pub fn get_end_point(&self) -> Point2f {
+        unsafe { self.ptr.GetEndPoint().into() }
     }
 
     /// Retrieves the `GradientStopCollection` associated with this linear gradient brush.
@@ -53,14 +54,14 @@ impl LinearGradientBrush {
 
     /// Sets the starting coordinates of the linear gradient in the brush's coordinate space.
     #[inline]
-    pub fn set_start_point(&mut self, point: Point2F) {
-        unsafe { self.ptr.SetStartPoint(point.0) }
+    pub fn set_start_point(&mut self, point: Point2f) {
+        unsafe { self.ptr.SetStartPoint(point.into()) }
     }
 
     /// Sets the ending coordinates of the linear gradient in the brush's coordinate space.
     #[inline]
-    pub fn set_end_point(&mut self, point: Point2F) {
-        unsafe { self.ptr.SetEndPoint(point.0) }
+    pub fn set_end_point(&mut self, point: Point2f) {
+        unsafe { self.ptr.SetEndPoint(point.into()) }
     }
 }
 
@@ -86,7 +87,7 @@ where
     pub fn new(context: &'a R) -> Self {
         LinearGradientBrushBuilder {
             context,
-            properties: BrushProperties::new(1.0, &Matrix3x2F::IDENTITY),
+            properties: BrushProperties::new(1.0, &Matrix3x2f::IDENTITY),
             linear_properties: unsafe { mem::zeroed() },
             stops: Either::Left(GradientStopBuilder::new(context)),
         }
@@ -102,8 +103,8 @@ where
         unsafe {
             let mut ptr = ptr::null_mut();
             let hr = self.context.rt().CreateLinearGradientBrush(
-                &self.linear_properties.0,
-                &self.properties.0,
+                (&self.linear_properties) as *const _ as *const _,
+                (&self.properties) as *const _ as *const _,
                 stops.get_raw(),
                 &mut ptr,
             );
@@ -126,28 +127,28 @@ where
     /// This changes the overall opacity of the brush, which is essentially
     /// multiplied with the colors in the gradient stops
     pub fn with_opacity(mut self, opacity: f32) -> Self {
-        self.properties.0.opacity = opacity;
+        self.properties.opacity = opacity;
         self
     }
 
     #[inline]
     /// Sets a full affine transform on how the gradient is applied when rendered
-    pub fn with_transform(mut self, transform: Matrix3x2F) -> Self {
-        self.properties.0.transform = transform.0;
+    pub fn with_transform(mut self, transform: Matrix3x2f) -> Self {
+        self.properties.transform = transform;
         self
     }
 
     #[inline]
     /// Sets the coordinate where the gradient stop at position 0.0 applies in full
-    pub fn with_start(mut self, start: Point2F) -> Self {
-        self.linear_properties.startPoint = start.0;
+    pub fn with_start(mut self, start: Point2f) -> Self {
+        self.linear_properties.start = start;
         self
     }
 
     #[inline]
     /// Sets the coordinate where the gradient stop at position 1.0 applies in full
-    pub fn with_end(mut self, end: Point2F) -> Self {
-        self.linear_properties.endPoint = end.0;
+    pub fn with_end(mut self, end: Point2f) -> Self {
+        self.linear_properties.end = end;
         self
     }
 

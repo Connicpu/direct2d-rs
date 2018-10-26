@@ -49,9 +49,9 @@ pub trait Brush {
     }
 
     #[inline]
-    fn set_transform(&mut self, transform: &Matrix3x2F) {
+    fn set_transform(&mut self, transform: &Matrix3x2f) {
         unsafe {
-            (*self.get_ptr()).SetTransform(&transform.0);
+            (*self.get_ptr()).SetTransform((&transform) as *const _ as *const _);
         }
     }
 
@@ -61,10 +61,10 @@ pub trait Brush {
     }
 
     #[inline]
-    fn get_transform(&self) -> Matrix3x2F {
+    fn get_transform(&self) -> Matrix3x2f {
         unsafe {
-            let mut mat: Matrix3x2F = mem::uninitialized();
-            (*self.get_ptr()).GetTransform(&mut mat.0);
+            let mut mat: Matrix3x2f = mem::uninitialized();
+            (*self.get_ptr()).GetTransform((&mut mat) as *mut _ as *mut _);
             mat
         }
     }
