@@ -1,11 +1,12 @@
-use enums::{CapStyle, DashStyle, LineJoin, StrokeTransformType, UncheckedEnum};
+use enums::{CapStyle, DashStyle, LineJoin, StrokeTransformType};
 use error::D2DResult;
 use factory::Factory;
 
 use std::ptr;
 
+use checked_enum::UncheckedEnum;
 use winapi::shared::winerror::SUCCEEDED;
-use winapi::um::d2d1_1::{D2D1_STROKE_STYLE_PROPERTIES1, ID2D1StrokeStyle1};
+use winapi::um::d2d1_1::{ID2D1StrokeStyle1, D2D1_STROKE_STYLE_PROPERTIES1};
 use wio::com::ComPtr;
 
 #[derive(Clone)]
@@ -120,7 +121,8 @@ impl<'a> StrokeStyleBuilder<'a> {
     pub fn build(self) -> D2DResult<StrokeStyle> {
         unsafe {
             let properties = self.to_d2d1();
-            let (dashes, dash_count) = self.dashes
+            let (dashes, dash_count) = self
+                .dashes
                 .map(|d| (d.as_ptr(), d.len() as u32))
                 .unwrap_or((ptr::null(), 0));
 

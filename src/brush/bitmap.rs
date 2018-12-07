@@ -1,4 +1,4 @@
-use enums::{BitmapInterpolationMode, ExtendMode, UncheckedEnum};
+use enums::{BitmapInterpolationMode, ExtendMode};
 use error::D2DResult;
 use image::Bitmap;
 use math::Matrix3x2f;
@@ -7,6 +7,7 @@ use render_target::RenderTarget;
 
 use std::ptr;
 
+use checked_enum::UncheckedEnum;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{ID2D1BitmapBrush, D2D1_BITMAP_BRUSH_PROPERTIES};
 use wio::com::ComPtr;

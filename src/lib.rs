@@ -7,6 +7,11 @@
 #![cfg_attr(all(windows, feature = "docs"), doc(include = "../CRATE_README.md"))]
 
 #[cfg(windows)]
+#[macro_use]
+extern crate auto_enum;
+#[cfg(windows)]
+extern crate checked_enum;
+#[cfg(windows)]
 extern crate directwrite;
 #[cfg(windows)]
 extern crate dxgi;

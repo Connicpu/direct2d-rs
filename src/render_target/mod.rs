@@ -1,6 +1,6 @@
 use brush::Brush;
 use directwrite::{TextFormat, TextLayout};
-use enums::{AntialiasMode, BitmapInterpolationMode, DrawTextOptions, UncheckedEnum};
+use enums::{AntialiasMode, BitmapInterpolationMode, DrawTextOptions};
 use error::Error;
 use factory::Factory;
 use geometry::Geometry;
@@ -11,6 +11,7 @@ use stroke_style::StrokeStyle;
 
 use std::{mem, ptr};
 
+use checked_enum::UncheckedEnum;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{ID2D1Factory, ID2D1RenderTarget, D2D1_TAG};
 use winapi::um::d2d1_1::ID2D1Factory1;
