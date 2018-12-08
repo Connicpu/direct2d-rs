@@ -3,6 +3,7 @@ use factory::Factory;
 
 use std::ptr;
 
+use com_wrapper::ComWrapper;
 use dxgi::device::Device as DxgiDevice;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1_1::ID2D1Device;

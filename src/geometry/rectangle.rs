@@ -1,6 +1,6 @@
 use error::D2DResult;
 use factory::Factory;
-use math::Rectf;
+use math2d::Rectf;
 use std::{mem, ptr};
 
 use winapi::shared::winerror::SUCCEEDED;

@@ -1,5 +1,5 @@
 use geometry::GenericGeometry;
-use math::Matrix3x2f;
+use math2d::Matrix3x2f;
 
 use std::{mem, ptr};
 

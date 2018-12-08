@@ -1,6 +1,5 @@
 use error::D2DResult;
 use factory::Factory;
-use math;
 
 use std::{mem, ptr};
 
@@ -17,7 +16,7 @@ pub struct Ellipse {
 
 impl Ellipse {
     #[inline]
-    pub fn create<R>(factory: &Factory, ellipse: &math::Ellipse) -> D2DResult<Ellipse> {
+    pub fn create<R>(factory: &Factory, ellipse: &math2d::Ellipse) -> D2DResult<Ellipse> {
         unsafe {
             let mut ptr = ptr::null_mut();
             let hr = (*factory.get_raw()).CreateEllipseGeometry((&ellipse) as *const _ as *const _, &mut ptr);
@@ -31,7 +30,7 @@ impl Ellipse {
     }
 
     #[inline]
-    pub fn get_ellipse(&self) -> math::Ellipse {
+    pub fn get_ellipse(&self) -> math2d::Ellipse {
         unsafe {
             let mut ellipse: D2D1_ELLIPSE = mem::uninitialized();
             self.ptr.GetEllipse(&mut ellipse);

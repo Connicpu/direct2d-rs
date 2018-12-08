@@ -1,11 +1,12 @@
 use enums::*;
 use error::D2DResult;
 use factory::Factory;
-use math::{Matrix3x2f, Point2f, Rectf, Vector2f};
+use math2d::{Matrix3x2f, Point2f, Rectf, Vector2f};
 use stroke_style::StrokeStyle;
 
 use std::{mem, ptr};
 
+use checked_enum::UncheckedEnum;
 use winapi::shared::minwindef::*;
 use winapi::shared::winerror::*;
 use winapi::um::d2d1::*;

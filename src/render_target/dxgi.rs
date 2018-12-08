@@ -5,14 +5,15 @@ use render_target::{GenericRenderTarget, RenderTarget};
 
 use std::ptr;
 
+use com_wrapper::ComWrapper;
 use dxgi::surface::Surface as DxgiSurface;
-use dxgi::Format;
+use dxgi::enums::Format;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{D2D1_RENDER_TARGET_PROPERTIES, ID2D1RenderTarget};
 use winapi::um::dcommon::D2D1_PIXEL_FORMAT;
 use wio::com::ComPtr;
 
-#[derive(Clone)]
+#[derive(ComWrapper)]
 pub struct DxgiSurfaceRenderTarget {
     ptr: ComPtr<ID2D1RenderTarget>,
 }
@@ -30,23 +31,6 @@ impl DxgiSurfaceRenderTarget {
             (*ptr).AddRef();
             GenericRenderTarget::from_raw(ptr)
         }
-    }
-
-    #[inline]
-    pub unsafe fn from_ptr(ptr: ComPtr<ID2D1RenderTarget>) -> Self {
-        Self { ptr }
-    }
-
-    #[inline]
-    pub unsafe fn from_raw(raw: *mut ID2D1RenderTarget) -> Self {
-        DxgiSurfaceRenderTarget {
-            ptr: ComPtr::from_raw(raw),
-        }
-    }
-
-    #[inline]
-    pub unsafe fn get_raw(&self) -> *mut ID2D1RenderTarget {
-        self.ptr.as_raw()
     }
 }
 

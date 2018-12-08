@@ -1,7 +1,8 @@
 use enums::AlphaMode;
-use math::Matrix3x2f;
-use math::Point2f;
 
+use math2d::Matrix3x2f;
+use math2d::Point2f;
+use dxgi::enums::Format;
 use winapi::um::d2d1::{
     D2D1_BITMAP_PROPERTIES, D2D1_BRUSH_PROPERTIES, D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES,
     D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES,
@@ -11,7 +12,7 @@ use winapi::um::dcommon::D2D1_PIXEL_FORMAT;
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct PixelFormat {
-    pub format: dxgi::Format,
+    pub format: Format,
     pub alpha_mode: AlphaMode,
 }
 

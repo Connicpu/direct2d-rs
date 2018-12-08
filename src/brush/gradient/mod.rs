@@ -1,6 +1,6 @@
 use enums::*;
 use error::D2DResult;
-use math::Color;
+use math2d::Color;
 use render_target::RenderTarget;
 
 use std::ptr;

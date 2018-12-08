@@ -1,7 +1,7 @@
 use brush::gradient::{GradientStop, GradientStopBuilder, GradientStopCollection};
 use enums::*;
 use error::D2DResult;
-use math::{Matrix3x2f, Point2f};
+use math2d::{Matrix3x2f, Point2f};
 use render_target::RenderTarget;
 use properties::{BrushProperties, LinearGradientBrushProperties};
 

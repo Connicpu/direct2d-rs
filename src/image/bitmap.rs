@@ -2,14 +2,15 @@ use device_context::DeviceContext;
 use enums::{AlphaMode, BitmapOptions};
 use error::D2DResult;
 use image::{GenericImage, Image};
-use math::{Sizef, Sizeu};
+use math2d::{Sizef, Sizeu};
 use render_target::RenderTarget;
 
 use std::ptr;
 use std::mem;
 
+use com_wrapper::ComWrapper;
 use dxgi::surface::Surface as DxgiSurface;
-use dxgi::Format;
+use dxgi::enums::Format;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{ID2D1Bitmap, ID2D1Image, D2D1_BITMAP_PROPERTIES};
 use winapi::um::d2d1_1::{ID2D1DeviceContext, D2D1_BITMAP_PROPERTIES1};

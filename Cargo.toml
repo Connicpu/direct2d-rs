@@ -7,7 +7,7 @@ repository = "https://github.com/Connicpu/direct2d-rs"
 documentation = "https://docs.rs/direct2d/*/x86_64-pc-windows-msvc/direct2d/"
 license = "MIT/Apache-2.0"
 readme = "CRATE_README.md"
-edition = "2018"
+edition = "2015"
 
 [package.metadata.docs.rs]
 features = ["docs"]
@@ -16,8 +16,12 @@ default-target = "x86_64-pc-windows-msvc"
 [target.'cfg(windows)'.dependencies]
 wio = "0.2"
 either = "1.5.0"
+
 checked-enum = "0.1.1-alpha1"
 auto-enum = "0.2.0-alpha1"
+
+com-wrapper = "0.1.0-alpha2"
+derive-com-wrapper = "0.1.0-alpha4"
 
 [target.'cfg(windows)'.dependencies.dxgi]
 version = "0.3.0-alpha3"

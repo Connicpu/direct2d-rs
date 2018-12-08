@@ -10,7 +10,7 @@ use direct2d::image::Bitmap;
 use direct2d::{Device, DeviceContext, RenderTarget};
 use direct3d11::flags::{BindFlags, CreateDeviceFlags};
 use directwrite::{TextFormat, TextLayout};
-use dxgi::Format;
+use dxgi::enums::Format;
 
 const TEXTURE_WIDTH: u32 = 512;
 const TEXTURE_HEIGHT: u32 = 128;

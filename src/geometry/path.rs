@@ -1,7 +1,7 @@
 use enums::{FigureBegin, FigureEnd, FillMode, PathSegment};
 use error::D2DResult;
 use factory::Factory;
-use math::{ArcSegment, BezierSegment, Point2f, QuadBezierSegment};
+use math2d::{ArcSegment, BezierSegment, Point2f, QuadBezierSegment};
 
 use std::marker::PhantomData;
 use std::{mem, ptr};

@@ -1,12 +1,14 @@
 use enums::{AlphaMode, FeatureLevel, PresentOptions, RenderTargetType, RenderTargetUsage};
 use error::D2DResult;
 use factory::Factory;
-use math;
+
 use render_target::{GenericRenderTarget, RenderTarget};
 
 use std::ptr;
 
-use dxgi::Format;
+use com_wrapper::ComWrapper;
+use math2d::Sizeu;
+use dxgi::enums::Format;
 use winapi::shared::windef::HWND;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{D2D1_HWND_RENDER_TARGET_PROPERTIES, D2D1_RENDER_TARGET_PROPERTIES,
@@ -14,7 +16,7 @@ use winapi::um::d2d1::{D2D1_HWND_RENDER_TARGET_PROPERTIES, D2D1_RENDER_TARGET_PR
 use winapi::um::dcommon::D2D1_PIXEL_FORMAT;
 use wio::com::ComPtr;
 
-#[derive(Clone)]
+#[derive(ComWrapper)]
 pub struct HwndRenderTarget {
     ptr: ComPtr<ID2D1HwndRenderTarget>,
 }
@@ -35,7 +37,7 @@ impl HwndRenderTarget {
     }
 
     #[inline]
-    pub fn resize(&self, pixel_size: math::Sizeu) -> D2DResult<()> {
+    pub fn resize(&self, pixel_size: Sizeu) -> D2DResult<()> {
         unsafe {
             let hr = self.ptr.Resize(&pixel_size.into());
             if SUCCEEDED(hr) {
@@ -49,23 +51,6 @@ impl HwndRenderTarget {
     #[inline]
     pub fn get_hwnd(&self) -> HWND {
         unsafe { self.ptr.GetHwnd() }
-    }
-
-    #[inline]
-    pub unsafe fn from_ptr(ptr: ComPtr<ID2D1HwndRenderTarget>) -> Self {
-        Self { ptr }
-    }
-
-    #[inline]
-    pub unsafe fn from_raw(raw: *mut ID2D1HwndRenderTarget) -> Self {
-        HwndRenderTarget {
-            ptr: ComPtr::from_raw(raw),
-        }
-    }
-
-    #[inline]
-    pub unsafe fn get_raw(&self) -> *mut ID2D1HwndRenderTarget {
-        self.ptr.as_raw()
     }
 }
 

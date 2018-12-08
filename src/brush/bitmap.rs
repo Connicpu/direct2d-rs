@@ -1,7 +1,7 @@
 use enums::{BitmapInterpolationMode, ExtendMode};
 use error::D2DResult;
 use image::Bitmap;
-use math::Matrix3x2f;
+use math2d::Matrix3x2f;
 use properties::BrushProperties;
 use render_target::RenderTarget;
 

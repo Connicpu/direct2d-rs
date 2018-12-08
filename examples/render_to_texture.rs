@@ -12,7 +12,7 @@ use direct2d::{Device, DeviceContext, RenderTarget};
 use direct3d11::flags::{BindFlags, CpuAccessFlags, CreateDeviceFlags, Usage};
 use direct3d11::helpers::ComWrapper;
 use directwrite::{TextFormat, TextLayout};
-use dxgi::Format;
+use dxgi::enums::Format;
 
 const TEXTURE_WIDTH: u32 = 400;
 const TEXTURE_HEIGHT: u32 = 200;

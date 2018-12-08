@@ -1,10 +1,11 @@
-use enums::{FillMode, UncheckedEnum};
+use enums::{FillMode};
 use error::D2DResult;
 use factory::Factory;
 use geometry::{GenericGeometry, Geometry};
 
 use std::{mem, ptr, slice};
 
+use checked_enum::UncheckedEnum;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{ID2D1Geometry, ID2D1GeometryGroup};
 use wio::com::ComPtr;

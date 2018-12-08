@@ -1,5 +1,5 @@
 use factory::Factory;
-use math::*;
+use math2d::*;
 
 use std::{mem, ptr};
 

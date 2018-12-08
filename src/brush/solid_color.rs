@@ -1,5 +1,5 @@
 use error::D2DResult;
-use math::{Color, Matrix3x2f};
+use math2d::{Color, Matrix3x2f};
 use properties::BrushProperties;
 use render_target::RenderTarget;
 

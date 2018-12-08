@@ -5,7 +5,7 @@ extern crate dxgi;
 use direct2d::image::Bitmap;
 use direct2d::{Device, DeviceContext, Factory};
 use direct3d11::flags::CreateDeviceFlags;
-use dxgi::Format;
+use dxgi::enums::Format;
 
 #[test]
 fn empty_bitmap() {

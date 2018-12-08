@@ -19,17 +19,24 @@ macro_rules! brush_type {
             }
         }
 
-        impl ::brush::Brush for $ty {
+        impl $crate::brush::Brush for $ty {
             #[inline]
             unsafe fn get_ptr(&self) -> *mut ::winapi::um::d2d1::ID2D1Brush {
                 self.ptr.as_raw() as *mut _
             }
         }
 
-        unsafe impl ::directwrite::drawing_effect::DrawingEffect for $ty {
+        unsafe impl directwrite::effects::DrawingEffect for $ty {
             #[inline]
-            unsafe fn get_effect_ptr(&self) -> *mut ::winapi::um::unknwnbase::IUnknown {
+            fn get_effect_ptr(&self) -> *mut ::winapi::um::unknwnbase::IUnknown {
                 self.ptr.as_raw() as *mut ::winapi::um::unknwnbase::IUnknown
+            }
+            #[inline]
+            fn from_client_effect(effect: &directwrite::effects::ClientEffect) -> Option<Self> {
+                unsafe {
+                    let ptr = com_wrapper::ComWrapper::into_ptr(effect.clone()).cast().ok()?;
+                    Some(Self::from_ptr(ptr))
+                }
             }
         }
 

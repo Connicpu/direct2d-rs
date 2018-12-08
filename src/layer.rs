@@ -2,7 +2,7 @@ use brush::Brush;
 use enums::{AntialiasMode, LayerOptions};
 use error::D2DResult;
 use geometry::{GenericGeometry, Geometry};
-use math::{Matrix3x2f, Rectf, Sizef};
+use math2d::{Matrix3x2f, Rectf, Sizef};
 use render_target::RenderTarget;
 
 use std::ptr;

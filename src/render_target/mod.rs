@@ -6,11 +6,12 @@ use factory::Factory;
 use geometry::Geometry;
 use image::Bitmap;
 use layer::{Layer, LayerBuilder};
-use math::*;
+use math2d::*;
 use stroke_style::StrokeStyle;
 
 use std::{mem, ptr};
 
+use com_wrapper::ComWrapper;
 use checked_enum::UncheckedEnum;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{ID2D1Factory, ID2D1RenderTarget, D2D1_TAG};
@@ -90,7 +91,7 @@ macro_rules! make_render_tag {
 /// #     use direct2d::{Device, Factory};
 /// #     use direct2d::enums::BitmapOptions;
 /// #     use direct3d11::flags::{BindFlags, CreateDeviceFlags};
-/// #     use dxgi::Format;
+/// #     use dxgi::enums::Format;
 /// #     let (_, d3d, _) = direct3d11::device::Device::create()
 /// #         .with_flags(CreateDeviceFlags::BGRA_SUPPORT)
 /// #         .build()
