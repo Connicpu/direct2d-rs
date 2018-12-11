@@ -1,5 +1,5 @@
-use enums::GeometryType;
-use geometry::{Ellipse, Group, Path, Rectangle, RoundedRectangle, Transformed};
+use crate::enums::GeometryType;
+use crate::geometry::{Ellipse, Group, Path, Rectangle, RoundedRectangle, Transformed};
 
 use winapi::um::d2d1::{ID2D1EllipseGeometry, ID2D1Geometry, ID2D1GeometryGroup,
                        ID2D1RectangleGeometry, ID2D1RoundedRectangleGeometry,

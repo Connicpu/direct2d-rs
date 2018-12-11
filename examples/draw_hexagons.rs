@@ -1,31 +1,22 @@
-#[macro_use]
-extern crate direct2d;
-extern crate direct3d11;
-extern crate directwrite;
-extern crate dxgi;
-extern crate image;
-extern crate winapi;
-extern crate com_wrapper;
-
 use com_wrapper::ComWrapper;
 use direct2d::brush::SolidColorBrush;
-use direct2d::enums::{BitmapOptions, DrawTextOptions};
+use direct2d::enums::{BitmapOptions,  FigureBegin::*, FigureEnd::*, };
+use direct2d::geometry::Path;
 use direct2d::image::Bitmap;
-use direct2d::{Device, DeviceContext, RenderTarget};
+use direct2d::{Device, DeviceContext, };
 use direct3d11::enums::{BindFlags, CpuAccessFlags, CreateDeviceFlags, Usage};
-use directwrite::{TextFormat, TextLayout};
 use dxgi::enums::{Format, MapFlags};
+use math2d::{Matrix3x2f, Point2f};
 
-const TEXTURE_WIDTH: u32 = 400;
-const TEXTURE_HEIGHT: u32 = 200;
-const DPI: f32 = 2.0;
+const TEXTURE_WIDTH: u32 = 2048;
+const TEXTURE_HEIGHT: u32 = 2048;
+const DPI: f32 = 96.0 * TEXTURE_HEIGHT as f32 / 100.0;
 
 const TEXTURE_WIDTH_S: usize = TEXTURE_WIDTH as usize;
 const TEXTURE_HEIGHT_S: usize = TEXTURE_HEIGHT as usize;
 
 fn main() {
-    // Create the DWrite and D2D factories
-    let dwrite = directwrite::Factory::new().unwrap();
+    // Create the D2D factory
     let d2d = direct2d::Factory::new().unwrap();
 
     // Initialize a D3D Device
@@ -49,26 +40,8 @@ fn main() {
     // Bind the backing texture to a D2D Bitmap
     let target = Bitmap::create(&context)
         .with_dxgi_surface(&tex.as_dxgi())
-        .with_dpi(96.0 * DPI, 96.0 * DPI)
+        .with_dpi(DPI, DPI)
         .with_options(BitmapOptions::TARGET)
-        .build()
-        .unwrap();
-
-    // Get the Segoe UI font
-    let font = TextFormat::create(&dwrite)
-        .with_family("Segoe UI")
-        .with_size(24.0)
-        .build()
-        .unwrap();
-
-    // Lay out our testing text, which contains an emoji
-    let text = TextLayout::create(&dwrite)
-        .with_str("Testing testing! \u{1F604}\u{1F604}\u{1F604}\u{1F604}\u{1F604}")
-        .with_format(&font)
-        .with_size(
-            TEXTURE_WIDTH as f32 / DPI - 30.0,
-            TEXTURE_HEIGHT as f32 / DPI - 30.0,
-        )
         .build()
         .unwrap();
 
@@ -78,32 +51,40 @@ fn main() {
         .build()
         .unwrap();
     let bg_brush = SolidColorBrush::create(&context)
-        .with_color(0xFF_7F_7F)
+        .with_color(math2d::Color::RED)
         .build()
         .unwrap();
 
-    println!("fg: {:?}", fg_brush.get_color());
-    println!("bg: {:?}", bg_brush.get_color());
+    let xo = 0.25;
+    let yo = 0.4330127018922193;
+
+    // Create a hexagon
+    let hex = Path::create(&d2d).unwrap()
+        .with_line_figure(Filled, Closed, &[
+            (100.0 * 0.5, 100.0 * 0.0).into(),
+            (100.0 * xo, 100.0 * yo).into(),
+            (100.0 * -xo, 100.0 * yo).into(),
+            (100.0 * -0.5, 100.0 * 0.0).into(),
+            (100.0 * -xo, 100.0 * -yo).into(),
+            (100.0 * xo, 100.0 * -yo).into(),
+        ])
+        .finish()
+        .unwrap();
 
     // Start drawing to the texture
     context.set_target(&target);
-    context.set_dpi(96.0 * DPI, 96.0 * DPI);
+    context.set_dpi(DPI, DPI);
     context.begin_draw();
 
-    // Make the background white
-    context.clear(0xFF_FF_FF);
-
-    let rect = [10.0, 10.0, 190.0, 90.0];
-    context.fill_rectangle(rect, &bg_brush);
-    context.draw_rectangle(rect, &fg_brush, 1.0, None);
-
-    // Draw the text
-    context.draw_text_layout(
-        (15.0, 15.0),
-        &text,
-        &fg_brush,
-        DrawTextOptions::ENABLE_COLOR_FONT,
-    );
+    // Make the background clear
+    context.clear((0x00_00_00, 0.0));
+    
+    // Draw the hexagon
+    let transform = Matrix3x2f::scaling(99.0 / 100.0, Point2f::ORIGIN)
+                  * Matrix3x2f::translation([50.0, 50.0]);
+    context.set_transform(&transform);
+    context.fill_geometry(&hex, &bg_brush);
+    context.draw_geometry(&hex, &fg_brush, 1.0, None);
 
     // Finish
     context.end_draw().unwrap();
@@ -113,7 +94,7 @@ fn main() {
         .with_format(Format::R8G8B8A8Unorm)
         .with_bind_flags(BindFlags::NONE)
         .with_usage(Usage::Staging)
-        .with_cpu_access_flags(CpuAccessFlags::READ)
+        .with_cpu_access(CpuAccessFlags::READ)
         .build()
         .unwrap();
 
@@ -132,9 +113,9 @@ fn main() {
         }
     }
 
-    println!("buffer size: {}", raw_pixels.len());
+    println!("Saving image...");
     image::save_buffer(
-        "temp-image.png",
+        "hexagon.png",
         &raw_pixels,
         TEXTURE_WIDTH,
         TEXTURE_HEIGHT,

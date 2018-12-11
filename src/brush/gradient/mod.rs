@@ -1,7 +1,7 @@
-use enums::*;
-use error::D2DResult;
+use crate::enums::*;
+use crate::error::D2DResult;
+use crate::render_target::RenderTarget;
 use math2d::Color;
-use render_target::RenderTarget;
 
 use std::ptr;
 
@@ -66,23 +66,17 @@ impl From<(f32, Color)> for GradientStop {
     }
 }
 
-pub struct GradientStopBuilder<'a, R>
-where
-    R: RenderTarget + 'a,
-{
-    context: &'a R,
+pub struct GradientStopBuilder<'a> {
+    context: &'a RenderTarget,
     extend_mode: ExtendMode,
     gamma: Gamma,
     state: GradientStopState<'a>,
 }
 
-impl<'a, R> GradientStopBuilder<'a, R>
-where
-    R: RenderTarget + 'a,
-{
+impl<'a> GradientStopBuilder<'a> {
     #[inline]
     /// Defaults: Gamma::_2_2, ExtendMode::Clamp
-    pub fn new(context: &'a R) -> Self {
+    pub fn new(context: &'a RenderTarget) -> Self {
         GradientStopBuilder {
             context,
             extend_mode: ExtendMode::Clamp,

@@ -16,18 +16,19 @@ extern crate winapi;
 extern crate wio;
 
 #[doc(inline)]
-pub use device::Device;
+pub use crate::device::Device;
 #[doc(inline)]
-pub use device_context::DeviceContext;
+pub use crate::device_context::DeviceContext;
 #[doc(inline)]
-pub use error::Error;
+pub use crate::error::Error;
 #[doc(inline)]
-pub use factory::Factory;
+pub use crate::factory::Factory;
 #[doc(inline)]
-pub use render_target::RenderTarget;
+pub use crate::render_target::RenderTarget;
 
 #[macro_use]
 mod macros;
+mod helpers;
 
 pub mod brush;
 pub mod device;

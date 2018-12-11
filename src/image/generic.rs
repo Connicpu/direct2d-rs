@@ -1,4 +1,4 @@
-use image::{Bitmap, Image};
+use crate::image::{Bitmap, Image};
 
 use winapi::um::d2d1::ID2D1Image;
 use wio::com::ComPtr;

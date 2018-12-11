@@ -1,82 +1,122 @@
 use crate::brush::Brush;
 use crate::enums::{AntialiasMode, BitmapInterpolationMode, DrawTextOptions};
 use crate::error::Error;
+use crate::factory::Factory;
 use crate::geometry::Geometry;
 use crate::image::Bitmap;
 use crate::layer::{Layer, LayerBuilder};
 use crate::stroke_style::StrokeStyle;
 
-use checked_enum::UncheckedEnum;
-use com_wrapper::ComWrapper;
+use std::{mem, ptr};
+
 use directwrite::{TextFormat, TextLayout};
 use math2d::*;
+use com_wrapper::ComWrapper;
+use checked_enum::UncheckedEnum;
 use winapi::shared::winerror::SUCCEEDED;
-use winapi::um::d2d1::{ID2D1RenderTarget, D2D1_TAG};
+use winapi::um::d2d1::{ID2D1Factory, ID2D1RenderTarget, D2D1_TAG};
+use winapi::um::d2d1_1::ID2D1Factory1;
 use winapi::um::dcommon::DWRITE_MEASURING_MODE_NATURAL;
-use winapi::um::unknwnbase::IUnknown;
 use wio::com::ComPtr;
 use wio::wide::ToWide;
 
-pub use self::render_tag::RenderTag;
+#[doc(inline)]
+pub use self::dxgi::DxgiSurfaceRenderTarget;
+#[doc(inline)]
+pub use self::generic::GenericRenderTarget;
+#[doc(inline)]
+pub use self::hwnd::HwndRenderTarget;
 
-pub mod render_tag;
+pub mod dxgi;
+pub mod generic;
+pub mod hwnd;
 
-#[repr(C)]
-pub struct RenderTarget {
-    ptr: ComPtr<ID2D1RenderTarget>,
-    state: RTState,
+impl<'r, R> RenderTarget for &'r mut R
+where
+    R: RenderTarget + 'r,
+{
+    #[doc(hidden)]
+    #[inline]
+    unsafe fn rt<'a>(&self) -> &'a mut ID2D1RenderTarget {
+        R::rt(*self)
+    }
 }
 
-impl RenderTarget {
+pub trait RenderTarget {
+    #[doc(hidden)]
     #[inline]
-    pub fn get_size(&self) -> Sizef {
+    unsafe fn rt<'a>(&self) -> &'a mut ID2D1RenderTarget;
+
+    #[doc(hidden)]
+    #[inline]
+    unsafe fn make_tag(tag1: D2D1_TAG, tag2: D2D1_TAG) -> Option<RenderTag> {
+        if tag1 == 0 {
+            None
+        } else {
+            let raw = RenderTagRaw(tag1 as usize, tag2 as usize);
+            let tag = mem::transmute(raw);
+            Some(tag)
+        }
+    }
+
+    #[inline]
+    fn as_generic(&self) -> GenericRenderTarget {
+        unsafe {
+            let ptr = self.rt();
+            ptr.AddRef();
+            GenericRenderTarget::from_raw(ptr)
+        }
+    }
+
+    #[inline]
+    fn get_factory(&mut self) -> Factory {
+        unsafe {
+            let mut ptr: *mut ID2D1Factory = ptr::null_mut();
+            self.rt().GetFactory(&mut ptr);
+
+            let ptr: ComPtr<ID2D1Factory1> = ComPtr::from_raw(ptr).cast().unwrap();
+            Factory::from_raw(ptr.into_raw())
+        }
+    }
+
+    #[inline]
+    fn get_size(&self) -> Sizef {
         unsafe { self.rt().GetSize().into() }
     }
 
     #[inline]
-    pub fn begin_draw(&mut self) {
-        if !self.state.is_set(RTState::NOT_DRAWING) {
-            panic!("You may not call begin_draw() when you are already drawing.");
-        }
-
+    fn begin_draw(&mut self) {
         unsafe {
             self.rt().BeginDraw();
-            self.state.clear(RTState::NOT_DRAWING);
         }
     }
 
     #[inline]
-    pub fn end_draw(&mut self) -> Result<(), (Error, Option<RenderTag>)> {
-        self.assert_can_draw("end_draw");
-
+    fn end_draw(&mut self) -> Result<(), (Error, Option<RenderTag>)> {
         let mut tag1 = 0;
         let mut tag2 = 0;
         unsafe {
-            let hr = self.rt().EndDraw(&mut tag1, &mut tag2);
+            let result = self.rt().EndDraw(&mut tag1, &mut tag2);
 
-            if SUCCEEDED(hr) {
+            if SUCCEEDED(result) {
                 Ok(())
             } else {
                 let tag = Self::make_tag(tag1, tag2);
-                Err((From::from(hr), tag))
+                Err((From::from(result), tag))
             }
         }
     }
 
     #[inline]
-    pub fn set_tag(&mut self, tag: Option<RenderTag>) {
+    fn set_tag(&mut self, tag: RenderTag) {
         unsafe {
-            if let Some(tag) = tag {
-                let (tag1, tag2) = tag.to_raw();
-                self.rt().SetTags(tag1 as u64, tag2 as u64)
-            } else {
-                self.rt().SetTags(0, 0);
-            }
+            let RenderTagRaw(tag1, tag2) = mem::transmute(tag);
+            self.rt().SetTags(tag1 as u64, tag2 as u64)
         };
     }
 
     #[inline]
-    pub fn get_tag(&self) -> Option<RenderTag> {
+    fn get_tag(&mut self) -> Option<RenderTag> {
         let mut tag1 = 0;
         let mut tag2 = 0;
         unsafe {
@@ -86,9 +126,7 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn flush(&mut self) -> Result<(), (Error, Option<RenderTag>)> {
-        self.assert_can_draw("flush");
-
+    fn flush(&mut self) -> Result<(), (Error, Option<RenderTag>)> {
         let mut tag1 = 0;
         let mut tag2 = 0;
         unsafe {
@@ -104,16 +142,14 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn clear(&mut self, color: impl Into<Color>) {
-        self.assert_can_draw("clear");
-
+    fn clear(&mut self, color: impl Into<Color>) {
         unsafe {
             self.rt().Clear(&color.into().into());
         }
     }
 
     #[inline]
-    pub fn draw_line(
+    fn draw_line(
         &mut self,
         p0: impl Into<Point2f>,
         p1: impl Into<Point2f>,
@@ -121,12 +157,10 @@ impl RenderTarget {
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
     ) {
-        self.assert_can_draw("draw_line");
-
         unsafe {
             let stroke_style = match stroke_style {
                 Some(s) => s.get_raw() as *mut _,
-                None => std::ptr::null_mut(),
+                None => ptr::null_mut(),
             };
 
             self.rt().DrawLine(
@@ -140,19 +174,17 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn draw_rectangle(
+    fn draw_rectangle(
         &mut self,
         rect: impl Into<Rectf>,
         brush: &impl Brush,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
     ) {
-        self.assert_can_draw("draw_rectangle");
-
         unsafe {
             let stroke_style = match stroke_style {
                 Some(s) => s.get_raw() as *mut _,
-                None => std::ptr::null_mut(),
+                None => ptr::null_mut(),
             };
 
             self.rt().DrawRectangle(
@@ -165,9 +197,7 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn fill_rectangle(&mut self, rect: impl Into<Rectf>, brush: &impl Brush) {
-        self.assert_can_draw("fill_rectangle");
-
+    fn fill_rectangle(&mut self, rect: impl Into<Rectf>, brush: &impl Brush) {
         unsafe {
             self.rt()
                 .FillRectangle(&rect.into().into(), brush.get_ptr());
@@ -175,19 +205,17 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn draw_rounded_rectangle(
+    fn draw_rounded_rectangle(
         &mut self,
         rect: impl Into<RoundedRect>,
         brush: &impl Brush,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
     ) {
-        self.assert_can_draw("draw_rounded_rectangle");
-
         unsafe {
             let stroke_style = match stroke_style {
                 Some(s) => s.get_raw() as *mut _,
-                None => std::ptr::null_mut(),
+                None => ptr::null_mut(),
             };
 
             self.rt().DrawRoundedRectangle(
@@ -200,9 +228,7 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn fill_rounded_rectangle(&mut self, rect: impl Into<RoundedRect>, brush: &impl Brush) {
-        self.assert_can_draw("fill_rounded_rectangle");
-
+    fn fill_rounded_rectangle(&mut self, rect: impl Into<RoundedRect>, brush: &impl Brush) {
         unsafe {
             self.rt()
                 .FillRoundedRectangle(&rect.into().into(), brush.get_ptr());
@@ -210,19 +236,17 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn draw_ellipse(
+    fn draw_ellipse(
         &mut self,
         ellipse: impl Into<Ellipse>,
         brush: &impl Brush,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
     ) {
-        self.assert_can_draw("draw_ellipse");
-
         unsafe {
             let stroke_style = match stroke_style {
                 Some(s) => s.get_raw() as *mut _,
-                None => std::ptr::null_mut(),
+                None => ptr::null_mut(),
             };
 
             self.rt().DrawEllipse(
@@ -235,9 +259,7 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn fill_ellipse(&mut self, ellipse: impl Into<Ellipse>, brush: &impl Brush) {
-        self.assert_can_draw("fill_ellipse");
-
+    fn fill_ellipse(&mut self, ellipse: impl Into<Ellipse>, brush: &impl Brush) {
         unsafe {
             self.rt()
                 .FillEllipse(&ellipse.into().into(), brush.get_ptr());
@@ -245,19 +267,17 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn draw_geometry(
+    fn draw_geometry(
         &mut self,
         geometry: &impl Geometry,
         brush: &impl Brush,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
     ) {
-        self.assert_can_draw("draw_geometry");
-
         unsafe {
             let stroke_style = match stroke_style {
                 Some(s) => s.get_raw() as *mut _,
-                None => std::ptr::null_mut(),
+                None => ptr::null_mut(),
             };
 
             self.rt().DrawGeometry(
@@ -270,24 +290,20 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn fill_geometry(&mut self, geometry: &impl Geometry, brush: &impl Brush) {
-        self.assert_can_draw("fill_geometry");
-
+    fn fill_geometry(&mut self, geometry: &impl Geometry, brush: &impl Brush) {
         unsafe {
             self.rt()
-                .FillGeometry(geometry.get_ptr(), brush.get_ptr(), std::ptr::null_mut());
+                .FillGeometry(geometry.get_ptr(), brush.get_ptr(), ptr::null_mut());
         }
     }
 
     #[inline]
-    pub fn fill_geometry_with_opacity(
+    fn fill_geometry_with_opacity(
         &mut self,
         geometry: &impl Geometry,
         brush: &impl Brush,
         opacity_brush: &impl Brush,
     ) {
-        self.assert_can_draw("fill_geometry_with_opacity");
-
         unsafe {
             self.rt()
                 .FillGeometry(geometry.get_ptr(), brush.get_ptr(), opacity_brush.get_ptr());
@@ -295,7 +311,7 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn draw_bitmap(
+    fn draw_bitmap(
         &mut self,
         bitmap: &Bitmap,
         dest_rect: impl Into<Rectf>,
@@ -303,8 +319,6 @@ impl RenderTarget {
         interpolation: BitmapInterpolationMode,
         src_rect: impl Into<Rectf>,
     ) {
-        self.assert_can_draw("draw_bitmap");
-
         unsafe {
             self.rt().DrawBitmap(
                 bitmap.get_raw(),
@@ -317,7 +331,7 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn draw_text(
+    fn draw_text(
         &mut self,
         text: &str,
         format: &TextFormat,
@@ -325,8 +339,6 @@ impl RenderTarget {
         foreground_brush: &impl Brush,
         options: DrawTextOptions,
     ) {
-        self.assert_can_draw("draw_text");
-
         let text = text.to_wide_null();
 
         unsafe {
@@ -344,15 +356,13 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn draw_text_layout(
+    fn draw_text_layout(
         &mut self,
         origin: impl Into<Point2f>,
         layout: &TextLayout,
         brush: &impl Brush,
         options: DrawTextOptions,
     ) {
-        self.assert_can_draw("draw_text_layout");
-
         unsafe {
             let layout = layout.get_raw();
             self.rt()
@@ -361,36 +371,36 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn set_transform(&mut self, transform: &Matrix3x2f) {
+    fn set_transform(&mut self, transform: &Matrix3x2f) {
         unsafe { self.rt().SetTransform(transform as *const _ as *const _) }
     }
 
     #[inline]
-    pub fn transform(&self) -> Matrix3x2f {
+    fn get_transform(&self) -> Matrix3x2f {
         unsafe {
-            let mut mat: Matrix3x2f = std::mem::uninitialized();
+            let mut mat: Matrix3x2f = mem::uninitialized();
             self.rt().GetTransform(&mut mat as *mut _ as *mut _);
             mat
         }
     }
 
     #[inline]
-    pub fn set_antialias_mode(&mut self, mode: AntialiasMode) {
+    fn set_antialias_mode(&mut self, mode: AntialiasMode) {
         unsafe { self.rt().SetAntialiasMode(mode as u32) };
     }
 
     #[inline]
-    pub fn antialias_mode(&mut self) -> UncheckedEnum<AntialiasMode> {
+    fn get_antialias_mode(&mut self) -> UncheckedEnum<AntialiasMode> {
         unsafe { self.rt().GetAntialiasMode().into() }
     }
 
     #[inline]
-    pub fn set_dpi(&mut self, dpi_x: f32, dpi_y: f32) {
+    fn set_dpi(&mut self, dpi_x: f32, dpi_y: f32) {
         unsafe { self.rt().SetDpi(dpi_x, dpi_y) }
     }
 
     #[inline]
-    pub fn dpi(&self) -> (f32, f32) {
+    fn get_dpi(&self) -> (f32, f32) {
         unsafe {
             let (mut x, mut y) = (0.0, 0.0);
             self.rt().GetDpi(&mut x, &mut y);
@@ -399,7 +409,7 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn push_layer<'a, 'b>(&'a mut self, layer: &'b Layer) -> LayerBuilder<'a, 'b>
+    fn push_layer<'a, 'b>(&'a mut self, layer: &'b Layer) -> LayerBuilder<'a, 'b, Self>
     where
         Self: Sized + 'a,
     {
@@ -407,14 +417,14 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn pop_layer(&mut self) {
+    fn pop_layer(&mut self) {
         unsafe {
             self.rt().PopLayer();
         }
     }
 
     #[inline]
-    pub fn push_axis_aligned_clip(&mut self, clip: impl Into<Rectf>, aa: AntialiasMode) {
+    fn push_axis_aligned_clip(&mut self, clip: impl Into<Rectf>, aa: AntialiasMode) {
         unsafe {
             self.rt()
                 .PushAxisAlignedClip(&clip.into().into(), aa as u32);
@@ -422,108 +432,9 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn pop_axis_aligned_clip(&mut self) {
+    fn pop_axis_aligned_clip(&mut self) {
         unsafe {
             self.rt().PopAxisAlignedClip();
         }
     }
-}
-
-// Private fns
-impl RenderTarget {
-    #[inline]
-    unsafe fn make_tag(tag1: D2D1_TAG, tag2: D2D1_TAG) -> Option<RenderTag> {
-        if tag1 == 0 {
-            None
-        } else {
-            let tag = RenderTag::from_raw(tag1, tag2);
-            Some(tag)
-        }
-    }
-
-    #[inline]
-    pub(crate) unsafe fn rt(&self) -> &ID2D1RenderTarget {
-        &*self.ptr
-    }
-
-    #[inline]
-    pub(crate) fn assert_can_draw(&self, fname: &str) {
-        if self.state.0 != 0 {
-            let tag = render_tag::fmt_tag(self.get_tag());
-            panic!(
-                "This RenderTarget is not currently able to be drawn to.\
-                 \n    Action: {}\
-                 \n    Tag: {}\
-                 \n    State: {:?}",
-                fname, tag, self.state
-            );
-        }
-    }
-}
-
-pub trait RenderTargetType: ComWrapper {
-    /// Try to cast this factory to a different factory type
-    fn try_cast<R: RenderTargetType>(self) -> Option<R>
-    where
-        Self: Sized,
-    {
-        unsafe {
-            let ptr = self.into_ptr();
-            Some(ComWrapper::from_ptr(ptr.cast().ok()?))
-        }
-    }
-
-    /// Try to temporarily upcast this type to perform an operation
-    fn try_with_cast<R: RenderTargetType, V>(&self, f: impl FnOnce(&R) -> V) -> Option<V> {
-        unsafe {
-            let ptr = self.get_raw() as *mut IUnknown;
-            (*ptr).AddRef();
-            let ptr = ComPtr::from_raw(ptr);
-            let obj = R::from_ptr(ptr.cast().ok()?);
-            Some(f(&obj))
-        }
-    }
-}
-
-impl RenderTargetType for RenderTarget {}
-
-impl ComWrapper for RenderTarget {
-    type Interface = ID2D1RenderTarget;
-    unsafe fn get_raw(&self) -> *mut Self::Interface {
-        self.ptr.as_raw()
-    }
-    unsafe fn into_raw(self) -> *mut Self::Interface {
-        self.ptr.into_raw()
-    }
-    unsafe fn from_raw(raw: *mut Self::Interface) -> Self {
-        Self::from_ptr(ComPtr::from_raw(raw))
-    }
-    unsafe fn from_ptr(ptr: ComPtr<Self::Interface>) -> Self {
-        RenderTarget {
-            ptr,
-            state: RTState::NOT_DRAWING,
-        }
-    }
-    unsafe fn into_ptr(self) -> ComPtr<Self::Interface> {
-        self.ptr
-    }
-}
-
-unsafe impl Send for RenderTarget {}
-unsafe impl Sync for RenderTarget {}
-
-impl std::fmt::Debug for RenderTarget {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
-        fmt.debug_struct("RenderTarget")
-            .field("ptr", &self.ptr.as_raw())
-            .field("state", &self.state)
-            .finish()
-    }
-}
-
-#[enum_flags]
-/// Flags that act as blockers to a target being able to be drawn to.
-pub(crate) enum RTState {
-    NOT_DRAWING,
-    NO_TARGET_IMAGE,
 }

@@ -8,7 +8,7 @@ use direct2d::brush::SolidColorBrush;
 use direct2d::enums::{BitmapOptions, DrawTextOptions};
 use direct2d::image::Bitmap;
 use direct2d::{Device, DeviceContext, RenderTarget};
-use direct3d11::flags::{BindFlags, CreateDeviceFlags};
+use direct3d11::enums::{BindFlags, CreateDeviceFlags};
 use directwrite::{TextFormat, TextLayout};
 use dxgi::enums::Format;
 
@@ -57,8 +57,8 @@ fn draw_to_texture() {
 
     // Lay out our testing text, which contains an emoji
     let text = TextLayout::create(&dwrite)
-        .with_text("Testing testing! \u{1F604}")
-        .with_font(&font)
+        .with_str("Testing testing! \u{1F604}")
+        .with_format(&font)
         .with_size(TEXTURE_WIDTH as f32 / DPI, TEXTURE_HEIGHT as f32 / DPI)
         .build()
         .unwrap();

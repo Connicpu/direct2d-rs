@@ -1,6 +1,6 @@
-use enums::{CapStyle, DashStyle, LineJoin, StrokeTransformType};
-use error::D2DResult;
-use factory::Factory;
+use crate::enums::{CapStyle, DashStyle, LineJoin, StrokeTransformType};
+use crate::error::D2DResult;
+use crate::factory::Factory;
 
 use std::ptr;
 

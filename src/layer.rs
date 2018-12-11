@@ -1,9 +1,9 @@
-use brush::Brush;
-use enums::{AntialiasMode, LayerOptions};
-use error::D2DResult;
-use geometry::{GenericGeometry, Geometry};
+use crate::brush::Brush;
+use crate::enums::{AntialiasMode, LayerOptions};
+use crate::error::D2DResult;
+use crate::geometry::{GenericGeometry, Geometry};
+use crate::render_target::RenderTarget;
 use math2d::{Matrix3x2f, Rectf, Sizef};
-use render_target::RenderTarget;
 
 use std::ptr;
 
@@ -17,10 +17,7 @@ pub struct Layer {
 
 impl Layer {
     #[inline]
-    pub fn create<R>(target: &mut R, size: Option<&Sizef>) -> D2DResult<Layer>
-    where
-        R: RenderTarget,
-    {
+    pub fn create(target: &mut RenderTarget, size: Option<&Sizef>) -> D2DResult<Layer> {
         let size = match size {
             Some(size) => size as *const _ as *const _,
             None => ptr::null(),
@@ -64,8 +61,8 @@ unsafe impl Send for Layer {}
 unsafe impl Sync for Layer {}
 
 #[must_use]
-pub struct LayerBuilder<'a, 'b, R: RenderTarget + 'a> {
-    rt: &'a mut R,
+pub struct LayerBuilder<'a, 'b> {
+    rt: &'a mut RenderTarget,
     layer: &'b Layer,
     bounds: Rectf,
     mask: Option<GenericGeometry>,
@@ -76,9 +73,9 @@ pub struct LayerBuilder<'a, 'b, R: RenderTarget + 'a> {
     layer_opts: LayerOptions,
 }
 
-impl<'a, 'b, R: RenderTarget + 'a> LayerBuilder<'a, 'b, R> {
+impl<'a, 'b> LayerBuilder<'a, 'b> {
     #[inline]
-    pub fn create(rt: &'a mut R, layer: &'b Layer) -> Self {
+    pub fn create(rt: &'a mut RenderTarget, layer: &'b Layer) -> Self {
         LayerBuilder {
             rt,
             layer,

@@ -1,9 +1,9 @@
-use brush::gradient::{GradientStop, GradientStopBuilder, GradientStopCollection};
-use enums::*;
-use error::D2DResult;
+use crate::brush::gradient::{GradientStop, GradientStopBuilder, GradientStopCollection};
+use crate::enums::*;
+use crate::error::D2DResult;
 use math2d::{Matrix3x2f, Point2f};
-use render_target::RenderTarget;
-use properties::{BrushProperties, LinearGradientBrushProperties};
+use crate::render_target::RenderTarget;
+use crate::properties::{BrushProperties, LinearGradientBrushProperties};
 
 use std::mem;
 use std::ptr;
@@ -21,9 +21,7 @@ pub struct LinearGradientBrush {
 
 impl LinearGradientBrush {
     #[inline]
-    pub fn create<'a, R>(context: &'a R) -> LinearGradientBrushBuilder<'a, R>
-    where
-        R: RenderTarget + 'a,
+    pub fn create<'a>(context: &'a RenderTarget) -> LinearGradientBrushBuilder<'a>
     {
         LinearGradientBrushBuilder::new(context)
     }
@@ -67,24 +65,20 @@ impl LinearGradientBrush {
 
 brush_type!(LinearGradientBrush: ID2D1LinearGradientBrush);
 
-pub struct LinearGradientBrushBuilder<'a, R>
-where
-    R: RenderTarget + 'a,
+pub struct LinearGradientBrushBuilder<'a>
 {
-    context: &'a R,
+    context: &'a RenderTarget,
     properties: BrushProperties,
     linear_properties: LinearGradientBrushProperties,
-    stops: Either<GradientStopBuilder<'a, R>, &'a GradientStopCollection>,
+    stops: Either<GradientStopBuilder<'a>, &'a GradientStopCollection>,
 }
 
-impl<'a, R> LinearGradientBrushBuilder<'a, R>
-where
-    R: RenderTarget + 'a,
+impl<'a> LinearGradientBrushBuilder<'a>
 {
     #[inline]
     /// Creates a builder. It starts with the opacity as 1.0 and the transform as the identity
     /// matrix, and all other values zeroed out. You should add at least two gradient stops.
-    pub fn new(context: &'a R) -> Self {
+    pub fn new(context: &'a RenderTarget) -> Self {
         LinearGradientBrushBuilder {
             context,
             properties: BrushProperties::new(1.0, &Matrix3x2f::IDENTITY),

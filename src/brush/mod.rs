@@ -1,4 +1,4 @@
-use factory::Factory;
+use crate::factory::Factory;
 use math2d::*;
 
 use std::{mem, ptr};
@@ -8,13 +8,13 @@ use winapi::um::d2d1_1::ID2D1Factory1;
 use wio::com::ComPtr;
 
 #[doc(inline)]
-pub use brush::gradient::linear::LinearGradientBrush;
+pub use crate::brush::gradient::linear::LinearGradientBrush;
 #[doc(inline)]
-pub use brush::gradient::radial::RadialGradientBrush;
+pub use crate::brush::gradient::radial::RadialGradientBrush;
 #[doc(inline)]
-pub use brush::gradient::{GradientStop, GradientStopCollection};
+pub use crate::brush::gradient::{GradientStop, GradientStopCollection};
 #[doc(inline)]
-pub use brush::solid_color::SolidColorBrush;
+pub use crate::brush::solid_color::SolidColorBrush;
 
 pub mod bitmap;
 pub mod gradient;

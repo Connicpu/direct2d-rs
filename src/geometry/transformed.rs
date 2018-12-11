@@ -1,4 +1,4 @@
-use geometry::GenericGeometry;
+use crate::geometry::GenericGeometry;
 use math2d::Matrix3x2f;
 
 use std::{mem, ptr};

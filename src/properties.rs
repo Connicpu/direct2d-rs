@@ -1,4 +1,4 @@
-use enums::AlphaMode;
+use crate::enums::AlphaMode;
 
 use math2d::Matrix3x2f;
 use math2d::Point2f;

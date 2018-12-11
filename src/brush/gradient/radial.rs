@@ -1,9 +1,9 @@
-use brush::gradient::{GradientStop, GradientStopBuilder, GradientStopCollection};
-use enums::*;
-use error::D2DResult;
+use crate::brush::gradient::{GradientStop, GradientStopBuilder, GradientStopCollection};
+use crate::enums::*;
+use crate::error::D2DResult;
+use crate::properties::{BrushProperties, RadialGradientBrushProperties};
+use crate::render_target::RenderTarget;
 use math2d::{Matrix3x2f, Point2f};
-use properties::{BrushProperties, RadialGradientBrushProperties};
-use render_target::RenderTarget;
 
 use std::ptr;
 
@@ -20,10 +20,7 @@ pub struct RadialGradientBrush {
 
 impl RadialGradientBrush {
     #[inline]
-    pub fn create<'a, R>(context: &'a R) -> RadialGradientBrushBuilder<'a, R>
-    where
-        R: RenderTarget + 'a,
-    {
+    pub fn create<'a>(context: &'a RenderTarget) -> RadialGradientBrushBuilder<'a> {
         RadialGradientBrushBuilder::new(context)
     }
 
@@ -82,22 +79,16 @@ impl RadialGradientBrush {
 
 brush_type!(RadialGradientBrush: ID2D1RadialGradientBrush);
 
-pub struct RadialGradientBrushBuilder<'a, R>
-where
-    R: RenderTarget + 'a,
-{
-    context: &'a R,
+pub struct RadialGradientBrushBuilder<'a> {
+    context: &'a RenderTarget,
     properties: BrushProperties,
     radial_properties: RadialGradientBrushProperties,
-    stops: Either<GradientStopBuilder<'a, R>, &'a GradientStopCollection>,
+    stops: Either<GradientStopBuilder<'a>, &'a GradientStopCollection>,
 }
 
-impl<'a, R> RadialGradientBrushBuilder<'a, R>
-where
-    R: RenderTarget + 'a,
-{
+impl<'a> RadialGradientBrushBuilder<'a> {
     #[inline]
-    pub fn new(context: &'a R) -> Self {
+    pub fn new(context: &'a RenderTarget) -> Self {
         RadialGradientBrushBuilder {
             context,
             properties: Default::default(),

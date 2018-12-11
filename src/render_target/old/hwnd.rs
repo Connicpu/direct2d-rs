@@ -1,8 +1,8 @@
-use enums::{AlphaMode, FeatureLevel, PresentOptions, RenderTargetType, RenderTargetUsage};
-use error::D2DResult;
-use factory::Factory;
+use crate::enums::{AlphaMode, FeatureLevel, PresentOptions, RenderTargetType, RenderTargetUsage};
+use crate::error::D2DResult;
+use crate::factory::Factory;
 
-use render_target::{GenericRenderTarget, RenderTarget};
+use crate::render_target::{GenericRenderTarget, RenderTarget};
 
 use std::ptr;
 

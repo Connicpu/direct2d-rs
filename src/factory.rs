@@ -1,4 +1,4 @@
-use error::D2DResult;
+use crate::error::D2DResult;
 
 use std::ptr;
 

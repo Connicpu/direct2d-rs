@@ -1,5 +1,5 @@
-use error::D2DResult;
-use factory::Factory;
+use crate::error::D2DResult;
+use crate::factory::Factory;
 use math2d::RoundedRect;
 use std::{mem, ptr};
 

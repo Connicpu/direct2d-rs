@@ -4,12 +4,13 @@ extern crate lazy_static;
 extern crate direct2d;
 extern crate winapi;
 extern crate wio;
+extern crate math2d;
 
+use math2d::*;
 use direct2d::brush::SolidColorBrush;
 use direct2d::enums::{FigureBegin, FigureEnd, FillMode};
 use direct2d::geometry::Path;
 use direct2d::layer::Layer;
-use direct2d::math2d::*;
 use direct2d::render_target::HwndRenderTarget;
 use direct2d::{Factory, RenderTarget};
 use std::{mem, ptr};

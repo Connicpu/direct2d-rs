@@ -1,9 +1,9 @@
-use enums::{BitmapInterpolationMode, ExtendMode};
-use error::D2DResult;
-use image::Bitmap;
+use crate::enums::{BitmapInterpolationMode, ExtendMode};
+use crate::error::D2DResult;
+use crate::image::Bitmap;
+use crate::properties::BrushProperties;
+use crate::render_target::RenderTarget;
 use math2d::Matrix3x2f;
-use properties::BrushProperties;
-use render_target::RenderTarget;
 
 use std::ptr;
 
@@ -19,10 +19,7 @@ pub struct BitmapBrush {
 
 impl BitmapBrush {
     #[inline]
-    pub fn create<'a, R>(context: &'a R) -> BitmapBrushBuilder<'a, R>
-    where
-        R: RenderTarget + 'a,
-    {
+    pub fn create<'a>(context: &'a RenderTarget) -> BitmapBrushBuilder<'a> {
         BitmapBrushBuilder::new(context)
     }
 
@@ -64,22 +61,16 @@ impl BitmapBrush {
 
 brush_type!(BitmapBrush: ID2D1BitmapBrush);
 
-pub struct BitmapBrushBuilder<'a, R>
-where
-    R: RenderTarget + 'a,
-{
-    context: &'a R,
+pub struct BitmapBrushBuilder<'a> {
+    context: &'a RenderTarget,
     bitmap: Option<&'a Bitmap>,
     b_properties: D2D1_BITMAP_BRUSH_PROPERTIES,
     properties: BrushProperties,
 }
 
-impl<'a, R> BitmapBrushBuilder<'a, R>
-where
-    R: RenderTarget + 'a,
-{
+impl<'a> BitmapBrushBuilder<'a> {
     #[inline]
-    pub fn new(context: &'a R) -> Self {
+    pub fn new(context: &'a RenderTarget) -> Self {
         BitmapBrushBuilder {
             context,
             bitmap: None,

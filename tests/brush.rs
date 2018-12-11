@@ -1,11 +1,11 @@
+extern crate math2d;
 extern crate direct2d;
 extern crate direct3d11;
-extern crate winapi;
 
 use direct2d::brush::SolidColorBrush;
-use direct2d::math2d::*;
 use direct2d::{Device, DeviceContext, Factory};
-use direct3d11::flags::CreateDeviceFlags;
+use direct3d11::enums::CreateDeviceFlags;
+use math2d::*;
 
 #[test]
 fn solid_color() {

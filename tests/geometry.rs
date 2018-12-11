@@ -1,8 +1,9 @@
 extern crate direct2d;
+extern crate math2d;
 
 use direct2d::enums::{FigureBegin, FigureEnd, FillMode};
 use direct2d::geometry::{Geometry, Group, Path, Rectangle};
-use direct2d::math2d::*;
+use math2d::*;
 use direct2d::Factory;
 
 const EPSILON: f32 = 0.0001;

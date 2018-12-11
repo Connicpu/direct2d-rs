@@ -1,5 +1,5 @@
-use device_context::DeviceContext;
-use render_target::{HwndRenderTarget, RenderTarget};
+use crate::device_context::DeviceContext;
+use crate::render_target::{HwndRenderTarget, RenderTarget};
 
 use com_wrapper::ComWrapper;
 use winapi::um::d2d1::ID2D1RenderTarget;

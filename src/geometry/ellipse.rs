@@ -1,5 +1,5 @@
-use error::D2DResult;
-use factory::Factory;
+use crate::error::D2DResult;
+use crate::factory::Factory;
 
 use std::{mem, ptr};
 

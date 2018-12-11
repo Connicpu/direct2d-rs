@@ -1,7 +1,7 @@
-use error::D2DResult;
+use crate::error::D2DResult;
+use crate::properties::BrushProperties;
+use crate::render_target::RenderTarget;
 use math2d::{Color, Matrix3x2f};
-use properties::BrushProperties;
-use render_target::RenderTarget;
 
 use std::ptr;
 
@@ -16,10 +16,7 @@ pub struct SolidColorBrush {
 
 impl SolidColorBrush {
     #[inline]
-    pub fn create<'a, R>(context: &'a R) -> SolidColorBrushBuilder<'a, R>
-    where
-        R: RenderTarget + 'a,
-    {
+    pub fn create<'a>(context: &'a RenderTarget) -> SolidColorBrushBuilder<'a> {
         SolidColorBrushBuilder::new(context)
     }
 
@@ -36,21 +33,15 @@ impl SolidColorBrush {
 
 brush_type!(SolidColorBrush: ID2D1SolidColorBrush);
 
-pub struct SolidColorBrushBuilder<'a, R>
-where
-    R: RenderTarget + 'a,
-{
-    context: &'a R,
+pub struct SolidColorBrushBuilder<'a> {
+    context: &'a RenderTarget,
     properties: BrushProperties,
     color: Option<Color>,
 }
 
-impl<'a, R> SolidColorBrushBuilder<'a, R>
-where
-    R: RenderTarget + 'a,
-{
+impl<'a> SolidColorBrushBuilder<'a> {
     #[inline]
-    pub fn new(context: &'a R) -> Self {
+    pub fn new(context: &'a RenderTarget) -> Self {
         SolidColorBrushBuilder {
             context,
             properties: BrushProperties::new(1.0, &Matrix3x2f::IDENTITY),

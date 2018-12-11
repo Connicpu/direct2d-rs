@@ -4,7 +4,7 @@ extern crate dxgi;
 
 use direct2d::image::Bitmap;
 use direct2d::{Device, DeviceContext, Factory};
-use direct3d11::flags::CreateDeviceFlags;
+use direct3d11::enums::CreateDeviceFlags;
 use dxgi::enums::Format;
 
 #[test]

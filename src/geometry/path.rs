@@ -1,10 +1,7 @@
-use enums::{FigureBegin, FigureEnd, FillMode, PathSegment};
-use error::D2DResult;
-use factory::Factory;
+use crate::enums::{FigureBegin, FigureEnd, FillMode, PathSegment};
+use crate::error::D2DResult;
+use crate::factory::Factory;
 use math2d::{ArcSegment, BezierSegment, Point2f, QuadBezierSegment};
-
-use std::marker::PhantomData;
-use std::{mem, ptr};
 
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{ID2D1GeometrySink, D2D1_FIGURE_END};
@@ -20,12 +17,24 @@ pub struct Path {
 
 impl Path {
     #[inline]
-    pub fn create(factory: &Factory) -> D2DResult<Path> {
+    pub fn create(factory: &Factory) -> D2DResult<PathBuilder> {
         unsafe {
-            let mut ptr = ptr::null_mut();
+            let mut ptr = std::ptr::null_mut();
             let hr = (*factory.get_raw()).CreatePathGeometry(&mut ptr);
             if SUCCEEDED(hr) {
-                Ok(Path::from_raw(ptr))
+                let path = Path::from_raw(ptr);
+
+                let mut ptr = std::ptr::null_mut();
+                let hr = path.ptr.Open(&mut ptr);
+
+                if SUCCEEDED(hr) {
+                    Ok(PathBuilder {
+                        path: path,
+                        sink: ComPtr::from_raw(ptr),
+                    })
+                } else {
+                    Err(hr.into())
+                }
             } else {
                 Err(hr.into())
             }
@@ -33,23 +42,7 @@ impl Path {
     }
 
     #[inline]
-    pub fn open<'a>(&'a mut self) -> D2DResult<GeometryBuilder<'a>> {
-        let mut ptr: *mut ID2D1GeometrySink = ptr::null_mut();
-        unsafe {
-            let result = self.ptr.Open(&mut ptr);
-            if SUCCEEDED(result) {
-                Ok(GeometryBuilder {
-                    sink: ComPtr::from_raw(ptr),
-                    phantom: PhantomData,
-                })
-            } else {
-                Err(From::from(result))
-            }
-        }
-    }
-
-    #[inline]
-    pub fn get_segment_count(&self) -> D2DResult<u32> {
+    pub fn segment_count(&self) -> D2DResult<u32> {
         unsafe {
             let mut count = 0;
             let result = self.ptr.GetSegmentCount(&mut count);
@@ -62,7 +55,7 @@ impl Path {
     }
 
     #[inline]
-    pub fn get_figure_count(&self) -> D2DResult<u32> {
+    pub fn figure_count(&self) -> D2DResult<u32> {
         unsafe {
             let mut count = 0;
             let result = self.ptr.GetFigureCount(&mut count);
@@ -78,12 +71,12 @@ impl Path {
 geometry_type!(Path: ID2D1PathGeometry1);
 
 /// Interface for building Path geometry
-pub struct GeometryBuilder<'a> {
+pub struct PathBuilder {
+    path: Path,
     sink: ComPtr<ID2D1GeometrySink>,
-    phantom: PhantomData<&'a mut Path>,
 }
 
-impl<'a> GeometryBuilder<'a> {
+impl PathBuilder {
     #[inline]
     pub fn fill_mode(self, fill_mode: FillMode) -> Self {
         unsafe { self.sink.SetFillMode(fill_mode as u32) };
@@ -102,7 +95,7 @@ impl<'a> GeometryBuilder<'a> {
         start: impl Into<Point2f>,
         begin: FigureBegin,
         end: FigureEnd,
-    ) -> FigureBuilder<'a> {
+    ) -> FigureBuilder {
         unsafe {
             self.sink.BeginFigure(start.into().into(), begin as u32);
         }
@@ -118,9 +111,15 @@ impl<'a> GeometryBuilder<'a> {
         start: impl Into<Point2f>,
         begin: FigureBegin,
         end: FigureEnd,
-        f: impl FnOnce(FigureBuilder<'a>) -> FigureBuilder<'a>,
+        f: impl FnOnce(FigureBuilder) -> FigureBuilder,
     ) -> Self {
         f(self.begin_figure(start, begin, end)).end()
+    }
+
+    #[inline]
+    pub fn with_line_figure(self, begin: FigureBegin, end: FigureEnd, lines: &[Point2f]) -> Self {
+        assert!(lines.len() > 1);
+        self.with_figure(lines[0], begin, end, |figure| figure.add_lines(&lines[1..]))
     }
 
     #[inline]
@@ -136,14 +135,17 @@ impl<'a> GeometryBuilder<'a> {
     }
 
     #[inline]
-    pub fn close(mut self) -> D2DResult<()> {
+    pub fn finish(mut self) -> D2DResult<Path> {
         unsafe {
-            eprintln!("close gb");
             let hr = self.sink.Close();
-            ptr::drop_in_place(&mut self.sink);
-            mem::forget(self);
+
+            // Move path out of self without invoking drop.
+            let path = std::ptr::read(&self.path);
+            std::ptr::drop_in_place(&mut self.sink);
+            std::mem::forget(self);
+
             if SUCCEEDED(hr) {
-                Ok(())
+                Ok(path)
             } else {
                 Err(hr.into())
             }
@@ -151,35 +153,29 @@ impl<'a> GeometryBuilder<'a> {
     }
 }
 
-impl<'a> Drop for GeometryBuilder<'a> {
+impl Drop for PathBuilder {
     #[inline]
     fn drop(&mut self) {
         unsafe {
-            eprintln!("drop gb");
-            let result = self.sink.Close();
-            assert!(
-                SUCCEEDED(result),
-                "Failed to close dropped GeometryBuilder. You should call \
-                 .close() manually if you would like to handle this error"
-            );
+            self.sink.Close();
         }
     }
 }
 
-pub struct FigureBuilder<'a> {
-    builder: GeometryBuilder<'a>,
+pub struct FigureBuilder {
+    builder: PathBuilder,
     end: D2D1_FIGURE_END,
 }
 
-impl<'a> FigureBuilder<'a> {
+impl FigureBuilder {
     #[inline]
-    pub fn end(self) -> GeometryBuilder<'a> {
+    pub fn end(self) -> PathBuilder {
         unsafe {
             self.builder.sink.EndFigure(self.end);
 
             // Move builder out of self without invoking drop.
-            let builder = ptr::read(&self.builder);
-            mem::forget(self);
+            let builder = std::ptr::read(&self.builder);
+            std::mem::forget(self);
             builder
         }
     }
@@ -202,11 +198,7 @@ impl<'a> FigureBuilder<'a> {
 
     #[inline]
     pub fn add_bezier(self, bezier: &BezierSegment) -> Self {
-        unsafe {
-            self.builder
-                .sink
-                .AddBezier(bezier as *const _ as *const _)
-        };
+        unsafe { self.builder.sink.AddBezier(bezier as *const _ as *const _) };
         self
     }
 
@@ -247,7 +239,7 @@ impl<'a> FigureBuilder<'a> {
     }
 }
 
-impl<'a> Drop for FigureBuilder<'a> {
+impl Drop for FigureBuilder {
     #[inline]
     fn drop(&mut self) {
         unsafe {

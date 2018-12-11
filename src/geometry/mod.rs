@@ -1,8 +1,8 @@
-use enums::*;
-use error::D2DResult;
-use factory::Factory;
+use crate::enums::*;
+use crate::error::D2DResult;
+use crate::factory::Factory;
 use math2d::{Matrix3x2f, Point2f, Rectf, Vector2f};
-use stroke_style::StrokeStyle;
+use crate::stroke_style::StrokeStyle;
 
 use std::{mem, ptr};
 

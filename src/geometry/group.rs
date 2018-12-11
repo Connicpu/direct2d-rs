@@ -1,7 +1,7 @@
-use enums::{FillMode};
-use error::D2DResult;
-use factory::Factory;
-use geometry::{GenericGeometry, Geometry};
+use crate::enums::{FillMode};
+use crate::error::D2DResult;
+use crate::factory::Factory;
+use crate::geometry::{GenericGeometry, Geometry};
 
 use std::{mem, ptr, slice};
 
