@@ -30,7 +30,7 @@ fn draw_to_texture() {
 
     // Create the D2D Device and Context
     let device = Device::create(&d2d, &d3d.as_dxgi()).unwrap();
-    let mut context = DeviceContext::create(&device, false).unwrap();
+    let mut context = DeviceContext::create(&device).unwrap();
 
     // Create a texture to render to
     let tex = direct3d11::texture2d::Texture2D::create(&d3d)

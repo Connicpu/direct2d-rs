@@ -37,6 +37,6 @@ fn make_context() -> (Factory, DeviceContext) {
         .unwrap();
     let factory = Factory::new().unwrap();
     let dev = Device::create(&factory, &d3d.as_dxgi()).unwrap();
-    let ctx = DeviceContext::create(&dev, false).unwrap();
+    let ctx = DeviceContext::create(&dev).unwrap();
     (factory, ctx)
 }

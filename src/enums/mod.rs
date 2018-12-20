@@ -45,53 +45,32 @@ pub use self::render_target_usage::RenderTargetUsage;
 #[doc(inline)]
 pub use self::stroke_transform_type::StrokeTransformType;
 #[doc(inline)]
+pub use self::window_state::WindowState;
+#[doc(inline)]
 pub use self::sweep_direction::SweepDirection;
 
-//#[doc(hidden)]
-pub mod alpha_mode;
-//#[doc(hidden)]
-pub mod antialias_mode;
-//#[doc(hidden)]
-pub mod arc_size;
-//#[doc(hidden)]
-pub mod bitmap_interpolation_mode;
-//#[doc(hidden)]
-pub mod bitmap_options;
-//#[doc(hidden)]
-pub mod cap_style;
-//#[doc(hidden)]
-pub mod dash_style;
-//#[doc(hidden)]
-pub mod draw_text_options;
-//#[doc(hidden)]
-pub mod extend_mode;
-//#[doc(hidden)]
-pub mod feature_level;
-//#[doc(hidden)]
-pub mod figure_begin;
-//#[doc(hidden)]
-pub mod figure_end;
-//#[doc(hidden)]
-pub mod fill_mode;
-//#[doc(hidden)]
-pub mod gamma;
-//#[doc(hidden)]
-pub mod geometry_relation;
-//#[doc(hidden)]
-pub mod geometry_type;
-//#[doc(hidden)]
-pub mod layer_options;
-//#[doc(hidden)]
-pub mod line_join;
-//#[doc(hidden)]
-pub mod path_segment;
-//#[doc(hidden)]
-pub mod present_options;
-//#[doc(hidden)]
-pub mod render_target_type;
-//#[doc(hidden)]
-pub mod render_target_usage;
-//#[doc(hidden)]
-pub mod stroke_transform_type;
-//#[doc(hidden)]
-pub mod sweep_direction;
+mod alpha_mode;
+mod antialias_mode;
+mod arc_size;
+mod bitmap_interpolation_mode;
+mod bitmap_options;
+mod cap_style;
+mod dash_style;
+mod draw_text_options;
+mod extend_mode;
+mod feature_level;
+mod figure_begin;
+mod figure_end;
+mod fill_mode;
+mod gamma;
+mod geometry_relation;
+mod geometry_type;
+mod layer_options;
+mod line_join;
+mod path_segment;
+mod present_options;
+mod render_target_type;
+mod render_target_usage;
+mod stroke_transform_type;
+mod sweep_direction;
+mod window_state;

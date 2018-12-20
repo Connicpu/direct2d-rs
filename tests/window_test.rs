@@ -52,7 +52,7 @@ fn paint_window(window: &mut Window) {
     rt.fill_rectangle([50.0, 50.0, 750.0, 430.0], &accent_brush);
     rt.fill_rectangle([150.0, 150.0, 650.0, 330.0], &foreground_brush);
 
-    let path = build_path(&rt.get_factory());
+    let path = build_path(&rt.factory());
 
     let layer = Layer::create(rt, None).unwrap();
     rt.push_layer(&layer)
@@ -172,8 +172,7 @@ fn window_test() {
 }
 
 fn build_path(factory: &Factory) -> Path {
-    let mut path = Path::create(factory).unwrap();
-    path.open()
+    let path = Path::create(factory)
         .unwrap()
         .fill_mode(FillMode::Winding)
         // Square with a triangle base
@@ -214,7 +213,7 @@ fn build_path(factory: &Factory) -> Path {
                     .add_line(Point2f::new(0.25, 0.75))
             },
         )
-        .close()
+        .finish()
         .unwrap();
 
     path

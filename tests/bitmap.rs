@@ -15,7 +15,7 @@ fn empty_bitmap() {
         .build()
         .unwrap();
     let device = Device::create(&d2d, &d3d.as_dxgi()).unwrap();
-    let context = DeviceContext::create(&device, false).unwrap();
+    let context = DeviceContext::create(&device).unwrap();
 
     Bitmap::create(&context)
         .with_blank_image((64, 64))

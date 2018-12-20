@@ -1,6 +1,5 @@
 use crate::brush::Brush;
 use crate::enums::{AntialiasMode, BitmapInterpolationMode, DrawTextOptions};
-use crate::error::Error;
 use crate::geometry::Geometry;
 use crate::image::Bitmap;
 use crate::layer::{Layer, LayerBuilder};
@@ -8,6 +7,7 @@ use crate::stroke_style::StrokeStyle;
 
 use checked_enum::UncheckedEnum;
 use com_wrapper::ComWrapper;
+use dcommon::error::Error;
 use directwrite::{TextFormat, TextLayout};
 use math2d::*;
 use winapi::shared::winerror::SUCCEEDED;
@@ -17,8 +17,10 @@ use winapi::um::unknwnbase::IUnknown;
 use wio::com::ComPtr;
 use wio::wide::ToWide;
 
+pub use self::hwnd::HwndRenderTarget;
 pub use self::render_tag::RenderTag;
 
+pub mod hwnd;
 pub mod render_tag;
 
 #[repr(C)]
@@ -29,8 +31,13 @@ pub struct RenderTarget {
 
 impl RenderTarget {
     #[inline]
-    pub fn get_size(&self) -> Sizef {
+    pub fn size(&self) -> Sizef {
         unsafe { self.rt().GetSize().into() }
+    }
+
+    #[inline]
+    pub fn pixel_size(&self) -> Sizeu {
+        unsafe { self.rt().GetPixelSize().into() }
     }
 
     #[inline]
@@ -53,6 +60,7 @@ impl RenderTarget {
         let mut tag2 = 0;
         unsafe {
             let hr = self.rt().EndDraw(&mut tag1, &mut tag2);
+            self.state |= RTState::NOT_DRAWING;
 
             if SUCCEEDED(hr) {
                 Ok(())
@@ -117,7 +125,7 @@ impl RenderTarget {
         &mut self,
         p0: impl Into<Point2f>,
         p1: impl Into<Point2f>,
-        brush: &impl Brush,
+        brush: &Brush,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
     ) {
@@ -132,7 +140,7 @@ impl RenderTarget {
             self.rt().DrawLine(
                 p0.into().into(),
                 p1.into().into(),
-                brush.get_ptr(),
+                brush.get_raw(),
                 stroke_width,
                 stroke_style,
             )
@@ -143,7 +151,7 @@ impl RenderTarget {
     pub fn draw_rectangle(
         &mut self,
         rect: impl Into<Rectf>,
-        brush: &impl Brush,
+        brush: &Brush,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
     ) {
@@ -157,7 +165,7 @@ impl RenderTarget {
 
             self.rt().DrawRectangle(
                 &rect.into().into(),
-                brush.get_ptr(),
+                brush.get_raw(),
                 stroke_width,
                 stroke_style,
             );
@@ -165,12 +173,12 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn fill_rectangle(&mut self, rect: impl Into<Rectf>, brush: &impl Brush) {
+    pub fn fill_rectangle(&mut self, rect: impl Into<Rectf>, brush: &Brush) {
         self.assert_can_draw("fill_rectangle");
 
         unsafe {
             self.rt()
-                .FillRectangle(&rect.into().into(), brush.get_ptr());
+                .FillRectangle(&rect.into().into(), brush.get_raw());
         }
     }
 
@@ -178,7 +186,7 @@ impl RenderTarget {
     pub fn draw_rounded_rectangle(
         &mut self,
         rect: impl Into<RoundedRect>,
-        brush: &impl Brush,
+        brush: &Brush,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
     ) {
@@ -192,7 +200,7 @@ impl RenderTarget {
 
             self.rt().DrawRoundedRectangle(
                 &rect.into().into(),
-                brush.get_ptr(),
+                brush.get_raw(),
                 stroke_width,
                 stroke_style,
             );
@@ -200,12 +208,12 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn fill_rounded_rectangle(&mut self, rect: impl Into<RoundedRect>, brush: &impl Brush) {
+    pub fn fill_rounded_rectangle(&mut self, rect: impl Into<RoundedRect>, brush: &Brush) {
         self.assert_can_draw("fill_rounded_rectangle");
 
         unsafe {
             self.rt()
-                .FillRoundedRectangle(&rect.into().into(), brush.get_ptr());
+                .FillRoundedRectangle(&rect.into().into(), brush.get_raw());
         }
     }
 
@@ -213,7 +221,7 @@ impl RenderTarget {
     pub fn draw_ellipse(
         &mut self,
         ellipse: impl Into<Ellipse>,
-        brush: &impl Brush,
+        brush: &Brush,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
     ) {
@@ -227,7 +235,7 @@ impl RenderTarget {
 
             self.rt().DrawEllipse(
                 &ellipse.into().into(),
-                brush.get_ptr(),
+                brush.get_raw(),
                 stroke_width,
                 stroke_style,
             );
@@ -235,20 +243,20 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn fill_ellipse(&mut self, ellipse: impl Into<Ellipse>, brush: &impl Brush) {
+    pub fn fill_ellipse(&mut self, ellipse: impl Into<Ellipse>, brush: &Brush) {
         self.assert_can_draw("fill_ellipse");
 
         unsafe {
             self.rt()
-                .FillEllipse(&ellipse.into().into(), brush.get_ptr());
+                .FillEllipse(&ellipse.into().into(), brush.get_raw());
         }
     }
 
     #[inline]
     pub fn draw_geometry(
         &mut self,
-        geometry: &impl Geometry,
-        brush: &impl Brush,
+        geometry: &Geometry,
+        brush: &Brush,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
     ) {
@@ -261,8 +269,8 @@ impl RenderTarget {
             };
 
             self.rt().DrawGeometry(
-                geometry.get_ptr(),
-                brush.get_ptr(),
+                geometry.get_raw(),
+                brush.get_raw(),
                 stroke_width,
                 stroke_style,
             );
@@ -270,27 +278,27 @@ impl RenderTarget {
     }
 
     #[inline]
-    pub fn fill_geometry(&mut self, geometry: &impl Geometry, brush: &impl Brush) {
+    pub fn fill_geometry(&mut self, geometry: &Geometry, brush: &Brush) {
         self.assert_can_draw("fill_geometry");
 
         unsafe {
             self.rt()
-                .FillGeometry(geometry.get_ptr(), brush.get_ptr(), std::ptr::null_mut());
+                .FillGeometry(geometry.get_raw(), brush.get_raw(), std::ptr::null_mut());
         }
     }
 
     #[inline]
     pub fn fill_geometry_with_opacity(
         &mut self,
-        geometry: &impl Geometry,
-        brush: &impl Brush,
-        opacity_brush: &impl Brush,
+        geometry: &Geometry,
+        brush: &Brush,
+        opacity_brush: &Brush,
     ) {
         self.assert_can_draw("fill_geometry_with_opacity");
 
         unsafe {
             self.rt()
-                .FillGeometry(geometry.get_ptr(), brush.get_ptr(), opacity_brush.get_ptr());
+                .FillGeometry(geometry.get_raw(), brush.get_raw(), opacity_brush.get_raw());
         }
     }
 
@@ -322,7 +330,7 @@ impl RenderTarget {
         text: &str,
         format: &TextFormat,
         layout_rect: impl Into<Rectf>,
-        foreground_brush: &impl Brush,
+        foreground_brush: &Brush,
         options: DrawTextOptions,
     ) {
         self.assert_can_draw("draw_text");
@@ -336,7 +344,7 @@ impl RenderTarget {
                 text.len() as u32,
                 format,
                 &layout_rect.into().into(),
-                foreground_brush.get_ptr(),
+                foreground_brush.get_raw(),
                 options.0,
                 DWRITE_MEASURING_MODE_NATURAL,
             );
@@ -348,7 +356,7 @@ impl RenderTarget {
         &mut self,
         origin: impl Into<Point2f>,
         layout: &TextLayout,
-        brush: &impl Brush,
+        brush: &Brush,
         options: DrawTextOptions,
     ) {
         self.assert_can_draw("draw_text_layout");
@@ -356,7 +364,7 @@ impl RenderTarget {
         unsafe {
             let layout = layout.get_raw();
             self.rt()
-                .DrawTextLayout(origin.into().into(), layout, brush.get_ptr(), options.0);
+                .DrawTextLayout(origin.into().into(), layout, brush.get_raw(), options.0);
         }
     }
 
@@ -511,6 +519,13 @@ impl ComWrapper for RenderTarget {
 
 unsafe impl Send for RenderTarget {}
 unsafe impl Sync for RenderTarget {}
+
+impl std::ops::Deref for RenderTarget {
+    type Target = crate::resource::Resource;
+    fn deref(&self) -> &Self::Target {
+        unsafe { std::mem::transmute(self) }
+    }
+}
 
 impl std::fmt::Debug for RenderTarget {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {

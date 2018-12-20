@@ -3,7 +3,7 @@ extern crate rand;
 extern crate winapi;
 
 use direct2d::render_target::HwndRenderTarget;
-use direct2d::{Error, Factory};
+use direct2d::Factory;
 use rand::{Rng, SeedableRng, XorShiftRng};
 
 const SEED: [u32; 4] = [0x4695b3d0, 0x3e1e33b9, 0xaec57978, 0xd44c5bad];

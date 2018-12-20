@@ -16,7 +16,6 @@ default-target = "x86_64-pc-windows-msvc"
 
 [target.'cfg(windows)'.dependencies]
 wio = "0.2"
-either = "1.5.0"
 
 checked-enum = "0.1.1-alpha1"
 auto-enum = "0.2.0-alpha1"
@@ -32,18 +31,28 @@ path = "../dxgi"
 version = "0.3.0-alpha3"
 path = "../directwrite"
 
-[target.'cfg(windows)'.dependencies.winapi]
-version = "0.3.5"
-features = ["d2d1_1", "d3d11", "dwrite", "winbase", "libloaderapi", "errhandlingapi", "windef", "winuser"]
+[target.'cfg(windows)'.dependencies.dcommon]
+version = "0.3.0-alpha1"
+path = "../dcommon"
+
+[target.'cfg(windows)'.dependencies.direct3d11]
+version = "0.3.0-alpha1"
+path = "../direct3d11"
 
 [target.'cfg(windows)'.dependencies.math2d]
 version = "0.2.0-alpha1"
 path = "../math2d"
 features = ["d2d"]
 
+[target.'cfg(windows)'.dependencies.winapi]
+version = "0.3.6"
+features = [
+    "d2d1_3", "d3d11", "dwrite", "dxgi", "winbase", "libloaderapi", "errhandlingapi", "windef",
+    "winuser"
+]
+
 [target.'cfg(windows)'.dev-dependencies]
 lazy_static = "1.0"
-direct3d11 = { version = "0.3.0-alpha1", path = "../direct3d11" }
 image = "0.18.0"
 rand = "0.4"
 

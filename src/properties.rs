@@ -1,30 +1,13 @@
-use crate::enums::AlphaMode;
+use crate::descriptions::PixelFormat;
+use crate::enums::BitmapOptions;
 
 use math2d::Matrix3x2f;
 use math2d::Point2f;
-use dxgi::enums::Format;
 use winapi::um::d2d1::{
     D2D1_BITMAP_PROPERTIES, D2D1_BRUSH_PROPERTIES, D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES,
     D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES,
 };
-use winapi::um::dcommon::D2D1_PIXEL_FORMAT;
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
-pub struct PixelFormat {
-    pub format: Format,
-    pub alpha_mode: AlphaMode,
-}
-
-impl From<PixelFormat> for D2D1_PIXEL_FORMAT {
-    #[inline]
-    fn from(pf: PixelFormat) -> Self {
-        D2D1_PIXEL_FORMAT {
-            format: pf.format as u32,
-            alphaMode: pf.alpha_mode as u32,
-        }
-    }
-}
+use winapi::um::d2d1_1::D2D1_BITMAP_PROPERTIES1;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -41,6 +24,28 @@ impl From<BitmapProperties> for D2D1_BITMAP_PROPERTIES {
             pixelFormat: bp.pixel_format.into(),
             dpiX: bp.dpi_x,
             dpiY: bp.dpi_y,
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct BitmapProperties1 {
+    pub pixel_format: PixelFormat,
+    pub dpi_x: f32,
+    pub dpi_y: f32,
+    pub options: BitmapOptions,
+}
+
+impl From<BitmapProperties1> for D2D1_BITMAP_PROPERTIES1 {
+    #[inline]
+    fn from(bp: BitmapProperties1) -> Self {
+        D2D1_BITMAP_PROPERTIES1 {
+            pixelFormat: bp.pixel_format.into(),
+            dpiX: bp.dpi_x,
+            dpiY: bp.dpi_y,
+            bitmapOptions: bp.options.0,
+            colorContext: std::ptr::null_mut(), // TODO: ColorContext
         }
     }
 }

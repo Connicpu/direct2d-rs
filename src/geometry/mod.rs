@@ -1,74 +1,49 @@
 use crate::enums::*;
 use crate::error::D2DResult;
-use crate::factory::Factory;
-use math2d::{Matrix3x2f, Point2f, Rectf, Vector2f};
 use crate::stroke_style::StrokeStyle;
+use crate::resource::Resource;
 
 use std::{mem, ptr};
 
+use dcommon::helpers::deref_com_wrapper;
 use checked_enum::UncheckedEnum;
+use com_wrapper::ComWrapper;
+use math2d::{Matrix3x2f, Point2f, Rectf, Vector2f};
 use winapi::shared::minwindef::*;
 use winapi::shared::winerror::*;
 use winapi::um::d2d1::*;
-use winapi::um::d2d1_1::*;
 use winapi::um::d2dbasetypes::{D2D1_POINT_2F, D2D1_RECT_F};
 use wio::com::ComPtr;
 
-#[doc(inline)]
-pub use self::ellipse::Ellipse;
-#[doc(inline)]
-pub use self::generic::GenericGeometry;
-#[doc(inline)]
-pub use self::group::Group;
-#[doc(inline)]
-pub use self::path::Path;
-#[doc(inline)]
-pub use self::rectangle::Rectangle;
-#[doc(inline)]
-pub use self::rounded_rectangle::RoundedRectangle;
-#[doc(inline)]
-pub use self::transformed::Transformed;
+pub use self::ellipse::EllipseGeometry;
+pub use self::group::GroupGeometry;
+pub use self::path::PathGeometry;
+pub use self::rectangle::RectangleGeometry;
+pub use self::rounded_rectangle::RoundedRectangleGeometry;
+pub use self::transformed::TransformedGeometry;
 
 pub mod ellipse;
-pub mod generic;
 pub mod group;
 pub mod path;
 pub mod rectangle;
 pub mod rounded_rectangle;
 pub mod transformed;
 
-pub trait Geometry {
-    unsafe fn get_ptr(&self) -> *mut ID2D1Geometry;
+#[derive(ComWrapper, Clone)]
+#[com(send, sync, debug)]
+pub struct Geometry {
+    ptr: ComPtr<ID2D1Geometry>,
+}
 
-    #[inline]
-    fn get_factory(&self) -> Factory {
-        unsafe {
-            let geom = self.get_ptr();
-            let mut ptr = ptr::null_mut();
-            (*geom).GetFactory(&mut ptr);
-
-            let ptr: ComPtr<ID2D1Factory1> = ComPtr::from_raw(ptr).cast().unwrap();
-            Factory::from_raw(ptr.into_raw())
-        }
-    }
-
-    #[inline]
-    fn to_generic(&self) -> GenericGeometry {
-        unsafe {
-            let ptr = self.get_ptr();
-            (*ptr).AddRef();
-            GenericGeometry::from_raw(ptr)
-        }
-    }
-
+impl Geometry {
     #[inline]
     /// Retrieve the bounds of the geometry, with an optional applied transform.
     ///
     /// **NOTE:** I'm not sure if this will ever return None, but the API has an
     /// error code so it could. The MSDN documentation is very vague on this.
-    fn get_bounds(&self, world_transform: Option<&Matrix3x2f>) -> D2DResult<Rectf> {
+    pub fn bounds(&self, world_transform: Option<&Matrix3x2f>) -> D2DResult<Rectf> {
         unsafe {
-            let ptr = self.get_ptr();
+            let ptr = self.get_raw();
             let matrix = match world_transform {
                 Some(mat) => mat as *const _ as *const _,
                 None => ptr::null(),
@@ -87,14 +62,14 @@ pub trait Geometry {
     #[inline]
     /// Get the bounds of the corresponding geometry after it has been widened or have
     /// an optional pen style applied.
-    fn get_widened_bounds(
+    pub fn widened_bounds(
         &self,
         stroke_width: f32,
         stroke_style: Option<&StrokeStyle>,
         world_transform: Option<&Matrix3x2f>,
     ) -> D2DResult<Rectf> {
         unsafe {
-            let ptr = self.get_ptr();
+            let ptr = self.get_raw();
             let matrix = match world_transform {
                 Some(mat) => &mat as *const _ as *const _,
                 None => ptr::null(),
@@ -124,7 +99,7 @@ pub trait Geometry {
     #[inline]
     /// Checks to see whether the corresponding penned and widened geometry contains the
     /// given point.
-    fn stroke_contains_point(
+    pub fn stroke_contains_point(
         &self,
         point: Point2f,
         stroke_width: f32,
@@ -132,7 +107,7 @@ pub trait Geometry {
         world_transform: Option<&Matrix3x2f>,
     ) -> D2DResult<bool> {
         unsafe {
-            let ptr = self.get_ptr();
+            let ptr = self.get_raw();
             let matrix = match world_transform {
                 Some(mat) => mat as *const _ as *const _,
                 None => ptr::null(),
@@ -162,13 +137,13 @@ pub trait Geometry {
 
     #[inline]
     /// Test whether the given fill of this geometry would contain this point.
-    fn fill_contains_point(
+    pub fn fill_contains_point(
         &self,
         point: Point2f,
         world_transform: Option<&Matrix3x2f>,
     ) -> D2DResult<bool> {
         unsafe {
-            let ptr = self.get_ptr();
+            let ptr = self.get_raw();
             let matrix = match world_transform {
                 Some(mat) => mat as *const _ as *const _,
                 None => ptr::null(),
@@ -192,14 +167,14 @@ pub trait Geometry {
 
     #[inline]
     /// Compare how one geometry intersects or contains another geometry.
-    fn compare_with_geometry<T: Geometry>(
+    pub fn compare_with_geometry(
         &self,
-        input: &T,
+        input: &Geometry,
         input_transform: Option<&Matrix3x2f>,
     ) -> D2DResult<UncheckedEnum<GeometryRelation>> {
         unsafe {
-            let self_ptr = self.get_ptr();
-            let input_ptr = input.get_ptr();
+            let self_ptr = self.get_raw();
+            let input_ptr = input.get_raw();
 
             let matrix = match input_transform {
                 Some(mat) => mat as *const _ as *const _,
@@ -224,9 +199,9 @@ pub trait Geometry {
 
     #[inline]
     /// Computes the area of the geometry.
-    fn compute_area(&self, world_transform: Option<&Matrix3x2f>) -> D2DResult<f32> {
+    pub fn compute_area(&self, world_transform: Option<&Matrix3x2f>) -> D2DResult<f32> {
         unsafe {
-            let ptr = self.get_ptr();
+            let ptr = self.get_raw();
             let matrix = match world_transform {
                 Some(mat) => mat as *const _ as *const _,
                 None => ptr::null(),
@@ -246,9 +221,9 @@ pub trait Geometry {
 
     #[inline]
     /// Computes the length of the geometry.
-    fn compute_length(&self, world_transform: Option<&Matrix3x2f>) -> D2DResult<f32> {
+    pub fn compute_length(&self, world_transform: Option<&Matrix3x2f>) -> D2DResult<f32> {
         unsafe {
-            let ptr = self.get_ptr();
+            let ptr = self.get_raw();
             let matrix = match world_transform {
                 Some(mat) => mat as *const _ as *const _,
                 None => ptr::null(),
@@ -268,13 +243,13 @@ pub trait Geometry {
 
     #[inline]
     /// Computes the point and tangent at a given distance along the path.
-    fn compute_point_at_length(
+    pub fn compute_point_at_length(
         &self,
         length: f32,
         world_transform: Option<&Matrix3x2f>,
     ) -> D2DResult<(Point2f, Vector2f)> {
         unsafe {
-            let ptr = self.get_ptr();
+            let ptr = self.get_raw();
             let matrix = match world_transform {
                 Some(mat) => mat as *const _ as *const _,
                 None => ptr::null(),
@@ -299,19 +274,19 @@ pub trait Geometry {
     }
 
     #[inline]
-    fn transformed(&self, transform: &Matrix3x2f) -> D2DResult<Transformed> {
-        let factory = self.get_factory();
+    pub fn transformed(&self, transform: &Matrix3x2f) -> D2DResult<TransformedGeometry> {
+        let factory = self.factory();
         unsafe {
             let raw_factory = factory.get_raw();
             let mut geometry = ptr::null_mut();
             let hr = (*raw_factory).CreateTransformedGeometry(
-                self.get_ptr(),
+                self.get_raw(),
                 transform as *const _ as *const _,
                 &mut geometry,
             );
 
             if SUCCEEDED(hr) {
-                Ok(Transformed::from_raw(geometry))
+                Ok(TransformedGeometry::from_raw(geometry))
             } else {
                 Err(hr.into())
             }
@@ -319,9 +294,13 @@ pub trait Geometry {
     }
 }
 
-impl<'a, T: Geometry> Geometry for &'a T {
-    #[inline]
-    unsafe fn get_ptr(&self) -> *mut ID2D1Geometry {
-        T::get_ptr(*self)
+impl std::ops::Deref for Geometry {
+    type Target = Resource;
+    fn deref(&self) -> &Resource {
+        unsafe { deref_com_wrapper(self) }
     }
 }
+
+pub unsafe trait GeometryType: ComWrapper {}
+
+unsafe impl GeometryType for Geometry {}

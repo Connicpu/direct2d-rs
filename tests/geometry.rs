@@ -99,9 +99,7 @@ fn path_geometry() {
         - -
     */
 
-    let mut path = Path::create(&factory).unwrap();
-    path.open()
-        .unwrap()
+    let mut path = Path::create(&factory).unwrap()
         .fill_mode(FillMode::Winding)
         // Square with a triangle base
         .with_figure(Point2f::new(0.0, 0.0), FigureBegin::Filled, FigureEnd::Closed, |figure| {
@@ -126,10 +124,8 @@ fn path_geometry() {
                 .add_line(Point2f::new(0.75, 0.75))
                 .add_line(Point2f::new(0.25, 0.75))
         })
-        .close()
+        .finish()
         .unwrap();
-
-    assert!(path.open().is_err());
 
     let real_area = 1.25;
     let area = path.compute_area(None).unwrap();

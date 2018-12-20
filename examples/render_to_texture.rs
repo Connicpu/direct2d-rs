@@ -113,7 +113,7 @@ fn main() {
         .with_format(Format::R8G8B8A8Unorm)
         .with_bind_flags(BindFlags::NONE)
         .with_usage(Usage::Staging)
-        .with_cpu_access_flags(CpuAccessFlags::READ)
+        .with_cpu_access(CpuAccessFlags::READ)
         .build()
         .unwrap();
 

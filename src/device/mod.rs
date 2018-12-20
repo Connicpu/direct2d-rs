@@ -1,5 +1,5 @@
 use crate::error::D2DResult;
-use crate::factory::Factory;
+use crate::factory::Factory1;
 
 use std::ptr;
 
@@ -16,7 +16,7 @@ pub struct Device {
 
 impl Device {
     #[inline]
-    pub fn create(factory: &Factory, dxgi: &DxgiDevice) -> D2DResult<Device> {
+    pub fn create(factory: &Factory1, dxgi: &DxgiDevice) -> D2DResult<Device> {
         unsafe {
             let mut ptr = ptr::null_mut();
             let hr = (*factory.get_raw()).CreateDevice(dxgi.get_raw(), &mut ptr);

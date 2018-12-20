@@ -9,7 +9,6 @@ use std::ptr;
 use com_wrapper::ComWrapper;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1_1::ID2D1DeviceContext;
-use winapi::um::unknwnbase::IUnknown;
 use wio::com::ComPtr;
 
 #[repr(C)]
@@ -33,10 +32,7 @@ impl DeviceContext {
     }
 
     #[inline]
-    pub fn set_target<I>(&mut self, target: &I)
-    where
-        I: Image,
-    {
+    pub fn set_target(&mut self, target: &Image) {
         /*if !self.state.is_set(RTState::NOT_DRAWING) {
             panic!(
                 "You should not call `DeviceContext::set_target` while \
@@ -45,7 +41,7 @@ impl DeviceContext {
         }*/
 
         unsafe {
-            self.ptr.SetTarget(target.get_ptr());
+            self.ptr.SetTarget(target.get_raw());
             self.state.clear(RTState::NO_TARGET_IMAGE);
         }
     }
@@ -54,42 +50,17 @@ impl DeviceContext {
 impl std::ops::Deref for DeviceContext {
     type Target = RenderTarget;
     fn deref(&self) -> &RenderTarget {
-        unsafe { crate::helpers::deref_com_wrapper(self) }
+        unsafe { dcommon::helpers::deref_com_wrapper(self) }
     }
 }
 
 impl std::ops::DerefMut for DeviceContext {
     fn deref_mut(&mut self) -> &mut RenderTarget {
-        unsafe { crate::helpers::deref_com_wrapper_mut(self) }
-    }
-}
-
-pub trait DeviceContextType: RenderTargetType {
-    /// Try to cast this factory to a different factory type
-    fn try_cast<R: DeviceContextType>(self) -> Option<R>
-    where
-        Self: Sized,
-    {
-        unsafe {
-            let ptr = self.into_ptr();
-            Some(ComWrapper::from_ptr(ptr.cast().ok()?))
-        }
-    }
-
-    /// Try to temporarily upcast this type to perform an operation
-    fn try_with_cast<R: DeviceContextType, V>(&self, f: impl FnOnce(&R) -> V) -> Option<V> {
-        unsafe {
-            let ptr = self.get_raw() as *mut IUnknown;
-            (*ptr).AddRef();
-            let ptr = ComPtr::from_raw(ptr);
-            let obj = R::from_ptr(ptr.cast().ok()?);
-            Some(f(&obj))
-        }
+        unsafe { dcommon::helpers::deref_com_wrapper_mut(self) }
     }
 }
 
 impl RenderTargetType for DeviceContext {}
-impl DeviceContextType for DeviceContext {}
 
 impl ComWrapper for DeviceContext {
     type Interface = ID2D1DeviceContext;

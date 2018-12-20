@@ -1,14 +1,22 @@
 use winapi::um::d2d1::ID2D1Image;
+use wio::com::ComPtr;
 
-#[doc(inline)]
 pub use self::bitmap::Bitmap;
-#[doc(inline)]
-pub use self::generic::GenericImage;
+pub use self::bitmap1::Bitmap1;
 
 pub mod bitmap;
-pub mod generic;
+pub mod bitmap1;
 
-pub trait Image {
-    #[inline]
-    unsafe fn get_ptr(&self) -> *mut ID2D1Image;
+#[repr(transparent)]
+#[derive(ComWrapper)]
+#[com(send, sync, debug)]
+pub struct Image {
+    ptr: ComPtr<ID2D1Image>,
+}
+
+impl std::ops::Deref for Image {
+    type Target = crate::resource::Resource;
+    fn deref(&self) -> &Self::Target {
+        unsafe { dcommon::helpers::deref_com_wrapper(self) }
+    }
 }
