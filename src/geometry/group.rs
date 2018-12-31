@@ -38,14 +38,22 @@ impl GroupGeometry {
         let list = geometry.raw_geometry_list();
         let list = list.as_ref();
 
+        eprintln!("{:?}", list);
+
         unsafe {
+            for i in 0..list.len() as isize {
+                eprintln!("[{}]: {:p}", i, *list.as_ptr().offset(i));
+            }
+
             let mut ptr = ptr::null_mut();
             let hr = (*factory.get_raw()).CreateGeometryGroup(
                 fill_mode as u32,
-                list.as_ptr() as *mut _,
+                list.as_ptr() as *mut *mut _,
                 list.len() as u32,
                 &mut ptr,
             );
+
+            eprintln!("made?");
 
             if SUCCEEDED(hr) {
                 Ok(GroupGeometry::from_raw(ptr))

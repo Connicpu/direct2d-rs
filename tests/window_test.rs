@@ -9,10 +9,10 @@ extern crate math2d;
 use math2d::*;
 use direct2d::brush::SolidColorBrush;
 use direct2d::enums::{FigureBegin, FigureEnd, FillMode};
-use direct2d::geometry::Path;
+use direct2d::geometry::PathGeometry;
 use direct2d::layer::Layer;
 use direct2d::render_target::HwndRenderTarget;
-use direct2d::{Factory, RenderTarget};
+use direct2d::factory::Factory;
 use std::{mem, ptr};
 
 use winapi::ctypes::c_int;
@@ -80,9 +80,18 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND, msg: UINT, wp: WPARAM, lp: LPARAM
     match msg {
         WM_CREATE => {
             // Set the window pointer into the creation parameters
-            let cs: &CREATESTRUCTW = mem::transmute(lp);
-            SetWindowLongPtrW(hwnd, GWLP_USERDATA, mem::transmute(cs.lpCreateParams));
-            let window: &mut Window = mem::transmute(cs.lpCreateParams);
+            let ptr = lp as *const CREATESTRUCTW;
+            if ptr.is_null() {
+                std::process::abort();
+            }
+            let cs = &*ptr;
+
+            let ptr = cs.lpCreateParams as *mut Window;
+            SetWindowLongPtrW(hwnd, GWLP_USERDATA, ptr as _);
+            if ptr.is_null() {
+                std::process::abort();
+            }
+            let window = &mut *ptr;
 
             // Create the direct2d stuff
             let target = HwndRenderTarget::create(&window.factory)
@@ -96,14 +105,15 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND, msg: UINT, wp: WPARAM, lp: LPARAM
             0
         }
         WM_PAINT => {
-            let window: &mut Window = mem::transmute(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
-            paint_window(window);
-
+            let ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut Window;
+            if !ptr.is_null() {
+                let window = &mut *ptr;
+                paint_window(window);
+            }
             DefWindowProcW(hwnd, msg, wp, lp)
         }
         WM_TIMER => {
             DestroyWindow(hwnd);
-
             0
         }
         _ => DefWindowProcW(hwnd, msg, wp, lp),
@@ -171,8 +181,8 @@ fn window_test() {
     unsafe { real_window_test() };
 }
 
-fn build_path(factory: &Factory) -> Path {
-    let path = Path::create(factory)
+fn build_path(factory: &Factory) -> PathGeometry {
+    let path = PathGeometry::create(factory)
         .unwrap()
         .fill_mode(FillMode::Winding)
         // Square with a triangle base

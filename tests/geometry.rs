@@ -1,10 +1,10 @@
 extern crate direct2d;
 extern crate math2d;
 
-use direct2d::enums::{FigureBegin, FigureEnd, FillMode};
-use direct2d::geometry::{Geometry, Group, Path, Rectangle};
+use direct2d::enums::FillMode;
+use direct2d::factory::Factory;
+use direct2d::geometry::{GroupGeometry, PathGeometry, RectangleGeometry};
 use math2d::*;
-use direct2d::Factory;
 
 const EPSILON: f32 = 0.0001;
 
@@ -13,7 +13,7 @@ fn rectangle_area() {
     let factory = Factory::new().unwrap();
 
     let rect = Rectf::new(0.0, 0.0, 1.0, 1.0);
-    let rectangle = Rectangle::create(&factory, &rect).unwrap();
+    let rectangle = RectangleGeometry::create(&factory, &rect).unwrap();
 
     let area = rectangle.compute_area(None).unwrap();
     assert!((area - 1.0).abs() <= EPSILON);
@@ -24,7 +24,7 @@ fn rectangle_length() {
     let factory = Factory::new().unwrap();
 
     let rect = Rectf::new(0.0, 0.0, 1.0, 1.0);
-    let rectangle = Rectangle::create(&factory, &rect).unwrap();
+    let rectangle = RectangleGeometry::create(&factory, &rect).unwrap();
 
     let area = rectangle.compute_length(None).unwrap();
     assert!((area - 4.0).abs() <= EPSILON);
@@ -32,15 +32,33 @@ fn rectangle_length() {
 
 #[test]
 fn combined_area() {
+    if true {
+        panic!("FIXME: Segfault :( No idea what invariant I'm breaking");
+    }
+
+    use direct2d::enums::FillMode::*;
+
     let factory = Factory::new().unwrap();
 
+    eprintln!("1");
+
     let rect1 = Rectf::new(0.0, 0.0, 1.0, 1.0);
-    let rectangle1 = Rectangle::create(&factory, &rect1).unwrap();
+    let rectangle1 = RectangleGeometry::create(&factory, &rect1).unwrap();
+
+    eprintln!("2");
 
     let rect2 = Rectf::new(0.0, 1.0, 1.0, 2.0);
-    let rectangle2 = Rectangle::create(&factory, &rect2).unwrap();
+    let rectangle2 = RectangleGeometry::create(&factory, &rect2).unwrap();
 
-    let combined = Group::create(&factory, FillMode::Winding, [&rectangle1, &rectangle2]).unwrap();
+    eprintln!("3");
+
+    let list = (rectangle1, rectangle2);
+
+    eprintln!("{:?}", list);
+
+    let combined = GroupGeometry::create(&factory, Winding, list).unwrap();
+
+    eprintln!("4");
 
     let area = combined.compute_area(None).unwrap();
     assert!((area - 2.0).abs() <= EPSILON);
@@ -51,7 +69,7 @@ fn transformed_area() {
     let factory = Factory::new().unwrap();
 
     let rect = Rectf::new(0.0, 0.0, 1.0, 1.0);
-    let rectangle = Rectangle::create(&factory, &rect).unwrap();
+    let rectangle = RectangleGeometry::create(&factory, &rect).unwrap();
 
     for x in 1..5 {
         for y in 1..5 {
@@ -86,6 +104,8 @@ fn transformed_area() {
 
 #[test]
 fn path_geometry() {
+    use direct2d::enums::{FigureBegin::*, FigureEnd::*};
+
     let factory = Factory::new().unwrap();
 
     /* It looks something like this:
@@ -99,46 +119,35 @@ fn path_geometry() {
         - -
     */
 
-    let mut path = Path::create(&factory).unwrap()
+    let path = PathGeometry::create(&factory)
+        .unwrap()
         .fill_mode(FillMode::Winding)
         // Square with a triangle base
-        .with_figure(Point2f::new(0.0, 0.0), FigureBegin::Filled, FigureEnd::Closed, |figure| {
-            figure
-                .add_line(Point2f::new(1.0, 0.0))
-                .add_line(Point2f::new(1.0, 1.0))
-                .add_line(Point2f::new(0.5, 1.5))
-                .add_line(Point2f::new(0.0, 1.0))
-                .add_line(Point2f::new(0.0, 0.0))
-        })
+        .with_line_figure(Filled, Closed, &[
+            (0.0, 0.0).into(),
+            (1.0, 0.0).into(),
+            (1.0, 1.0).into(),
+            (0.5, 1.5).into(),
+            (0.0, 1.0).into(),
+        ])
         // Add a triangle hat
-        .with_figure(Point2f::new(0.0, 0.0), FigureBegin::Filled, FigureEnd::Closed, |figure| {
-            figure
-                .add_line(Point2f::new(0.5, -0.5))
-                .add_line(Point2f::new(1.0, 0.0))
-        })
+        .with_line_figure(Filled, Closed, &[
+            (0.0, 0.0).into(),
+            (0.5, -0.5).into(),
+            (1.0, 0.0).into()
+        ])
         // Cut a hole in the middle
         .fill_mode(FillMode::Alternate)
-        .with_figure(Point2f::new(0.25, 0.25), FigureBegin::Filled, FigureEnd::Closed, |figure| {
-            figure
-                .add_line(Point2f::new(0.75, 0.25))
-                .add_line(Point2f::new(0.75, 0.75))
-                .add_line(Point2f::new(0.25, 0.75))
-        })
+        .with_line_figure(Filled, Closed, &[
+            (0.25, 0.25).into(),
+            (0.75, 0.25).into(),
+            (0.75, 0.75).into(),
+            (0.25, 0.75).into(),
+        ])
         .finish()
         .unwrap();
 
     let real_area = 1.25;
     let area = path.compute_area(None).unwrap();
     assert!((area - real_area).abs() <= EPSILON);
-}
-
-#[test]
-fn to_generic_and_back() {
-    let factory = Factory::new().unwrap();
-
-    let rect = Rectf::new(0.0, 0.0, 1.0, 1.0);
-    let rectangle = Rectangle::create(&factory, &rect).unwrap();
-    let generic = rectangle.to_generic();
-    let rectangle = generic.as_rectangle().unwrap();
-    assert_eq!(rectangle.get_rect(), rect);
 }

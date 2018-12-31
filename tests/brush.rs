@@ -3,7 +3,7 @@ extern crate direct2d;
 extern crate direct3d11;
 
 use direct2d::brush::SolidColorBrush;
-use direct2d::{Device, DeviceContext, Factory};
+use direct2d::{Device, DeviceContext, factory::Factory1};
 use direct3d11::enums::CreateDeviceFlags;
 use math2d::*;
 
@@ -24,18 +24,18 @@ fn solid_color() {
             .build()
             .unwrap();
 
-        let brush_color = brush.get_color();
+        let brush_color = brush.color();
 
         assert_eq!(color, brush_color);
     }
 }
 
-fn make_context() -> (Factory, DeviceContext) {
+fn make_context() -> (Factory1, DeviceContext) {
     let (_, d3d, _) = direct3d11::device::Device::create()
         .with_flags(CreateDeviceFlags::BGRA_SUPPORT)
         .build()
         .unwrap();
-    let factory = Factory::new().unwrap();
+    let factory = Factory1::new().unwrap();
     let dev = Device::create(&factory, &d3d.as_dxgi()).unwrap();
     let ctx = DeviceContext::create(&dev).unwrap();
     (factory, ctx)

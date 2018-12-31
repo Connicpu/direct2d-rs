@@ -1,9 +1,9 @@
 use com_wrapper::ComWrapper;
 use direct2d::brush::SolidColorBrush;
-use direct2d::enums::{BitmapOptions,  FigureBegin::*, FigureEnd::*, };
-use direct2d::geometry::Path;
-use direct2d::image::Bitmap;
-use direct2d::{Device, DeviceContext, };
+use direct2d::enums::{BitmapOptions,  FigureBegin::*, FigureEnd::*};
+use direct2d::geometry::PathGeometry;
+use direct2d::image::Bitmap1;
+use direct2d::{Device, DeviceContext};
 use direct3d11::enums::{BindFlags, CpuAccessFlags, CreateDeviceFlags, Usage};
 use dxgi::enums::{Format, MapFlags};
 use math2d::{Matrix3x2f, Point2f};
@@ -17,7 +17,7 @@ const TEXTURE_HEIGHT_S: usize = TEXTURE_HEIGHT as usize;
 
 fn main() {
     // Create the D2D factory
-    let d2d = direct2d::Factory::new().unwrap();
+    let d2d = direct2d::factory::Factory1::new().unwrap();
 
     // Initialize a D3D Device
     let (_, d3d, d3d_ctx) = direct3d11::device::Device::create()
@@ -38,7 +38,7 @@ fn main() {
         .unwrap();
 
     // Bind the backing texture to a D2D Bitmap
-    let target = Bitmap::create(&context)
+    let target = Bitmap1::create(&context)
         .with_dxgi_surface(&tex.as_dxgi())
         .with_dpi(DPI, DPI)
         .with_options(BitmapOptions::TARGET)
@@ -59,7 +59,7 @@ fn main() {
     let yo = 0.4330127018922193;
 
     // Create a hexagon
-    let hex = Path::create(&d2d).unwrap()
+    let hex = PathGeometry::create(&d2d).unwrap()
         .with_line_figure(Filled, Closed, &[
             (100.0 * 0.5, 100.0 * 0.0).into(),
             (100.0 * xo, 100.0 * yo).into(),

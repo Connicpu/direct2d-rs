@@ -1,17 +1,8 @@
-#[macro_use]
-extern crate direct2d;
-extern crate direct3d11;
-extern crate directwrite;
-extern crate dxgi;
-extern crate image;
-extern crate winapi;
-extern crate com_wrapper;
-
 use com_wrapper::ComWrapper;
 use direct2d::brush::SolidColorBrush;
 use direct2d::enums::{BitmapOptions, DrawTextOptions};
-use direct2d::image::Bitmap;
-use direct2d::{Device, DeviceContext, RenderTarget};
+use direct2d::image::Bitmap1;
+use direct2d::{Device, DeviceContext};
 use direct3d11::enums::{BindFlags, CpuAccessFlags, CreateDeviceFlags, Usage};
 use directwrite::{TextFormat, TextLayout};
 use dxgi::enums::{Format, MapFlags};
@@ -26,7 +17,7 @@ const TEXTURE_HEIGHT_S: usize = TEXTURE_HEIGHT as usize;
 fn main() {
     // Create the DWrite and D2D factories
     let dwrite = directwrite::Factory::new().unwrap();
-    let d2d = direct2d::Factory::new().unwrap();
+    let d2d = direct2d::factory::Factory1::new().unwrap();
 
     // Initialize a D3D Device
     let (_, d3d, d3d_ctx) = direct3d11::device::Device::create()
@@ -47,7 +38,7 @@ fn main() {
         .unwrap();
 
     // Bind the backing texture to a D2D Bitmap
-    let target = Bitmap::create(&context)
+    let target = Bitmap1::create(&context)
         .with_dxgi_surface(&tex.as_dxgi())
         .with_dpi(96.0 * DPI, 96.0 * DPI)
         .with_options(BitmapOptions::TARGET)
@@ -82,8 +73,8 @@ fn main() {
         .build()
         .unwrap();
 
-    println!("fg: {:?}", fg_brush.get_color());
-    println!("bg: {:?}", bg_brush.get_color());
+    println!("fg: {:?}", fg_brush.color());
+    println!("bg: {:?}", bg_brush.color());
 
     // Start drawing to the texture
     context.set_target(&target);

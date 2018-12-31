@@ -3,13 +3,13 @@ extern crate direct3d11;
 extern crate dxgi;
 
 use direct2d::image::Bitmap;
-use direct2d::{Device, DeviceContext, Factory};
+use direct2d::{Device, DeviceContext, factory::Factory1};
 use direct3d11::enums::CreateDeviceFlags;
 use dxgi::enums::Format;
 
 #[test]
 fn empty_bitmap() {
-    let d2d = Factory::new().unwrap();
+    let d2d = Factory1::new().unwrap();
     let (_, d3d, _) = direct3d11::device::Device::create()
         .with_flags(CreateDeviceFlags::BGRA_SUPPORT)
         .build()

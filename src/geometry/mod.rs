@@ -301,6 +301,10 @@ impl std::ops::Deref for Geometry {
     }
 }
 
-pub unsafe trait GeometryType: ComWrapper {}
+pub unsafe trait GeometryType: ComWrapper + Clone {
+    fn to_generic(&self) -> Geometry where Self: Sized {
+        unsafe { Geometry::from_ptr(self.clone().into_ptr().cast().unwrap()) }
+    }
+}
 
 unsafe impl GeometryType for Geometry {}
