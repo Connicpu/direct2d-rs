@@ -60,7 +60,7 @@ where
 
 macro_rules! groupable_variadic {
     (@tup $($gtup:ident)*) => {
-        impl<$($gtup,)*> GroupableGeometry for ($($gtup,)*)
+        impl<$($gtup,)*> GroupableGeometry for &'_ ($($gtup,)*)
         where
             $($gtup : GeometryType,)*
         {
@@ -68,7 +68,7 @@ macro_rules! groupable_variadic {
             #[allow(non_snake_case)]
             #[inline]
             fn raw_geometry_list(self) -> Self::List {
-                let ($($gtup,)*) = self;
+                let ($(ref $gtup,)*) = self;
                 [$(unsafe { $gtup.get_raw() as _ },)*]
             }
         }

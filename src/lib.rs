@@ -9,6 +9,7 @@ extern crate auto_enum;
 pub use crate::device::Device;
 pub use crate::device_context::DeviceContext;
 pub use crate::render_target::RenderTarget;
+pub use crate::factory::{Factory, Factory1};
 
 pub mod brush;
 pub mod descriptions;

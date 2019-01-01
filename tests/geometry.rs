@@ -32,33 +32,18 @@ fn rectangle_length() {
 
 #[test]
 fn combined_area() {
-    if true {
-        panic!("FIXME: Segfault :( No idea what invariant I'm breaking");
-    }
-
     use direct2d::enums::FillMode::*;
 
     let factory = Factory::new().unwrap();
 
-    eprintln!("1");
-
     let rect1 = Rectf::new(0.0, 0.0, 1.0, 1.0);
     let rectangle1 = RectangleGeometry::create(&factory, &rect1).unwrap();
-
-    eprintln!("2");
 
     let rect2 = Rectf::new(0.0, 1.0, 1.0, 2.0);
     let rectangle2 = RectangleGeometry::create(&factory, &rect2).unwrap();
 
-    eprintln!("3");
-
     let list = (rectangle1, rectangle2);
-
-    eprintln!("{:?}", list);
-
-    let combined = GroupGeometry::create(&factory, Winding, list).unwrap();
-
-    eprintln!("4");
+    let combined = GroupGeometry::create(&factory, Winding, &list).unwrap();
 
     let area = combined.compute_area(None).unwrap();
     assert!((area - 2.0).abs() <= EPSILON);

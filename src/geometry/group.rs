@@ -27,24 +27,15 @@ pub struct GroupGeometry {
 
 impl GroupGeometry {
     #[inline]
-    pub fn create<G>(
+    pub fn create(
         factory: &Factory,
         fill_mode: FillMode,
-        geometry: G,
-    ) -> D2DResult<GroupGeometry>
-    where
-        G: GroupableGeometry,
-    {
+        geometry: impl GroupableGeometry,
+    ) -> D2DResult<GroupGeometry> {
         let list = geometry.raw_geometry_list();
         let list = list.as_ref();
 
-        eprintln!("{:?}", list);
-
         unsafe {
-            for i in 0..list.len() as isize {
-                eprintln!("[{}]: {:p}", i, *list.as_ptr().offset(i));
-            }
-
             let mut ptr = ptr::null_mut();
             let hr = (*factory.get_raw()).CreateGeometryGroup(
                 fill_mode as u32,

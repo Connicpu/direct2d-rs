@@ -58,8 +58,8 @@ macro_rules! make_render_tag {
 /// # extern crate dxgi;
 /// # use direct2d::{DeviceContext, RenderTarget};
 /// # use direct2d::brush::SolidColorBrush;
-/// # use direct2d::image::Bitmap;
-/// fn draw(context: &mut DeviceContext, target: &Bitmap) {
+/// # use direct2d::image::Bitmap1;
+/// fn draw(context: &mut DeviceContext, target: &Bitmap1) {
 ///     let brush = SolidColorBrush::create(&context)
 ///         .with_color(0xFF_7F_7F)
 ///         .build().unwrap();
@@ -87,7 +87,7 @@ macro_rules! make_render_tag {
 ///     }
 /// }
 /// # fn main() {
-/// #     use direct2d::{Device, Factory};
+/// #     use direct2d::{Device, Factory1};
 /// #     use direct2d::enums::BitmapOptions;
 /// #     use direct3d11::enums::{BindFlags, CreateDeviceFlags};
 /// #     use dxgi::enums::Format;
@@ -101,10 +101,10 @@ macro_rules! make_render_tag {
 /// #         .with_bind_flags(BindFlags::RENDER_TARGET | BindFlags::SHADER_RESOURCE)
 /// #         .build()
 /// #         .unwrap();
-/// #     let factory = Factory::new().unwrap();
+/// #     let factory = Factory1::new().unwrap();
 /// #     let dev = Device::create(&factory, &d3d.as_dxgi()).unwrap();
-/// #     let mut ctx = DeviceContext::create(&dev, false).unwrap();
-/// #     let target = Bitmap::create(&ctx)
+/// #     let mut ctx = DeviceContext::create(&dev).unwrap();
+/// #     let target = Bitmap1::create(&ctx)
 /// #         .with_dxgi_surface(&tex.as_dxgi())
 /// #         .with_dpi(192.0, 192.0)
 /// #         .with_options(BitmapOptions::TARGET)
