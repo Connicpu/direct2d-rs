@@ -4,9 +4,9 @@ use std::{mem, ptr, slice};
 
 use winapi::um::d2d1::ID2D1Geometry;
 
-pub trait GroupableGeometry {
-    type List: AsRef<[*mut ID2D1Geometry]>;
-    fn raw_geometry_list(self) -> Self::List;
+pub unsafe trait GroupableGeometry<'a> {
+    type List: AsRef<[*mut ID2D1Geometry]> + 'a;
+    fn raw_geometry_list(&'a self) -> Self::List;
 }
 
 #[doc(hidden)]
@@ -24,13 +24,13 @@ impl<'a> AsRef<[*mut ID2D1Geometry]> for MaybeOwnedGeomList<'a> {
     }
 }
 
-impl<'a, G> GroupableGeometry for &'a [G]
+unsafe impl<'a, G> GroupableGeometry<'a> for [G]
 where
     G: GeometryType,
 {
     type List = MaybeOwnedGeomList<'a>;
     #[inline]
-    fn raw_geometry_list(self) -> Self::List {
+    fn raw_geometry_list(&'a self) -> Self::List {
         unsafe {
             if mem::size_of::<G>() == mem::size_of::<*mut ID2D1Geometry>()
                 && self.len() > 0
@@ -47,27 +47,27 @@ where
     }
 }
 
-impl<'a, G> GroupableGeometry for &'a Vec<G>
+unsafe impl<'a, G> GroupableGeometry<'a> for Vec<G>
 where
     G: GeometryType,
 {
-    type List = <&'a [G] as GroupableGeometry>::List;
+    type List = <[G] as GroupableGeometry<'a>>::List;
     #[inline]
-    fn raw_geometry_list(self) -> Self::List {
+    fn raw_geometry_list(&'a self) -> Self::List {
         self[..].raw_geometry_list()
     }
 }
 
 macro_rules! groupable_variadic {
     (@tup $($gtup:ident)*) => {
-        impl<$($gtup,)*> GroupableGeometry for &'_ ($($gtup,)*)
+        unsafe impl<'a, $($gtup,)*> GroupableGeometry<'a> for ($($gtup,)*)
         where
             $($gtup : GeometryType,)*
         {
             type List = [*mut ID2D1Geometry; groupable_variadic!(@count_tuple_size $($gtup)*)];
             #[allow(non_snake_case)]
             #[inline]
-            fn raw_geometry_list(self) -> Self::List {
+            fn raw_geometry_list(&'a self) -> Self::List {
                 let ($(ref $gtup,)*) = self;
                 [$(unsafe { $gtup.get_raw() as _ },)*]
             }
@@ -75,17 +75,10 @@ macro_rules! groupable_variadic {
     };
 
     (@arrays $($len:expr)*) => {$(
-        impl<G> GroupableGeometry for [G; $len] where G: GeometryType {
+        unsafe impl<'a, G> GroupableGeometry<'a> for [G; $len] where G: GeometryType {
             type List = [*mut ID2D1Geometry; $len];
             #[inline]
-            fn raw_geometry_list(self) -> Self::List {
-                GroupableGeometry::raw_geometry_list(&self)
-            }
-        }
-        impl<'a, G> GroupableGeometry for &'a [G; $len] where G: GeometryType + 'a {
-            type List = [*mut ID2D1Geometry; $len];
-            #[inline]
-            fn raw_geometry_list(self) -> Self::List {
+            fn raw_geometry_list(&'a self) -> Self::List {
                 let mut data = [ptr::null_mut(); $len];
                 for (src, dst) in self.iter().zip(data.iter_mut()) {
                     *dst = unsafe { src.get_raw() as _ };

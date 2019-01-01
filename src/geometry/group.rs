@@ -27,10 +27,10 @@ pub struct GroupGeometry {
 
 impl GroupGeometry {
     #[inline]
-    pub fn create(
+    pub fn create<'a>(
         factory: &Factory,
         fill_mode: FillMode,
-        geometry: impl GroupableGeometry,
+        geometry: &'a impl GroupableGeometry<'a>,
     ) -> D2DResult<GroupGeometry> {
         let list = geometry.raw_geometry_list();
         let list = list.as_ref();
