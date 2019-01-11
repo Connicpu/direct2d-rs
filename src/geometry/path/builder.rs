@@ -1,10 +1,10 @@
-use crate::geometry::path::PathGeometry;
 use crate::enums::{FigureBegin, FigureEnd, FillMode, PathSegment};
 use crate::error::D2DResult;
+use crate::geometry::path::PathGeometry;
 
 use math2d::{ArcSegment, BezierSegment, Point2f, QuadBezierSegment};
 use winapi::shared::winerror::SUCCEEDED;
-use winapi::um::d2d1::{ID2D1GeometrySink,  D2D1_FIGURE_END};
+use winapi::um::d2d1::ID2D1GeometrySink;
 use wio::com::ComPtr;
 
 /// Interface for building Path geometry
@@ -27,19 +27,11 @@ impl PathBuilder {
     }
 
     #[inline]
-    pub fn begin_figure(
-        self,
-        start: impl Into<Point2f>,
-        begin: FigureBegin,
-        end: FigureEnd,
-    ) -> FigureBuilder {
+    pub fn begin_figure(self, start: impl Into<Point2f>, begin: FigureBegin) -> FigureBuilder {
         unsafe {
             self.sink.BeginFigure(start.into().into(), begin as u32);
         }
-        FigureBuilder {
-            builder: self,
-            end: (end as u32),
-        }
+        FigureBuilder { builder: self }
     }
 
     #[inline]
@@ -50,7 +42,7 @@ impl PathBuilder {
         end: FigureEnd,
         f: impl FnOnce(FigureBuilder) -> FigureBuilder,
     ) -> Self {
-        f(self.begin_figure(start, begin, end)).end()
+        f(self.begin_figure(start, begin)).end(end)
     }
 
     #[inline]
@@ -101,14 +93,13 @@ impl Drop for PathBuilder {
 
 pub struct FigureBuilder {
     builder: PathBuilder,
-    end: D2D1_FIGURE_END,
 }
 
 impl FigureBuilder {
     #[inline]
-    pub fn end(self) -> PathBuilder {
+    pub fn end(self, end: FigureEnd) -> PathBuilder {
         unsafe {
-            self.builder.sink.EndFigure(self.end);
+            self.builder.sink.EndFigure(end as u32);
 
             // Move builder out of self without invoking drop.
             let builder = std::ptr::read(&self.builder);
@@ -180,7 +171,7 @@ impl Drop for FigureBuilder {
     #[inline]
     fn drop(&mut self) {
         unsafe {
-            self.builder.sink.EndFigure(self.end);
+            self.builder.sink.EndFigure(FigureEnd::Open as u32);
         }
     }
 }
