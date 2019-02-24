@@ -28,7 +28,7 @@ version = "0.3.0-alpha3"
 path = "../dxgi"
 
 [target.'cfg(windows)'.dependencies.directwrite]
-version = "0.3.0-alpha3"
+version = "0.3.0-alpha4"
 path = "../directwrite"
 
 [target.'cfg(windows)'.dependencies.dcommon]
