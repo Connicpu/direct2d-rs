@@ -1,7 +1,6 @@
 use crate::device::Device;
 use crate::error::D2DResult;
 use crate::image::Image;
-use crate::render_target::RenderTargetType;
 use crate::render_target::{RTState, RenderTarget};
 
 use std::ptr;
@@ -59,8 +58,6 @@ impl std::ops::DerefMut for DeviceContext {
         unsafe { dcommon::helpers::deref_com_wrapper_mut(self) }
     }
 }
-
-impl RenderTargetType for DeviceContext {}
 
 impl ComWrapper for DeviceContext {
     type Interface = ID2D1DeviceContext;

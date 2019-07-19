@@ -63,8 +63,6 @@ impl std::ops::DerefMut for HwndRenderTarget {
     }
 }
 
-impl super::RenderTargetType for HwndRenderTarget {}
-
 impl ComWrapper for HwndRenderTarget {
     type Interface = ID2D1HwndRenderTarget;
     unsafe fn get_raw(&self) -> *mut Self::Interface {

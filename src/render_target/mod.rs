@@ -13,7 +13,6 @@ use math2d::*;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{ID2D1RenderTarget, D2D1_TAG};
 use winapi::um::dcommon::DWRITE_MEASURING_MODE_NATURAL;
-use winapi::um::unknwnbase::IUnknown;
 use wio::com::ComPtr;
 use wio::wide::ToWide;
 
@@ -468,32 +467,6 @@ impl RenderTarget {
         }
     }
 }
-
-pub trait RenderTargetType: ComWrapper {
-    /// Try to cast this factory to a different factory type
-    fn try_cast<R: RenderTargetType>(self) -> Option<R>
-    where
-        Self: Sized,
-    {
-        unsafe {
-            let ptr = self.into_ptr();
-            Some(ComWrapper::from_ptr(ptr.cast().ok()?))
-        }
-    }
-
-    /// Try to temporarily upcast this type to perform an operation
-    fn try_with_cast<R: RenderTargetType, V>(&self, f: impl FnOnce(&R) -> V) -> Option<V> {
-        unsafe {
-            let ptr = self.get_raw() as *mut IUnknown;
-            (*ptr).AddRef();
-            let ptr = ComPtr::from_raw(ptr);
-            let obj = R::from_ptr(ptr.cast().ok()?);
-            Some(f(&obj))
-        }
-    }
-}
-
-impl RenderTargetType for RenderTarget {}
 
 impl ComWrapper for RenderTarget {
     type Interface = ID2D1RenderTarget;
