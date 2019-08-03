@@ -11,12 +11,20 @@ pub struct Resource {
     ptr: ComPtr<ID2D1Resource>,
 }
 
-impl Resource {
-    pub fn factory(&self) -> Factory {
+pub unsafe trait IResource {
+    fn factory(&self) -> Factory {
         unsafe {
             let mut ptr = std::ptr::null_mut();
-            self.ptr.GetFactory(&mut ptr);
+            self.raw_resource().GetFactory(&mut ptr);
             Factory::from_raw(ptr)
         }
+    }
+
+    unsafe fn raw_resource(&self) -> &ID2D1Resource;
+}
+
+unsafe impl IResource for Resource {
+    unsafe fn raw_resource(&self) -> &ID2D1Resource {
+        &self.ptr
     }
 }

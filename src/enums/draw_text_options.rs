@@ -1,4 +1,4 @@
-#[enum_flags(u32)]
+#[auto_enum::enum_flags(u32)]
 pub enum DrawTextOptions {
     NONE = 0,
     NO_SNAP = 0x1,

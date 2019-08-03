@@ -2,17 +2,18 @@
 extern crate lazy_static;
 
 extern crate direct2d;
+extern crate math2d;
 extern crate winapi;
 extern crate wio;
-extern crate math2d;
 
-use math2d::*;
 use direct2d::brush::SolidColorBrush;
 use direct2d::enums::{FigureBegin, FigureEnd, FillMode};
+use direct2d::factory::{Factory, IFactory};
 use direct2d::geometry::PathGeometry;
 use direct2d::layer::Layer;
-use direct2d::render_target::HwndRenderTarget;
-use direct2d::factory::Factory;
+use direct2d::render_target::{HwndRenderTarget, IRenderTarget};
+use direct2d::resource::IResource;
+use math2d::*;
 use std::{mem, ptr};
 
 use winapi::ctypes::c_int;
@@ -33,15 +34,15 @@ lazy_static! {
 fn paint_window(window: &mut Window) {
     let rt = window.target.as_mut().unwrap();
 
-    let accent_brush = SolidColorBrush::create(&rt)
+    let accent_brush = SolidColorBrush::create(rt)
         .with_color(*ACCENT)
         .build()
         .unwrap();
-    let foreground_brush = SolidColorBrush::create(&rt)
+    let foreground_brush = SolidColorBrush::create(rt)
         .with_color(*FOREGROUND)
         .build()
         .unwrap();
-    let diamond_brush = SolidColorBrush::create(&rt)
+    let diamond_brush = SolidColorBrush::create(rt)
         .with_color(*HIGHLIGHT)
         .build()
         .unwrap();
@@ -49,8 +50,8 @@ fn paint_window(window: &mut Window) {
     rt.begin_draw();
     rt.clear(*BACKGROUND);
 
-    rt.fill_rectangle([50.0, 50.0, 750.0, 430.0], &accent_brush);
-    rt.fill_rectangle([150.0, 150.0, 650.0, 330.0], &foreground_brush);
+    rt.fill_rectangle([50.0, 50.0, 750.0, 430.0].into(), &accent_brush);
+    rt.fill_rectangle([150.0, 150.0, 650.0, 330.0].into(), &foreground_brush);
 
     let path = build_path(&rt.factory());
 
@@ -63,7 +64,7 @@ fn paint_window(window: &mut Window) {
         )
         .push();
 
-    rt.fill_rectangle([0.0, 0.0, 800.0, 480.0], &diamond_brush);
+    rt.fill_rectangle([0.0, 0.0, 800.0, 480.0].into(), &diamond_brush);
 
     rt.pop_layer();
 
@@ -181,7 +182,7 @@ fn window_test() {
     unsafe { real_window_test() };
 }
 
-fn build_path(factory: &Factory) -> PathGeometry {
+fn build_path(factory: &dyn IFactory) -> PathGeometry {
     let path = PathGeometry::create(factory)
         .unwrap()
         .fill_mode(FillMode::Winding)

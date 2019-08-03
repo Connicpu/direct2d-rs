@@ -1,7 +1,10 @@
-use crate::error::D2DResult;
-use crate::render_target::RenderTarget;
+use crate::brush::IBrush;
+use crate::render_target::IRenderTarget;
 
+use com_wrapper::ComWrapper;
+use dcommon::Error;
 use math2d::Color;
+use winapi::um::d2d1::ID2D1Brush;
 use winapi::um::d2d1::ID2D1SolidColorBrush;
 use wio::com::ComPtr;
 
@@ -17,12 +20,15 @@ pub struct SolidColorBrush {
 }
 
 impl SolidColorBrush {
-    pub fn new(context: &RenderTarget, color: impl Into<Color>) -> D2DResult<Self> {
+    pub fn new(
+        context: &dyn IRenderTarget,
+        color: impl Into<Color>,
+    ) -> Result<SolidColorBrush, Error> {
         Self::create(context).with_color(color).build()
     }
 
     #[inline]
-    pub fn create<'a>(context: &'a RenderTarget) -> SolidColorBrushBuilder<'a> {
+    pub fn create<'a>(context: &'a dyn IRenderTarget) -> SolidColorBrushBuilder<'a> {
         SolidColorBrushBuilder::new(context)
     }
 
@@ -32,9 +38,8 @@ impl SolidColorBrush {
     }
 }
 
-impl std::ops::Deref for SolidColorBrush {
-    type Target = crate::brush::Brush;
-    fn deref(&self) -> &Self::Target {
-        unsafe { dcommon::helpers::deref_com_wrapper(self) }
+unsafe impl IBrush for SolidColorBrush {
+    unsafe fn raw_brush(&self) -> &ID2D1Brush {
+        &self.ptr
     }
 }

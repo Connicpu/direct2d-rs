@@ -1,14 +1,15 @@
 use crate::enums::WindowState;
-use crate::error::D2DResult;
-use crate::factory::Factory;
-use crate::render_target::{RTState, RenderTarget};
+use crate::factory::IFactory;
+use crate::render_target::{IRenderTarget, RTState};
+use crate::resource::IResource;
 
 use checked_enum::UncheckedEnum;
 use com_wrapper::ComWrapper;
+use dcommon::Error;
 use math2d::Sizeu;
 use winapi::shared::windef::HWND;
 use winapi::shared::winerror::SUCCEEDED;
-use winapi::um::d2d1::ID2D1HwndRenderTarget;
+use winapi::um::d2d1::{ID2D1HwndRenderTarget, ID2D1RenderTarget, ID2D1Resource};
 use wio::com::ComPtr;
 
 pub use self::builder::HwndRenderTargetBuilder;
@@ -22,18 +23,15 @@ pub struct HwndRenderTarget {
 }
 
 impl HwndRenderTarget {
-    #[inline]
-    pub fn create<'a>(factory: &'a Factory) -> HwndRenderTargetBuilder<'a> {
+    pub fn create<'a>(factory: &'a dyn IFactory) -> HwndRenderTargetBuilder<'a> {
         HwndRenderTargetBuilder::new(factory)
     }
 
-    #[inline]
     pub fn window_state(&self) -> UncheckedEnum<WindowState> {
         unsafe { self.ptr.CheckWindowState().into() }
     }
 
-    #[inline]
-    pub fn resize(&self, pixel_size: Sizeu) -> D2DResult<()> {
+    pub fn resize(&self, pixel_size: Sizeu) -> Result<(), Error> {
         unsafe {
             let hr = self.ptr.Resize(&pixel_size.into());
             if SUCCEEDED(hr) {
@@ -44,22 +42,28 @@ impl HwndRenderTarget {
         }
     }
 
-    #[inline]
     pub fn hwnd(&self) -> HWND {
         unsafe { self.ptr.GetHwnd() }
     }
 }
 
-impl std::ops::Deref for HwndRenderTarget {
-    type Target = RenderTarget;
-    fn deref(&self) -> &RenderTarget {
-        unsafe { dcommon::helpers::deref_com_wrapper(self) }
+unsafe impl IResource for HwndRenderTarget {
+    unsafe fn raw_resource(&self) -> &ID2D1Resource {
+        &self.ptr
     }
 }
 
-impl std::ops::DerefMut for HwndRenderTarget {
-    fn deref_mut(&mut self) -> &mut RenderTarget {
-        unsafe { dcommon::helpers::deref_com_wrapper_mut(self) }
+unsafe impl IRenderTarget for HwndRenderTarget {
+    unsafe fn raw_rt(&self) -> &ID2D1RenderTarget {
+        &self.ptr
+    }
+
+    fn draw_state(&self) -> RTState {
+        self.state
+    }
+
+    fn draw_state_mut(&mut self) -> &mut RTState {
+        &mut self.state
     }
 }
 
@@ -94,11 +98,5 @@ impl std::fmt::Debug for HwndRenderTarget {
             .field("ptr", &self.ptr.as_raw())
             .field("state", &self.state)
             .finish()
-    }
-}
-
-impl std::convert::AsRef<RenderTarget> for HwndRenderTarget {
-    fn as_ref(&self) -> &RenderTarget {
-        self
     }
 }

@@ -1,9 +1,7 @@
-use crate::error::D2DResult;
-use crate::render_target::RenderTarget;
-
-use std::ptr;
+use crate::render_target::IRenderTarget;
 
 use com_wrapper::ComWrapper;
+use dcommon::Error;
 use math2d::Sizef;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::ID2D1Layer;
@@ -21,16 +19,15 @@ pub struct Layer {
 }
 
 impl Layer {
-    #[inline]
-    pub fn create(target: &RenderTarget, size: Option<&Sizef>) -> D2DResult<Layer> {
+    pub fn create(target: &dyn IRenderTarget, size: Option<&Sizef>) -> Result<Layer, Error> {
         let size = match size {
             Some(size) => size as *const _ as *const _,
-            None => ptr::null(),
+            None => std::ptr::null(),
         };
 
         unsafe {
-            let mut ptr = ptr::null_mut();
-            let hr = target.rt().CreateLayer(size, &mut ptr);
+            let mut ptr = std::ptr::null_mut();
+            let hr = target.raw_rt().CreateLayer(size, &mut ptr);
             if SUCCEEDED(hr) {
                 Ok(Layer::from_raw(ptr))
             } else {
@@ -39,7 +36,6 @@ impl Layer {
         }
     }
 
-    #[inline]
     pub fn size(&self) -> Sizef {
         unsafe { self.ptr.GetSize().into() }
     }

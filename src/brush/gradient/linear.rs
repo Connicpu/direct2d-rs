@@ -1,11 +1,12 @@
 use crate::brush::gradient::stops::GradientStopCollection;
-use crate::render_target::RenderTarget;
-use math2d::Point2f;
+use crate::brush::IBrush;
+use crate::render_target::IRenderTarget;
 
 use std::ptr;
 
 use com_wrapper::ComWrapper;
-use winapi::um::d2d1::ID2D1LinearGradientBrush;
+use math2d::Point2f;
+use winapi::um::d2d1::{ID2D1Brush, ID2D1LinearGradientBrush};
 use wio::com::ComPtr;
 
 pub use self::builder::LinearGradientBrushBuilder;
@@ -21,24 +22,20 @@ pub struct LinearGradientBrush {
 }
 
 impl LinearGradientBrush {
-    #[inline]
-    pub fn create<'a>(context: &'a RenderTarget) -> LinearGradientBrushBuilder<'a> {
+    pub fn create<'a>(context: &'a dyn IRenderTarget) -> LinearGradientBrushBuilder<'a> {
         LinearGradientBrushBuilder::new(context)
     }
 
-    #[inline]
     /// Retrieves the starting coordinates of the linear gradient.
     pub fn start_point(&self) -> Point2f {
         unsafe { self.ptr.GetStartPoint().into() }
     }
 
-    #[inline]
     /// Retrieves the ending coordinates of the linear gradient.
     pub fn end_point(&self) -> Point2f {
         unsafe { self.ptr.GetEndPoint().into() }
     }
 
-    #[inline]
     /// Retrieves the `GradientStopCollection` associated with this linear gradient brush.
     pub fn gradient_stop_collection(&self) -> GradientStopCollection {
         unsafe {
@@ -49,10 +46,8 @@ impl LinearGradientBrush {
     }
 }
 
-impl std::ops::Deref for LinearGradientBrush {
-    type Target = crate::brush::Brush;
-    fn deref(&self) -> &Self::Target {
-        unsafe { dcommon::helpers::deref_com_wrapper(self) }
+unsafe impl IBrush for LinearGradientBrush {
+    unsafe fn raw_brush(&self) -> &ID2D1Brush {
+        &self.ptr
     }
 }
-

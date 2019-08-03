@@ -2,8 +2,10 @@ extern crate direct2d;
 extern crate direct3d11;
 extern crate dxgi;
 
+use direct2d::device::Device;
+use direct2d::device_context::DeviceContext;
+use direct2d::factory::Factory1;
 use direct2d::image::Bitmap;
-use direct2d::{Device, DeviceContext, factory::Factory1};
 use direct3d11::enums::CreateDeviceFlags;
 use dxgi::enums::Format;
 

@@ -1,4 +1,4 @@
-#[auto_enum(u32, checked)]
+#[auto_enum::auto_enum(u32, checked)]
 pub enum FeatureLevel {
     Default = 0,
     Level9 = 37120,

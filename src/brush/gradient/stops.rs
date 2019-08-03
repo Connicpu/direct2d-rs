@@ -1,6 +1,7 @@
 use crate::descriptions::GradientStop;
 
-use winapi::um::d2d1::ID2D1GradientStopCollection;
+use com_wrapper::ComWrapper;
+use winapi::um::d2d1::{ID2D1GradientStopCollection, ID2D1Resource};
 use wio::com::ComPtr;
 
 pub use self::builder::GradientStopBuilder;
@@ -16,13 +17,11 @@ pub struct GradientStopCollection {
 }
 
 impl GradientStopCollection {
-    #[inline]
     /// Get the number of stops in the collection
     pub fn len(&self) -> u32 {
         unsafe { self.ptr.GetGradientStopCount() }
     }
 
-    #[inline]
     /// Get all of the stop points
     pub fn stops(&self) -> Vec<GradientStop> {
         unsafe {
@@ -34,10 +33,8 @@ impl GradientStopCollection {
     }
 }
 
-impl std::ops::Deref for GradientStopCollection {
-    type Target = crate::resource::Resource;
-    fn deref(&self) -> &Self::Target {
-        unsafe { dcommon::helpers::deref_com_wrapper(self) }
+unsafe impl crate::resource::IResource for GradientStopCollection {
+    unsafe fn raw_resource(&self) -> &ID2D1Resource {
+        &self.ptr
     }
 }
-

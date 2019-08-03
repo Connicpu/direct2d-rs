@@ -1,16 +1,13 @@
-use super::GeometryType;
 use crate::enums::FillMode;
-use crate::error::D2DResult;
-use crate::factory::Factory;
-use crate::geometry::Geometry;
-
-use std::ptr;
+use crate::factory::IFactory;
+use crate::geometry::{Geometry, GeometryType, IGeometry};
+use crate::resource::IResource;
 
 use checked_enum::UncheckedEnum;
 use com_wrapper::ComWrapper;
-use dcommon::helpers::deref_com_wrapper;
+use dcommon::Error;
 use winapi::shared::winerror::SUCCEEDED;
-use winapi::um::d2d1::ID2D1GeometryGroup;
+use winapi::um::d2d1::{ID2D1Geometry, ID2D1GeometryGroup, ID2D1Resource};
 use wio::com::ComPtr;
 
 pub use self::grouppable::*;
@@ -26,18 +23,17 @@ pub struct GroupGeometry {
 }
 
 impl GroupGeometry {
-    #[inline]
     pub fn create<'a>(
-        factory: &Factory,
+        factory: &dyn IFactory,
         fill_mode: FillMode,
         geometry: &'a impl GroupableGeometry<'a>,
-    ) -> D2DResult<GroupGeometry> {
+    ) -> Result<GroupGeometry, Error> {
         let list = geometry.raw_geometry_list();
         let list = list.as_ref();
 
         unsafe {
-            let mut ptr = ptr::null_mut();
-            let hr = (*factory.get_raw()).CreateGeometryGroup(
+            let mut ptr = std::ptr::null_mut();
+            let hr = factory.raw_f().CreateGeometryGroup(
                 fill_mode as u32,
                 list.as_ptr() as *mut *mut _,
                 list.len() as u32,
@@ -54,17 +50,14 @@ impl GroupGeometry {
         }
     }
 
-    #[inline]
     pub fn fill_mode(&self) -> UncheckedEnum<FillMode> {
         unsafe { self.ptr.GetFillMode().into() }
     }
 
-    #[inline]
     pub fn source_geometry_count(&self) -> u32 {
         unsafe { self.ptr.GetSourceGeometryCount() }
     }
 
-    #[inline]
     pub fn source_geometries(&self) -> Vec<Geometry> {
         unsafe {
             let count = self.source_geometry_count();
@@ -77,11 +70,16 @@ impl GroupGeometry {
     }
 }
 
-impl std::ops::Deref for GroupGeometry {
-    type Target = super::Geometry;
-    fn deref(&self) -> &super::Geometry {
-        unsafe { deref_com_wrapper(self) }
+unsafe impl IResource for GroupGeometry {
+    unsafe fn raw_resource(&self) -> &ID2D1Resource {
+        &self.ptr
     }
 }
 
-unsafe impl super::GeometryType for GroupGeometry {}
+unsafe impl IGeometry for GroupGeometry {
+    unsafe fn raw_geom(&self) -> &ID2D1Geometry {
+        &self.ptr
+    }
+}
+
+unsafe impl GeometryType for GroupGeometry {}

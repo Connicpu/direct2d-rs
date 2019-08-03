@@ -1,11 +1,14 @@
 use com_wrapper::ComWrapper;
 use direct2d::brush::SolidColorBrush;
-use direct2d::enums::{BitmapOptions,  FigureBegin::*, FigureEnd::*};
+use direct2d::device::Device;
+use direct2d::device_context::{DeviceContext, IDeviceContext};
+use direct2d::enums::{BitmapOptions, FigureBegin::*, FigureEnd::*};
 use direct2d::geometry::PathGeometry;
 use direct2d::image::Bitmap1;
-use direct2d::{Device, DeviceContext};
+use direct2d::render_target::IRenderTarget;
 use direct3d11::enums::{BindFlags, CpuAccessFlags, CreateDeviceFlags, Usage};
 use dxgi::enums::{Format, MapFlags};
+use dxgi::surface::ISurface;
 use math2d::{Matrix3x2f, Point2f};
 
 const TEXTURE_WIDTH: u32 = 2048;
@@ -59,15 +62,20 @@ fn main() {
     let yo = 0.4330127018922193;
 
     // Create a hexagon
-    let hex = PathGeometry::create(&d2d).unwrap()
-        .with_line_figure(Filled, Closed, &[
-            (100.0 * 0.5, 100.0 * 0.0).into(),
-            (100.0 * xo, 100.0 * yo).into(),
-            (100.0 * -xo, 100.0 * yo).into(),
-            (100.0 * -0.5, 100.0 * 0.0).into(),
-            (100.0 * -xo, 100.0 * -yo).into(),
-            (100.0 * xo, 100.0 * -yo).into(),
-        ])
+    let hex = PathGeometry::create(&d2d)
+        .unwrap()
+        .with_line_figure(
+            Filled,
+            Closed,
+            &[
+                (100.0 * 0.5, 100.0 * 0.0).into(),
+                (100.0 * xo, 100.0 * yo).into(),
+                (100.0 * -xo, 100.0 * yo).into(),
+                (100.0 * -0.5, 100.0 * 0.0).into(),
+                (100.0 * -xo, 100.0 * -yo).into(),
+                (100.0 * xo, 100.0 * -yo).into(),
+            ],
+        )
         .finish()
         .unwrap();
 
@@ -77,11 +85,11 @@ fn main() {
     context.begin_draw();
 
     // Make the background clear
-    context.clear((0x00_00_00, 0.0));
-    
+    context.clear((0x00_00_00, 0.0).into());
+
     // Draw the hexagon
-    let transform = Matrix3x2f::scaling(99.0 / 100.0, Point2f::ORIGIN)
-                  * Matrix3x2f::translation([50.0, 50.0]);
+    let transform =
+        Matrix3x2f::scaling(99.0 / 100.0, Point2f::ORIGIN) * Matrix3x2f::translation([50.0, 50.0]);
     context.set_transform(&transform);
     context.fill_geometry(&hex, &bg_brush);
     context.draw_geometry(&hex, &fg_brush, 1.0, None);
@@ -120,5 +128,6 @@ fn main() {
         TEXTURE_WIDTH,
         TEXTURE_HEIGHT,
         image::ColorType::RGBA(8),
-    ).unwrap();
+    )
+    .unwrap();
 }

@@ -1,13 +1,15 @@
-use crate::device::Device;
-use crate::error::D2DResult;
-use crate::image::Image;
-use crate::render_target::{RTState, RenderTarget};
-
-use std::ptr;
+use crate::device::IDevice;
+use crate::image::IImage;
+use crate::render_target::{IRenderTarget, RTState};
+use crate::resource::IResource;
 
 use com_wrapper::ComWrapper;
+use dcommon::Error;
 use winapi::shared::winerror::SUCCEEDED;
-use winapi::um::d2d1_1::ID2D1DeviceContext;
+use winapi::um::d2d1::{ID2D1RenderTarget, ID2D1Resource};
+use winapi::um::d2d1_1::{
+    ID2D1DeviceContext, D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS,
+};
 use wio::com::ComPtr;
 
 #[repr(C)]
@@ -18,10 +20,13 @@ pub struct DeviceContext {
 
 impl DeviceContext {
     #[inline]
-    pub fn create(device: &Device) -> D2DResult<DeviceContext> {
+    pub fn create(device: &dyn IDevice) -> Result<DeviceContext, Error> {
         unsafe {
-            let mut ptr = ptr::null_mut();
-            let hr = (*device.get_raw()).CreateDeviceContext(1, &mut ptr);
+            let mut ptr = std::ptr::null_mut();
+            let hr = device.raw_dev().CreateDeviceContext(
+                D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS,
+                &mut ptr,
+            );
             if SUCCEEDED(hr) {
                 Ok(DeviceContext::from_raw(ptr))
             } else {
@@ -29,33 +34,42 @@ impl DeviceContext {
             }
         }
     }
+}
 
-    #[inline]
-    pub fn set_target(&mut self, target: &Image) {
-        /*if !self.state.is_set(RTState::NOT_DRAWING) {
-            panic!(
-                "You should not call `DeviceContext::set_target` while \
-                 the target is being drawn to."
-            );
-        }*/
-
+pub unsafe trait IDeviceContext: IRenderTarget {
+    fn set_target(&mut self, target: &dyn IImage) {
         unsafe {
-            self.ptr.SetTarget(target.get_raw());
-            self.state.clear(RTState::NO_TARGET_IMAGE);
+            self.raw_dc().SetTarget(target.raw_img());
+            self.draw_state_mut().clear(RTState::NO_TARGET_IMAGE);
         }
     }
+
+    unsafe fn raw_dc(&self) -> &ID2D1DeviceContext;
 }
 
-impl std::ops::Deref for DeviceContext {
-    type Target = RenderTarget;
-    fn deref(&self) -> &RenderTarget {
-        unsafe { dcommon::helpers::deref_com_wrapper(self) }
+unsafe impl IResource for DeviceContext {
+    unsafe fn raw_resource(&self) -> &ID2D1Resource {
+        &self.ptr
     }
 }
 
-impl std::ops::DerefMut for DeviceContext {
-    fn deref_mut(&mut self) -> &mut RenderTarget {
-        unsafe { dcommon::helpers::deref_com_wrapper_mut(self) }
+unsafe impl IRenderTarget for DeviceContext {
+    unsafe fn raw_rt(&self) -> &ID2D1RenderTarget {
+        &self.ptr
+    }
+
+    fn draw_state(&self) -> RTState {
+        self.state
+    }
+
+    fn draw_state_mut(&mut self) -> &mut RTState {
+        &mut self.state
+    }
+}
+
+unsafe impl IDeviceContext for DeviceContext {
+    unsafe fn raw_dc(&self) -> &ID2D1DeviceContext {
+        &self.ptr
     }
 }
 

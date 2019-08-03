@@ -1,20 +1,17 @@
-use crate::descriptions::GradientStop;
 use crate::brush::gradient::linear::LinearGradientBrush;
 use crate::brush::gradient::stops::{GradientStopBuilder, GradientStopCollection};
+use crate::descriptions::GradientStop;
 use crate::enums::*;
-use crate::error::D2DResult;
 use crate::properties::{BrushProperties, LinearGradientBrushProperties};
-use crate::render_target::RenderTarget;
-use math2d::{Matrix3x2f, Point2f};
-
-use std::mem;
-use std::ptr;
+use crate::render_target::IRenderTarget;
 
 use com_wrapper::ComWrapper;
+use dcommon::Error;
+use math2d::{Matrix3x2f, Point2f};
 use winapi::shared::winerror::SUCCEEDED;
 
 pub struct LinearGradientBrushBuilder<'a> {
-    context: &'a RenderTarget,
+    context: &'a dyn IRenderTarget,
     properties: BrushProperties,
     linear_properties: LinearGradientBrushProperties,
     stops: Stops<'a>,
@@ -29,11 +26,11 @@ impl<'a> LinearGradientBrushBuilder<'a> {
     #[inline]
     /// Creates a builder. It starts with the opacity as 1.0 and the transform as the identity
     /// matrix, and all other values zeroed out. You should add at least two gradient stops.
-    pub fn new(context: &'a RenderTarget) -> Self {
+    pub fn new(context: &'a dyn IRenderTarget) -> Self {
         LinearGradientBrushBuilder {
             context,
             properties: BrushProperties::new(1.0, &Matrix3x2f::IDENTITY),
-            linear_properties: unsafe { mem::zeroed() },
+            linear_properties: Default::default(),
             stops: Stops::Builder(GradientStopBuilder::new(context)),
         }
     }
@@ -41,15 +38,15 @@ impl<'a> LinearGradientBrushBuilder<'a> {
     #[inline]
     /// Build the brush described in this builder. Will likely fail if you haven't added any
     /// stops to the collection (or specified an existing collection).
-    pub fn build(self) -> D2DResult<LinearGradientBrush> {
+    pub fn build(self) -> Result<LinearGradientBrush, Error> {
         let stops = match self.stops {
             Stops::Builder(builder) => builder.build()?,
             Stops::Collection(col) => col.clone(),
         };
 
         unsafe {
-            let mut ptr = ptr::null_mut();
-            let hr = self.context.rt().CreateLinearGradientBrush(
+            let mut ptr = std::ptr::null_mut();
+            let hr = self.context.raw_rt().CreateLinearGradientBrush(
                 (&self.linear_properties) as *const _ as *const _,
                 (&self.properties) as *const _ as *const _,
                 stops.get_raw(),

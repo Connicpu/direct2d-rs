@@ -1,11 +1,14 @@
 use com_wrapper::ComWrapper;
 use direct2d::brush::SolidColorBrush;
+use direct2d::device::Device;
+use direct2d::device_context::{DeviceContext, IDeviceContext};
 use direct2d::enums::{BitmapOptions, DrawTextOptions};
 use direct2d::image::Bitmap1;
-use direct2d::{Device, DeviceContext};
+use direct2d::render_target::IRenderTarget;
 use direct3d11::enums::{BindFlags, CpuAccessFlags, CreateDeviceFlags, Usage};
 use directwrite::{TextFormat, TextLayout};
 use dxgi::enums::{Format, MapFlags};
+use dxgi::surface::ISurface;
 
 const TEXTURE_WIDTH: u32 = 400;
 const TEXTURE_HEIGHT: u32 = 200;
@@ -82,15 +85,15 @@ fn main() {
     context.begin_draw();
 
     // Make the background white
-    context.clear(0xFF_FF_FF);
+    context.clear(0xFF_FF_FF.into());
 
-    let rect = [10.0, 10.0, 190.0, 90.0];
+    let rect = [10.0, 10.0, 190.0, 90.0].into();
     context.fill_rectangle(rect, &bg_brush);
     context.draw_rectangle(rect, &fg_brush, 1.0, None);
 
     // Draw the text
     context.draw_text_layout(
-        (15.0, 15.0),
+        (15.0, 15.0).into(),
         &text,
         &fg_brush,
         DrawTextOptions::ENABLE_COLOR_FONT,
@@ -130,5 +133,6 @@ fn main() {
         TEXTURE_WIDTH,
         TEXTURE_HEIGHT,
         image::ColorType::RGBA(8),
-    ).unwrap();
+    )
+    .unwrap();
 }

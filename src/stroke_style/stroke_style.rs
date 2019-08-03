@@ -1,8 +1,10 @@
 use crate::enums::{CapStyle, DashStyle, LineJoin};
-use crate::factory::Factory;
+use crate::factory::IFactory;
+use crate::resource::IResource;
 
 use checked_enum::UncheckedEnum;
-use winapi::um::d2d1::ID2D1StrokeStyle;
+use com_wrapper::ComWrapper;
+use winapi::um::d2d1::{ID2D1Resource, ID2D1StrokeStyle};
 use wio::com::ComPtr;
 
 pub use self::builder::*;
@@ -17,58 +19,64 @@ pub struct StrokeStyle {
 }
 
 impl StrokeStyle {
-    #[inline]
-    pub fn create<'a>(factory: &'a Factory) -> StrokeStyleBuilder<'a> {
+    pub fn create<'a>(factory: &'a dyn IFactory) -> StrokeStyleBuilder<'a> {
         StrokeStyleBuilder::new(factory)
     }
+}
 
-    #[inline]
-    pub fn start_cap(&self) -> UncheckedEnum<CapStyle> {
-        unsafe { self.ptr.GetStartCap().into() }
+pub unsafe trait IStrokeStyle: IResource {
+    fn start_cap(&self) -> UncheckedEnum<CapStyle> {
+        unsafe { self.raw_stroke().GetStartCap().into() }
     }
 
-    #[inline]
-    pub fn end_cap(&self) -> UncheckedEnum<CapStyle> {
-        unsafe { self.ptr.GetEndCap().into() }
+    fn end_cap(&self) -> UncheckedEnum<CapStyle> {
+        unsafe { self.raw_stroke().GetEndCap().into() }
     }
 
-    #[inline]
-    pub fn dash_cap(&self) -> UncheckedEnum<CapStyle> {
-        unsafe { self.ptr.GetDashCap().into() }
+    fn dash_cap(&self) -> UncheckedEnum<CapStyle> {
+        unsafe { self.raw_stroke().GetDashCap().into() }
     }
 
-    #[inline]
-    pub fn miter_limit(&self) -> f32 {
-        unsafe { self.ptr.GetMiterLimit() }
+    fn miter_limit(&self) -> f32 {
+        unsafe { self.raw_stroke().GetMiterLimit() }
     }
 
-    #[inline]
-    pub fn line_join(&self) -> UncheckedEnum<LineJoin> {
-        unsafe { self.ptr.GetLineJoin().into() }
+    fn line_join(&self) -> UncheckedEnum<LineJoin> {
+        unsafe { self.raw_stroke().GetLineJoin().into() }
     }
 
-    #[inline]
-    pub fn dash_offset(&self) -> f32 {
-        unsafe { self.ptr.GetDashOffset() }
+    fn dash_offset(&self) -> f32 {
+        unsafe { self.raw_stroke().GetDashOffset() }
     }
 
-    #[inline]
-    pub fn dash_style(&self) -> UncheckedEnum<DashStyle> {
-        unsafe { self.ptr.GetDashStyle().into() }
+    fn dash_style(&self) -> UncheckedEnum<DashStyle> {
+        unsafe { self.raw_stroke().GetDashStyle().into() }
     }
 
-    #[inline]
-    pub fn dashes_count(&self) -> u32 {
-        unsafe { self.ptr.GetDashesCount() }
+    fn dashes_count(&self) -> u32 {
+        unsafe { self.raw_stroke().GetDashesCount() }
     }
 
-    #[inline]
-    pub fn dashes(&self) -> Vec<f32> {
+    fn dashes(&self) -> Vec<f32> {
         let count = self.dashes_count();
         let mut data = vec![0.0; count as usize];
         unsafe {
-            self.ptr.GetDashes(data.as_mut_ptr(), count);
+            self.raw_stroke().GetDashes(data.as_mut_ptr(), count);
         }
         data
+    }
+
+    unsafe fn raw_stroke(&self) -> &ID2D1StrokeStyle;
+}
+
+unsafe impl IResource for StrokeStyle {
+    unsafe fn raw_resource(&self) -> &ID2D1Resource {
+        &self.ptr
+    }
+}
+
+unsafe impl IStrokeStyle for StrokeStyle {
+    unsafe fn raw_stroke(&self) -> &ID2D1StrokeStyle {
+        &self.ptr
     }
 }

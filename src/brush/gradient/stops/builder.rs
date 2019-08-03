@@ -1,25 +1,22 @@
 use crate::brush::gradient::stops::GradientStopCollection;
 use crate::descriptions::GradientStop;
 use crate::enums::*;
-use crate::error::D2DResult;
-use crate::render_target::RenderTarget;
-
-use std::ptr;
+use crate::render_target::IRenderTarget;
 
 use com_wrapper::ComWrapper;
+use dcommon::Error;
 use winapi::shared::winerror::SUCCEEDED;
 
 pub struct GradientStopBuilder<'a> {
-    context: &'a RenderTarget,
+    context: &'a dyn IRenderTarget,
     extend_mode: ExtendMode,
     gamma: Gamma,
     state: GradientStopState<'a>,
 }
 
 impl<'a> GradientStopBuilder<'a> {
-    #[inline]
     /// Defaults: Gamma::_2_2, ExtendMode::Clamp
-    pub fn new(context: &'a RenderTarget) -> Self {
+    pub fn new(context: &'a dyn IRenderTarget) -> Self {
         GradientStopBuilder {
             context,
             extend_mode: ExtendMode::Clamp,
@@ -28,7 +25,7 @@ impl<'a> GradientStopBuilder<'a> {
         }
     }
 
-    pub fn build(self) -> D2DResult<GradientStopCollection> {
+    pub fn build(self) -> Result<GradientStopCollection, Error> {
         let slice: &[GradientStop] = match self.state {
             GradientStopState::Empty => &[],
             GradientStopState::Stops(ref vec) => vec,
@@ -36,8 +33,8 @@ impl<'a> GradientStopBuilder<'a> {
         };
 
         unsafe {
-            let mut ptr = ptr::null_mut();
-            let hr = self.context.rt().CreateGradientStopCollection(
+            let mut ptr = std::ptr::null_mut();
+            let hr = self.context.raw_rt().CreateGradientStopCollection(
                 slice.as_ptr() as *const _,
                 slice.len() as u32,
                 self.gamma as u32,

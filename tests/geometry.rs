@@ -3,7 +3,7 @@ extern crate math2d;
 
 use direct2d::enums::FillMode;
 use direct2d::factory::Factory;
-use direct2d::geometry::{GroupGeometry, PathGeometry, RectangleGeometry};
+use direct2d::geometry::{GroupGeometry, IGeometry, PathGeometry, RectangleGeometry};
 use math2d::*;
 
 const EPSILON: f32 = 0.0001;
@@ -108,27 +108,35 @@ fn path_geometry() {
         .unwrap()
         .fill_mode(FillMode::Winding)
         // Square with a triangle base
-        .with_line_figure(Filled, Closed, &[
-            (0.0, 0.0).into(),
-            (1.0, 0.0).into(),
-            (1.0, 1.0).into(),
-            (0.5, 1.5).into(),
-            (0.0, 1.0).into(),
-        ])
+        .with_line_figure(
+            Filled,
+            Closed,
+            &[
+                (0.0, 0.0).into(),
+                (1.0, 0.0).into(),
+                (1.0, 1.0).into(),
+                (0.5, 1.5).into(),
+                (0.0, 1.0).into(),
+            ],
+        )
         // Add a triangle hat
-        .with_line_figure(Filled, Closed, &[
-            (0.0, 0.0).into(),
-            (0.5, -0.5).into(),
-            (1.0, 0.0).into()
-        ])
+        .with_line_figure(
+            Filled,
+            Closed,
+            &[(0.0, 0.0).into(), (0.5, -0.5).into(), (1.0, 0.0).into()],
+        )
         // Cut a hole in the middle
         .fill_mode(FillMode::Alternate)
-        .with_line_figure(Filled, Closed, &[
-            (0.25, 0.25).into(),
-            (0.75, 0.25).into(),
-            (0.75, 0.75).into(),
-            (0.25, 0.75).into(),
-        ])
+        .with_line_figure(
+            Filled,
+            Closed,
+            &[
+                (0.25, 0.25).into(),
+                (0.75, 0.25).into(),
+                (0.75, 0.75).into(),
+                (0.25, 0.75).into(),
+            ],
+        )
         .finish()
         .unwrap();
 

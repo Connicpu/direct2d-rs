@@ -1,8 +1,10 @@
 use dcommon::Error;
 use direct2d::brush::SolidColorBrush;
+use direct2d::device::Device;
+use direct2d::device_context::{DeviceContext, IDeviceContext};
 use direct2d::enums::{BitmapOptions, DrawTextOptions};
 use direct2d::image::Bitmap1;
-use direct2d::{Device, DeviceContext};
+use direct2d::render_target::IRenderTarget;
 use direct3d11::enums::{BindFlags, CreateDeviceFlags};
 use directwrite::{TextFormat, TextLayout};
 use dxgi::enums::Format;
@@ -69,11 +71,11 @@ fn draw_to_texture() {
     context.set_target(&target);
 
     // Make the background white
-    context.clear(0xFF_FF_FF);
+    context.clear(0xFF_FF_FF.into());
 
     // Draw the text
     context.draw_text_layout(
-        (0.0, 0.0),
+        (0.0, 0.0).into(),
         &text,
         &brush,
         DrawTextOptions::ENABLE_COLOR_FONT,

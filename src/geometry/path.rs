@@ -1,10 +1,11 @@
-use crate::error::D2DResult;
-use crate::factory::Factory;
+use crate::factory::IFactory;
+use crate::geometry::IGeometry;
+use crate::resource::IResource;
 
 use com_wrapper::ComWrapper;
-use dcommon::helpers::deref_com_wrapper;
+use dcommon::Error;
 use winapi::shared::winerror::SUCCEEDED;
-use winapi::um::d2d1::ID2D1PathGeometry;
+use winapi::um::d2d1::{ID2D1Geometry, ID2D1PathGeometry, ID2D1Resource};
 use wio::com::ComPtr;
 
 pub use self::builder::*;
@@ -20,11 +21,10 @@ pub struct PathGeometry {
 }
 
 impl PathGeometry {
-    #[inline]
-    pub fn create(factory: &Factory) -> D2DResult<PathBuilder> {
+    pub fn create(factory: &dyn IFactory) -> Result<PathBuilder, Error> {
         unsafe {
             let mut ptr = std::ptr::null_mut();
-            let hr = (*factory.get_raw()).CreatePathGeometry(&mut ptr);
+            let hr = factory.raw_f().CreatePathGeometry(&mut ptr);
             if SUCCEEDED(hr) {
                 let path = PathGeometry::from_raw(ptr);
 
@@ -45,8 +45,7 @@ impl PathGeometry {
         }
     }
 
-    #[inline]
-    pub fn segment_count(&self) -> D2DResult<u32> {
+    pub fn segment_count(&self) -> Result<u32, Error> {
         unsafe {
             let mut count = 0;
             let result = self.ptr.GetSegmentCount(&mut count);
@@ -58,8 +57,7 @@ impl PathGeometry {
         }
     }
 
-    #[inline]
-    pub fn figure_count(&self) -> D2DResult<u32> {
+    pub fn figure_count(&self) -> Result<u32, Error> {
         unsafe {
             let mut count = 0;
             let result = self.ptr.GetFigureCount(&mut count);
@@ -72,10 +70,15 @@ impl PathGeometry {
     }
 }
 
-impl std::ops::Deref for PathGeometry {
-    type Target = super::Geometry;
-    fn deref(&self) -> &super::Geometry {
-        unsafe { deref_com_wrapper(self) }
+unsafe impl IResource for PathGeometry {
+    unsafe fn raw_resource(&self) -> &ID2D1Resource {
+        &self.ptr
+    }
+}
+
+unsafe impl IGeometry for PathGeometry {
+    unsafe fn raw_geom(&self) -> &ID2D1Geometry {
+        &self.ptr
     }
 }
 

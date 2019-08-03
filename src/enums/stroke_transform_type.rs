@@ -1,4 +1,4 @@
-#[auto_enum(u32, checked)]
+#[auto_enum::auto_enum(u32, checked)]
 pub enum StrokeTransformType {
     Normal = 0,
     Fixed = 1,

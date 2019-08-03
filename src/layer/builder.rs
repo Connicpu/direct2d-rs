@@ -1,30 +1,29 @@
-use crate::brush::Brush;
+use crate::brush::IBrush;
 use crate::enums::{AntialiasMode, LayerOptions};
-use crate::geometry::Geometry;
+use crate::geometry::IGeometry;
 use crate::layer::Layer;
-use crate::render_target::RenderTarget;
+use crate::render_target::IRenderTarget;
 
 use com_wrapper::ComWrapper;
-use dcommon::helpers::unwrap_opt_com;
 use math2d::{Matrix3x2f, Rectf};
 use winapi::um::d2d1::D2D1_LAYER_PARAMETERS;
 
 #[must_use]
 pub struct LayerBuilder<'a, 'b> {
-    rt: &'a mut RenderTarget,
+    rt: &'a mut dyn IRenderTarget,
     layer: &'b Layer,
     bounds: Rectf,
-    mask: Option<&'b Geometry>,
+    mask: Option<&'b dyn IGeometry>,
     mask_aa: AntialiasMode,
     mask_tr: Matrix3x2f,
     opacity: f32,
-    opacity_brush: Option<&'b Brush>,
+    opacity_brush: Option<&'b dyn IBrush>,
     layer_opts: LayerOptions,
 }
 
 impl<'a, 'b> LayerBuilder<'a, 'b> {
     #[inline]
-    pub fn create(rt: &'a mut RenderTarget, layer: &'b Layer) -> Self {
+    pub fn create(rt: &'a mut dyn IRenderTarget, layer: &'b Layer) -> Self {
         LayerBuilder {
             rt,
             layer,
@@ -39,7 +38,7 @@ impl<'a, 'b> LayerBuilder<'a, 'b> {
     }
 
     #[inline]
-    pub fn with_mask(mut self, mask: &'b Geometry) -> Self {
+    pub fn with_mask(mut self, mask: &'b dyn IGeometry) -> Self {
         self.mask = Some(mask);
         self
     }
@@ -55,17 +54,23 @@ impl<'a, 'b> LayerBuilder<'a, 'b> {
             let params = D2D1_LAYER_PARAMETERS {
                 contentBounds: self.bounds.into(),
 
-                geometricMask: unwrap_opt_com(self.mask),
+                geometricMask: self
+                    .mask
+                    .map(|g| g.raw_geom() as *const _ as *mut _)
+                    .unwrap_or(std::ptr::null_mut()),
                 maskAntialiasMode: self.mask_aa as u32,
                 maskTransform: self.mask_tr.into(),
 
                 opacity: self.opacity,
-                opacityBrush: unwrap_opt_com(self.opacity_brush),
+                opacityBrush: self
+                    .opacity_brush
+                    .map(|g| g.raw_brush() as *const _ as *mut _)
+                    .unwrap_or(std::ptr::null_mut()),
 
                 layerOptions: self.layer_opts as u32,
             };
 
-            self.rt.rt().PushLayer(&params, self.layer.get_raw());
+            self.rt.raw_rt().PushLayer(&params, self.layer.get_raw());
         }
     }
 }

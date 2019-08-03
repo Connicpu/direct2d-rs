@@ -1,8 +1,10 @@
+use crate::brush::IBrush;
 use crate::enums::{BitmapInterpolationMode, ExtendMode};
-use crate::render_target::RenderTarget;
+use crate::render_target::IRenderTarget;
 
 use checked_enum::UncheckedEnum;
-use winapi::um::d2d1::ID2D1BitmapBrush;
+use com_wrapper::ComWrapper;
+use winapi::um::d2d1::{ID2D1BitmapBrush, ID2D1Brush};
 use wio::com::ComPtr;
 
 pub use self::builder::*;
@@ -17,31 +19,25 @@ pub struct BitmapBrush {
 }
 
 impl BitmapBrush {
-    #[inline]
-    pub fn create<'a>(context: &'a RenderTarget) -> BitmapBrushBuilder<'a> {
+    pub fn create<'a>(context: &'a dyn IRenderTarget) -> BitmapBrushBuilder<'a> {
         BitmapBrushBuilder::new(context)
     }
 
-    #[inline]
     pub fn extend_mode_x(&self) -> UncheckedEnum<ExtendMode> {
         unsafe { self.ptr.GetExtendModeX().into() }
     }
 
-    #[inline]
     pub fn extend_mode_y(&self) -> UncheckedEnum<ExtendMode> {
         unsafe { self.ptr.GetExtendModeY().into() }
     }
 
-    #[inline]
     pub fn interpolation_mode(&self) -> UncheckedEnum<BitmapInterpolationMode> {
         unsafe { self.ptr.GetInterpolationMode().into() }
     }
 }
 
-impl std::ops::Deref for BitmapBrush {
-    type Target = crate::brush::Brush;
-    fn deref(&self) -> &Self::Target {
-        unsafe { dcommon::helpers::deref_com_wrapper(self) }
+unsafe impl IBrush for BitmapBrush {
+    unsafe fn raw_brush(&self) -> &ID2D1Brush {
+        &self.ptr
     }
 }
-

@@ -1,16 +1,14 @@
 use crate::enums::{CapStyle, DashStyle, LineJoin, StrokeTransformType};
-use crate::error::D2DResult;
-use crate::factory::Factory1;
+use crate::factory::IFactory1;
 use crate::stroke_style::StrokeStyle1;
 
-use std::ptr;
-
 use com_wrapper::ComWrapper;
+use dcommon::Error;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1_1::D2D1_STROKE_STYLE_PROPERTIES1;
 
 pub struct StrokeStyleBuilder1<'a> {
-    factory: &'a Factory1,
+    factory: &'a dyn IFactory1,
     start_cap: CapStyle,
     end_cap: CapStyle,
     dash_cap: CapStyle,
@@ -23,7 +21,7 @@ pub struct StrokeStyleBuilder1<'a> {
 }
 
 impl<'a> StrokeStyleBuilder1<'a> {
-    pub fn new(factory: &'a Factory1) -> Self {
+    pub fn new(factory: &'a dyn IFactory1) -> Self {
         // default values taken from D2D1::StrokeStyleProperties in d2d1helper.h
         StrokeStyleBuilder1 {
             factory,
@@ -39,21 +37,19 @@ impl<'a> StrokeStyleBuilder1<'a> {
         }
     }
 
-    pub fn build(self) -> D2DResult<StrokeStyle1> {
+    pub fn build(self) -> Result<StrokeStyle1, Error> {
         unsafe {
             let properties = self.to_d2d1();
             let (dashes, dash_count) = self
                 .dashes
                 .map(|d| (d.as_ptr(), d.len() as u32))
-                .unwrap_or((ptr::null(), 0));
+                .unwrap_or((std::ptr::null(), 0));
 
-            let mut ptr = ptr::null_mut();
-            let hr = (*self.factory.get_raw()).CreateStrokeStyle(
-                &properties,
-                dashes,
-                dash_count,
-                &mut ptr,
-            );
+            let mut ptr = std::ptr::null_mut();
+            let hr =
+                self.factory
+                    .raw_f1()
+                    .CreateStrokeStyle(&properties, dashes, dash_count, &mut ptr);
 
             if SUCCEEDED(hr) {
                 Ok(StrokeStyle1::from_raw(ptr))

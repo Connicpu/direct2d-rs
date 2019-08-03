@@ -1,12 +1,14 @@
-use crate::error::D2DResult;
-use crate::factory::Factory;
-use math2d::RoundedRect;
-use std::{mem, ptr};
+use crate::factory::IFactory;
+use crate::geometry::IGeometry;
+use crate::resource::IResource;
+
+use std::mem::MaybeUninit;
 
 use com_wrapper::ComWrapper;
-use dcommon::helpers::deref_com_wrapper;
+use dcommon::Error;
+use math2d::RoundedRect;
 use winapi::shared::winerror::SUCCEEDED;
-use winapi::um::d2d1::{ID2D1RoundedRectangleGeometry, D2D1_ROUNDED_RECT};
+use winapi::um::d2d1::{ID2D1Geometry, ID2D1Resource, ID2D1RoundedRectangleGeometry};
 use wio::com::ComPtr;
 
 #[repr(transparent)]
@@ -18,14 +20,14 @@ pub struct RoundedRectangleGeometry {
 }
 
 impl RoundedRectangleGeometry {
-    #[inline]
     pub fn create(
-        factory: &Factory,
+        factory: &dyn IFactory,
         rectangle: &RoundedRect,
-    ) -> D2DResult<RoundedRectangleGeometry> {
+    ) -> Result<RoundedRectangleGeometry, Error> {
         unsafe {
-            let mut ptr = ptr::null_mut();
-            let hr = (*factory.get_raw())
+            let mut ptr = std::ptr::null_mut();
+            let hr = factory
+                .raw_f()
                 .CreateRoundedRectangleGeometry(rectangle as *const _ as *const _, &mut ptr);
             if SUCCEEDED(hr) {
                 Ok(RoundedRectangleGeometry::from_raw(ptr))
@@ -35,20 +37,24 @@ impl RoundedRectangleGeometry {
         }
     }
 
-    #[inline]
     pub fn get_rounded_rect(&self) -> RoundedRect {
         unsafe {
-            let mut rect: D2D1_ROUNDED_RECT = mem::uninitialized();
-            self.ptr.GetRoundedRect(&mut rect);
-            mem::transmute(rect)
+            let mut rect = MaybeUninit::uninit();
+            self.ptr.GetRoundedRect(rect.as_mut_ptr());
+            rect.assume_init().into()
         }
     }
 }
 
-impl std::ops::Deref for RoundedRectangleGeometry {
-    type Target = super::Geometry;
-    fn deref(&self) -> &super::Geometry {
-        unsafe { deref_com_wrapper(self) }
+unsafe impl IResource for RoundedRectangleGeometry {
+    unsafe fn raw_resource(&self) -> &ID2D1Resource {
+        &self.ptr
+    }
+}
+
+unsafe impl IGeometry for RoundedRectangleGeometry {
+    unsafe fn raw_geom(&self) -> &ID2D1Geometry {
+        &self.ptr
     }
 }
 

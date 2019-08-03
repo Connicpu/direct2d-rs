@@ -1,4 +1,4 @@
-#[enum_flags(u32)]
+#[auto_enum::enum_flags(u32)]
 pub enum BitmapOptions {
     NONE = 0,
     TARGET = 0x1,

@@ -53,28 +53,27 @@ macro_rules! make_render_tag {
 /// error to help debug which part of the drawing code is causing the error.
 ///
 /// ```
-/// # #[macro_use] extern crate direct2d;
-/// # extern crate direct3d11;
-/// # extern crate dxgi;
-/// # use direct2d::{DeviceContext, RenderTarget};
+/// # use direct2d::set_render_tag;
+/// # use direct2d::device_context::{IDeviceContext, DeviceContext};
+/// # use direct2d::render_target::IRenderTarget;
 /// # use direct2d::brush::SolidColorBrush;
-/// # use direct2d::image::Bitmap1;
+/// # use direct2d::image::{IBitmap1, Bitmap1};
 /// fn draw(context: &mut DeviceContext, target: &Bitmap1) {
-///     let brush = SolidColorBrush::create(&context)
+///     let brush = SolidColorBrush::create(context)
 ///         .with_color(0xFF_7F_7F)
 ///         .build().unwrap();
 ///
 ///     context.begin_draw();
 ///     context.set_target(target);
-///     context.clear(0xFF_FF_FF);
+///     context.clear(0xFF_FF_FF.into());
 ///
 ///     // Not sure which of these two lines could mess it up, so I set
 ///     // the render tag to be notified of the failure in the Err value.
 ///     set_render_tag!(context);
-///     context.draw_line((10.0, 10.0), (20.0, 20.0), &brush, 2.0, None);
+///     context.draw_line((10.0, 10.0).into(), (20.0, 20.0).into(), &brush, 2.0, None);
 ///
 ///     set_render_tag!(context);
-///     context.draw_line((10.0, 20.0), (20.0, 10.0), &brush, 2.0, None);
+///     context.draw_line((10.0, 20.0).into(), (20.0, 10.0).into(), &brush, 2.0, None);
 ///
 ///     match context.end_draw() {
 ///         Ok(_) => {/* cool */},
@@ -87,7 +86,7 @@ macro_rules! make_render_tag {
 ///     }
 /// }
 /// # fn main() {
-/// #     use direct2d::{Device, Factory1};
+/// #     use direct2d::factory::Factory1;
 /// #     use direct2d::enums::BitmapOptions;
 /// #     use direct3d11::enums::{BindFlags, CreateDeviceFlags};
 /// #     use dxgi::enums::Format;
@@ -102,9 +101,9 @@ macro_rules! make_render_tag {
 /// #         .build()
 /// #         .unwrap();
 /// #     let factory = Factory1::new().unwrap();
-/// #     let dev = Device::create(&factory, &d3d.as_dxgi()).unwrap();
-/// #     let mut ctx = DeviceContext::create(&dev).unwrap();
-/// #     let target = Bitmap1::create(&ctx)
+/// #     let dev = direct2d::device::Device::create(&factory, &d3d.as_dxgi()).unwrap();
+/// #     let mut ctx = direct2d::device_context::DeviceContext::create(&dev).unwrap();
+/// #     let target = direct2d::image::Bitmap1::create(&ctx)
 /// #         .with_dxgi_surface(&tex.as_dxgi())
 /// #         .with_dpi(192.0, 192.0)
 /// #         .with_options(BitmapOptions::TARGET)
@@ -115,9 +114,6 @@ macro_rules! make_render_tag {
 /// ```
 macro_rules! set_render_tag {
     ($rt:expr) => {
-        $crate::render_target::RenderTarget::set_tag(
-            $rt,
-            Some($crate::make_render_tag!()),
-        );
+        $crate::render_target::IRenderTarget::set_tag($rt, Some($crate::make_render_tag!()));
     };
 }

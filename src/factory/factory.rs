@@ -1,8 +1,5 @@
-use crate::error::D2DResult;
-
-use std::ptr;
-
 use com_wrapper::ComWrapper;
+use dcommon::Error;
 use winapi::ctypes::c_void;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::{
@@ -19,10 +16,9 @@ pub struct Factory {
 }
 
 impl Factory {
-    #[inline]
-    pub fn new() -> D2DResult<Factory> {
+    pub fn new() -> Result<Factory, Error> {
         unsafe {
-            let mut ptr: *mut ID2D1Factory = ptr::null_mut();
+            let mut ptr: *mut ID2D1Factory = std::ptr::null_mut();
             let hr = D2D1CreateFactory(
                 D2D1_FACTORY_TYPE_MULTI_THREADED,
                 &ID2D1Factory::uuidof(),
@@ -39,13 +35,22 @@ impl Factory {
             }
         }
     }
+}
 
-    #[inline]
-    pub fn desktop_dpi(&self) -> (f32, f32) {
+pub unsafe trait IFactory {
+    fn desktop_dpi(&self) -> (f32, f32) {
         unsafe {
             let (mut x, mut y) = (0.0, 0.0);
-            self.ptr.GetDesktopDpi(&mut x, &mut y);
+            self.raw_f().GetDesktopDpi(&mut x, &mut y);
             (x, y)
         }
+    }
+
+    unsafe fn raw_f(&self) -> &ID2D1Factory;
+}
+
+unsafe impl IFactory for Factory {
+    unsafe fn raw_f(&self) -> &ID2D1Factory {
+        &self.ptr
     }
 }

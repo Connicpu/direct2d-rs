@@ -1,23 +1,21 @@
 use crate::brush::solid_color::SolidColorBrush;
-use crate::error::D2DResult;
 use crate::properties::BrushProperties;
-use crate::render_target::RenderTarget;
-
-use std::ptr;
+use crate::render_target::IRenderTarget;
 
 use com_wrapper::ComWrapper;
+use dcommon::Error;
 use math2d::{Color, Matrix3x2f};
 use winapi::shared::winerror::SUCCEEDED;
 
 pub struct SolidColorBrushBuilder<'a> {
-    context: &'a RenderTarget,
+    context: &'a dyn IRenderTarget,
     properties: BrushProperties,
     color: Option<Color>,
 }
 
 impl<'a> SolidColorBrushBuilder<'a> {
     #[inline]
-    pub fn new(context: &'a RenderTarget) -> Self {
+    pub fn new(context: &'a dyn IRenderTarget) -> Self {
         SolidColorBrushBuilder {
             context,
             properties: BrushProperties::new(1.0, &Matrix3x2f::IDENTITY),
@@ -26,11 +24,11 @@ impl<'a> SolidColorBrushBuilder<'a> {
     }
 
     #[inline]
-    pub fn build(self) -> D2DResult<SolidColorBrush> {
+    pub fn build(self) -> Result<SolidColorBrush, Error> {
         let color = self.color.expect("`color` must be specified");
         unsafe {
-            let mut ptr = ptr::null_mut();
-            let hr = self.context.rt().CreateSolidColorBrush(
+            let mut ptr = std::ptr::null_mut();
+            let hr = self.context.raw_rt().CreateSolidColorBrush(
                 (&color) as *const _ as *const _,
                 (&self.properties) as *const _ as *const _,
                 &mut ptr,

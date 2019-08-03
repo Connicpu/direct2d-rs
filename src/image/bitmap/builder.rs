@@ -1,7 +1,6 @@
 use crate::enums::AlphaMode;
-use crate::error::D2DResult;
 use crate::image::bitmap::{Bitmap, SharedBitmapSource};
-use crate::render_target::RenderTarget;
+use crate::render_target::IRenderTarget;
 
 use com_wrapper::ComWrapper;
 use dcommon::Error;
@@ -14,7 +13,7 @@ use winapi::um::dcommon::D2D1_PIXEL_FORMAT;
 use winapi::um::unknwnbase::IUnknown;
 
 pub struct BitmapBuilder<'a> {
-    context: &'a RenderTarget,
+    context: &'a dyn IRenderTarget,
     source: Option<BitmapSource<'a>>,
     properties: D2D1_BITMAP_PROPERTIES,
 }
@@ -30,7 +29,7 @@ const DEFAULT_BITMAP_PROPS: D2D1_BITMAP_PROPERTIES = D2D1_BITMAP_PROPERTIES {
 
 impl<'a> BitmapBuilder<'a> {
     #[inline]
-    pub fn new(context: &'a RenderTarget) -> Self {
+    pub fn new(context: &'a dyn IRenderTarget) -> Self {
         BitmapBuilder {
             context,
             source: None,
@@ -39,7 +38,7 @@ impl<'a> BitmapBuilder<'a> {
     }
 
     #[inline]
-    pub fn build(self) -> D2DResult<Bitmap> {
+    pub fn build(self) -> Result<Bitmap, Error> {
         let source = self.source.expect("An image source must be specified");
         let properties = &self.properties;
         match source {
@@ -57,14 +56,14 @@ impl<'a> BitmapBuilder<'a> {
                 let mut ptr = std::ptr::null_mut();
                 let hr = self
                     .context
-                    .rt()
+                    .raw_rt()
                     .CreateBitmap(size, src, pitch, properties, &mut ptr);
 
                 Error::map_if(hr, || Bitmap::from_raw(ptr))
             },
             BitmapSource::Shared(ref riid, data) => unsafe {
                 let mut ptr = std::ptr::null_mut();
-                let hr = self.context.rt().CreateSharedBitmap(
+                let hr = self.context.raw_rt().CreateSharedBitmap(
                     riid,
                     data as *const _ as _,
                     properties,

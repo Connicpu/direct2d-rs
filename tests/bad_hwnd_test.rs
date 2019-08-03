@@ -2,8 +2,8 @@ extern crate direct2d;
 extern crate rand;
 extern crate winapi;
 
-use direct2d::render_target::HwndRenderTarget;
 use direct2d::factory::Factory1;
+use direct2d::render_target::HwndRenderTarget;
 use rand::{Rng, SeedableRng, XorShiftRng};
 
 const SEED: [u32; 4] = [0x4695b3d0, 0x3e1e33b9, 0xaec57978, 0xd44c5bad];

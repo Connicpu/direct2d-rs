@@ -23,7 +23,7 @@ enum Source<'a> {
         stride: u32,
     },
     Dxgi {
-        dxgi: &'a dxgi::surface::Surface,
+        dxgi: &'a dyn dxgi::surface::ISurface,
     },
 }
 
@@ -60,20 +60,19 @@ impl<'a> BitmapBuilder1<'a> {
                 Source::Dxgi { dxgi } => {
                     let ddesc = dxgi.desc();
                     if properties.pixel_format.format == Format::Unknown {
-                        properties.pixel_format.format = ddesc.format();
+                        properties.pixel_format.format = ddesc.format;
                     }
-                    if ddesc.format() != properties.pixel_format.format {
+                    if ddesc.format != properties.pixel_format.format {
                         eprintln!(
                             "WARNING: Format of bitmap does not match backing surface. \
                              Surface format: {:?}, Bitmap format: {:?}",
-                            ddesc.format(),
-                            properties.pixel_format.format,
+                            ddesc.format, properties.pixel_format.format,
                         );
                         return Err(Error::INVALIDARG);
                     }
 
                     (*self.context.get_raw()).CreateBitmapFromDxgiSurface(
-                        dxgi.get_raw(),
+                        dxgi.raw_surface(),
                         &properties.into(),
                         &mut ptr,
                     )
@@ -84,7 +83,6 @@ impl<'a> BitmapBuilder1<'a> {
         }
     }
 
-    #[inline]
     pub fn with_image_data(self, size: impl Into<Sizeu>, data: &'a [u8], stride: u32) -> Self {
         let size = size.into();
         let fmt = self
@@ -128,32 +126,27 @@ impl<'a> BitmapBuilder1<'a> {
         unsafe { self.with_image_data_unchecked(size, data, stride) }
     }
 
-    #[inline]
     pub fn with_dxgi_surface(mut self, dxgi: &'a dxgi::surface::Surface) -> Self {
         self.source = Some(Source::Dxgi { dxgi });
         self
     }
 
-    #[inline]
     pub fn with_format(mut self, format: Format) -> Self {
         self.properties.pixel_format.format = format.into();
         self
     }
 
-    #[inline]
     pub fn with_alpha_mode(mut self, alpha_mode: AlphaMode) -> Self {
         self.properties.pixel_format.alpha_mode = alpha_mode.into();
         self
     }
 
-    #[inline]
     pub fn with_dpi(mut self, dpi_x: f32, dpi_y: f32) -> Self {
         self.properties.dpi_x = dpi_x;
         self.properties.dpi_y = dpi_y;
         self
     }
 
-    #[inline]
     pub fn with_options(mut self, options: BitmapOptions) -> Self {
         self.properties.options = options;
         self
@@ -161,7 +154,6 @@ impl<'a> BitmapBuilder1<'a> {
 }
 
 impl<'a> BitmapBuilder1<'a> {
-    #[inline]
     pub unsafe fn with_image_data_unchecked(
         mut self,
         size: impl Into<Sizeu>,
@@ -172,8 +164,7 @@ impl<'a> BitmapBuilder1<'a> {
         self.source = Some(Source::Memory { size, data, stride });
         self
     }
-    
-    #[inline]
+
     pub unsafe fn with_format_unchecked(mut self, format: UncheckedEnum<Format>) -> Self {
         self.properties.pixel_format.format = format;
         self

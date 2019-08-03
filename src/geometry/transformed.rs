@@ -1,11 +1,11 @@
-use crate::geometry::Geometry;
+use crate::geometry::{Geometry, IGeometry};
+use crate::resource::IResource;
 
 use std::{mem, ptr};
 
 use com_wrapper::ComWrapper;
-use dcommon::helpers::deref_com_wrapper;
 use math2d::Matrix3x2f;
-use winapi::um::d2d1::{ID2D1TransformedGeometry, D2D1_MATRIX_3X2_F};
+use winapi::um::d2d1::{ID2D1Geometry, ID2D1Resource, ID2D1TransformedGeometry, D2D1_MATRIX_3X2_F};
 use wio::com::ComPtr;
 
 #[repr(transparent)]
@@ -17,7 +17,6 @@ pub struct TransformedGeometry {
 }
 
 impl TransformedGeometry {
-    #[inline]
     pub fn source_geometry(&self) -> Geometry {
         unsafe {
             let mut ptr = ptr::null_mut();
@@ -26,7 +25,6 @@ impl TransformedGeometry {
         }
     }
 
-    #[inline]
     pub fn transform(&self) -> Matrix3x2f {
         unsafe {
             let mut matrix: D2D1_MATRIX_3X2_F = mem::uninitialized();
@@ -36,10 +34,15 @@ impl TransformedGeometry {
     }
 }
 
-impl std::ops::Deref for TransformedGeometry {
-    type Target = super::Geometry;
-    fn deref(&self) -> &super::Geometry {
-        unsafe { deref_com_wrapper(self) }
+unsafe impl IResource for TransformedGeometry {
+    unsafe fn raw_resource(&self) -> &ID2D1Resource {
+        &self.ptr
+    }
+}
+
+unsafe impl IGeometry for TransformedGeometry {
+    unsafe fn raw_geom(&self) -> &ID2D1Geometry {
+        &self.ptr
     }
 }
 

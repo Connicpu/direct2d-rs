@@ -1,8 +1,11 @@
-use winapi::um::d2d1::ID2D1Image;
+use crate::resource::IResource;
+
+use com_wrapper::ComWrapper;
+use winapi::um::d2d1::{ID2D1Image, ID2D1Resource};
 use wio::com::ComPtr;
 
-pub use self::bitmap::Bitmap;
-pub use self::bitmap1::Bitmap1;
+pub use self::bitmap::{Bitmap, IBitmap};
+pub use self::bitmap1::{Bitmap1, IBitmap1};
 
 pub mod bitmap;
 pub mod bitmap1;
@@ -14,9 +17,18 @@ pub struct Image {
     ptr: ComPtr<ID2D1Image>,
 }
 
-impl std::ops::Deref for Image {
-    type Target = crate::resource::Resource;
-    fn deref(&self) -> &Self::Target {
-        unsafe { dcommon::helpers::deref_com_wrapper(self) }
+pub unsafe trait IImage: IResource {
+    unsafe fn raw_img(&self) -> &ID2D1Image;
+}
+
+unsafe impl IResource for Image {
+    unsafe fn raw_resource(&self) -> &ID2D1Resource {
+        &self.ptr
+    }
+}
+
+unsafe impl IImage for Image {
+    unsafe fn raw_img(&self) -> &ID2D1Image {
+        &self.ptr
     }
 }

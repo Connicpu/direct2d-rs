@@ -45,9 +45,9 @@ pub use self::render_target_usage::RenderTargetUsage;
 #[doc(inline)]
 pub use self::stroke_transform_type::StrokeTransformType;
 #[doc(inline)]
-pub use self::window_state::WindowState;
-#[doc(inline)]
 pub use self::sweep_direction::SweepDirection;
+#[doc(inline)]
+pub use self::window_state::WindowState;
 
 mod alpha_mode;
 mod antialias_mode;

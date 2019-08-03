@@ -5,7 +5,8 @@ Safe abstractions for drawing on Windows using Direct2D
 ```
 extern crate direct2d;
 
-use direct2d::{DeviceContext, RenderTarget};
+use direct2d::device_context::{DeviceContext, IDeviceContext};
+use direct2d::render_target::IRenderTarget;
 use direct2d::brush::SolidColorBrush;
 use direct2d::image::Bitmap;
 
@@ -16,10 +17,10 @@ fn draw(context: &mut DeviceContext, target: &Bitmap) {
 
     context.begin_draw();
     context.set_target(target);
-    context.clear(0xFF_FF_FF);
+    context.clear(0xFF_FF_FF.into());
     
-    context.draw_line((10.0, 10.0), (20.0, 20.0), &brush, 2.0, None);
-    context.draw_line((10.0, 20.0), (20.0, 10.0), &brush, 2.0, None);
+    context.draw_line((10.0, 10.0).into(), (20.0, 20.0).into(), &brush, 2.0, None);
+    context.draw_line((10.0, 20.0).into(), (20.0, 10.0).into(), &brush, 2.0, None);
 
     match context.end_draw() {
         Ok(_) => {/* cool */},

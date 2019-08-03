@@ -1,27 +1,26 @@
 use crate::brush::bitmap::BitmapBrush;
 use crate::enums::{BitmapInterpolationMode, ExtendMode};
-use crate::error::D2DResult;
-use crate::image::Bitmap;
+use crate::image::IBitmap;
 use crate::properties::BrushProperties;
-use crate::render_target::RenderTarget;
+use crate::render_target::IRenderTarget;
 
 use std::ptr;
 
 use com_wrapper::ComWrapper;
+use dcommon::Error;
 use math2d::Matrix3x2f;
 use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d2d1::D2D1_BITMAP_BRUSH_PROPERTIES;
 
 pub struct BitmapBrushBuilder<'a> {
-    context: &'a RenderTarget,
-    bitmap: Option<&'a Bitmap>,
+    context: &'a dyn IRenderTarget,
+    bitmap: Option<&'a dyn IBitmap>,
     b_properties: D2D1_BITMAP_BRUSH_PROPERTIES,
     properties: BrushProperties,
 }
 
 impl<'a> BitmapBrushBuilder<'a> {
-    #[inline]
-    pub fn new(context: &'a RenderTarget) -> Self {
+    pub fn new(context: &'a dyn IRenderTarget) -> Self {
         BitmapBrushBuilder {
             context,
             bitmap: None,
@@ -34,13 +33,12 @@ impl<'a> BitmapBrushBuilder<'a> {
         }
     }
 
-    #[inline]
-    pub fn build(self) -> D2DResult<BitmapBrush> {
+    pub fn build(self) -> Result<BitmapBrush, Error> {
         let bitmap = self.bitmap.expect("`bitmap` must be specified");
         unsafe {
             let mut ptr = ptr::null_mut();
-            let hr = self.context.rt().CreateBitmapBrush(
-                bitmap.get_raw(),
+            let hr = self.context.raw_rt().CreateBitmapBrush(
+                bitmap.raw_bitmap() as *const _ as *mut _,
                 &self.b_properties,
                 (&self.properties) as *const _ as *const _,
                 &mut ptr,
@@ -54,8 +52,7 @@ impl<'a> BitmapBrushBuilder<'a> {
         }
     }
 
-    #[inline]
-    pub fn with_bitmap(mut self, bitmap: &'a Bitmap) -> Self {
+    pub fn with_bitmap(mut self, bitmap: &'a dyn IBitmap) -> Self {
         self.bitmap = Some(bitmap);
         self
     }
